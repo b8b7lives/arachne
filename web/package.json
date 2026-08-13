@@ -1,0 +1,24 @@
+{
+  "name": "arachne-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "license": "GPL-3.0-only",
+  "scripts": {
+    "wasm": "wasm-pack build ../wasm --target web --out-dir ../web/src/wasm-pkg --no-pack",
+    "data": "mkdir -p public && cp ../data/blocks-26.2.json ../data/mapartcraft-presets-26.2.json public/",
+    "predev": "npm run data",
+    "dev": "vite",
+    "prebuild": "npm run wasm && npm run data",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "shot": "node tools/shot.js",
+    "e2e": "node tools/e2e.js",
+    "dither-compare": "node tools/dither-compare.js"
+  },
+  "devDependencies": {
+    "typescript": "~5.6.0",
+    "vite": "^6.0.0",
+    "ws": "^8.18.0"
+  }
+}

@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arachne</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Arachne</h1>
+      <p class="tag">Minecraft map art generator</p>
+      <span id="status" class="status">loading…</span>
+    </header>
+
+    <main>
+      <section id="source-panel">
+        <h2>Source</h2>
+        <div class="row">
+          <input type="file" id="file" accept="image/*" />
+        </div>
+
+        <div class="subsection">
+          <div class="sub-head">size &amp; framing</div>
+          <div class="row">
+            <label title="each map is 128×128 blocks in game">size <input type="number" id="maps-w" value="1" min="1" max="16" /> ×
+              <input type="number" id="maps-h" value="1" min="1" max="16" /> maps</label>
+            <label>fit
+              <select id="fit">
+              <option value="cover" selected>crop (keep ratio)</option>
+              <option value="manual">crop (choose the framing)</option>
+              <option value="contain">pad (keep ratio, transparent)</option>
+              <option value="stretch">stretch</option>
+            </select>
+            </label>
+            <span class="note" id="ratio-hint"></span>
+          </div>
+          <div class="field-grid" id="crop-controls" hidden>
+          <label class="field" title="1× frames as much of the picture as the map shape allows; higher zooms in on a smaller area">
+            <span class="field-name">zoom</span>
+            <input type="range" id="crop-zoom" min="1" max="5" step="0.1" value="1" />
+            <input type="number" class="slider-num" id="crop-zoom-num" min="1" max="5" step="0.1" value="1" title="type or arrow for fine changes" />
+            <span class="field-unit">×</span></label>
+          </div>
+          <div class="field-grid" id="crop-position" hidden>
+          <label class="field" title="slide the crop window left and right">
+            <span class="field-name">across</span>
+            <input type="range" id="crop-x" min="0" max="100" step="1" value="50" />
+            <input type="number" class="slider-num" id="crop-x-num" min="0" max="100" step="1" value="50" title="type or arrow for fine changes" />
+            <span class="field-unit">%</span></label>
+          <label class="field" title="slide the crop window up and down">
+            <span class="field-name">down</span>
+            <input type="range" id="crop-y" min="0" max="100" step="1" value="50" />
+            <input type="number" class="slider-num" id="crop-y-num" min="0" max="100" step="1" value="50" title="type or arrow for fine changes" />
+            <span class="field-unit">%</span></label>
+            <div class="field-actions">
+              <button id="crop-reset" class="mini" title="back to a centered 1× crop">center</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-head">
+            <label title="brightness, contrast, saturation and white balance. Changes what Arachne builds from; the picture on disk is never touched">
+              <input type="checkbox" id="adjust-on" /> adjust color properties</label>
+            <span id="adjust-state" class="chip-adjust" hidden></span>
+            <button id="adjust-reset" class="mini" hidden title="back to no adjustment">neutral</button>
+          </div>
+          <div class="field-grid" id="adjust-controls" hidden>
+          <label class="field" title="lighter or darker overall">
+            <span class="field-name">brightness</span>
+            <input type="range" id="adj-brightness" min="-100" max="100" step="1" value="0" />
+            <input type="number" class="slider-num" id="adj-brightness-num" min="-100" max="100" step="1" value="0" />
+            <span class="field-unit"></span></label>
+          <label class="field" title="pushes lights and darks apart around the midpoint">
+            <span class="field-name">contrast</span>
+            <input type="range" id="adj-contrast" min="-100" max="100" step="1" value="0" />
+            <input type="number" class="slider-num" id="adj-contrast-num" min="-100" max="100" step="1" value="0" />
+            <span class="field-unit"></span></label>
+          <label class="field" title="how strong the colors are; hue is held steady, so nothing shifts toward a neighboring color">
+            <span class="field-name">saturation</span>
+            <input type="range" id="adj-saturation" min="0" max="200" step="1" value="100" />
+            <input type="number" class="slider-num" id="adj-saturation-num" min="0" max="200" step="1" value="100" />
+            <span class="field-unit"></span></label>
+          <label class="field" title="cooler toward blue, warmer toward yellow. Use this when whites read blue">
+            <span class="field-name">temperature</span>
+            <input type="range" id="adj-temperature" min="-100" max="100" step="1" value="0" />
+            <input type="number" class="slider-num" id="adj-temperature-num" min="-100" max="100" step="1" value="0" />
+            <span class="field-unit"></span></label>
+          <label class="field" title="toward green or toward magenta, the other half of white balance">
+            <span class="field-name">tint</span>
+            <input type="range" id="adj-tint" min="-100" max="100" step="1" value="0" />
+            <input type="number" class="slider-num" id="adj-tint-num" min="-100" max="100" step="1" value="0" />
+            <span class="field-unit"></span></label>
+          </div>
+        </div>
+
+        <div class="subsection" id="background-row" hidden>
+          <div class="sub-head">see-through parts</div>
+          <div class="row">
+            <label title="transparent source pixels place no blocks at all, so no background color is needed">
+              <input type="checkbox" id="honor-alpha" checked /> honor transparency</label>
+            <label title="what fills the see-through parts of your picture instead of leaving holes in the build">fill
+              <select id="bg-mode">
+              <option value="off" selected>leave holes</option>
+              <option value="smooth">fill flat</option>
+              <option value="dithered">fill dithered</option>
+            </select></label>
+            <label title="the color to fill with">color
+              <input type="color" id="bg-color" value="#151515" /></label>
+            <span class="note" id="bg-note"></span>
+          </div>
+          <div class="field-grid" id="alpha-threshold-row" hidden>
+          <label class="field" title="pixels less solid than this become holes; pixels at or above it are built as blocks">
+            <span class="field-name">solid enough to build</span>
+            <input type="range" id="alpha-threshold" min="1" max="99" step="1" value="50" />
+            <input type="number" class="slider-num" id="alpha-threshold-num" min="1" max="99" step="1" value="50" title="type or arrow for fine changes" />
+            <span class="field-unit">%</span></label>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-head">build</div>
+          <div class="row">
+            <label class="field-inline"><span class="field-name">dither</span>
+              <select id="dither">
+              <option value="none">none</option>
+              <option value="floyd_steinberg" selected>Floyd-Steinberg</option>
+              <option value="min_avg_err">Jarvis</option>
+              <option value="burkes">Burkes</option>
+              <option value="sierra_lite">Sierra lite</option>
+              <option value="stucki">Stucki</option>
+              <option value="atkinson">Atkinson</option>
+              <option value="bayer2">ordered 2×2</option>
+              <option value="bayer4">ordered 4×4</option>
+              <option value="ordered3">ordered 3×3</option>
+              <option value="yliluoma_bayer2">ordered 2×2 mixed (Yliluoma)</option>
+              <option value="yliluoma_bayer4">ordered 4×4 mixed (Yliluoma)</option>
+              <option value="yliluoma_ordered3">ordered 3×3 mixed (Yliluoma)</option>
+            </select>
+            </label>
+            <label class="checkbox" title="Rearranges blocks to look right on a map framed a few blocks away. Slow, and slightly worse up close.">
+              <input type="checkbox" id="dbs-refine" />refine for display (slow)</label>
+          </div>
+          <div class="row">
+            <label class="field-inline"><span class="field-name">height</span>
+              <select id="height-mode">
+              <option value="stepped" selected>staircased</option>
+              <option value="flat">flat</option>
+            </select>
+            </label>
+            <label id="cliff-cap-label" title="biggest height jump allowed between neighboring rows; blank = no limit (lowest possible build), 1 = classic flat-ish terraces">
+              max step <input type="number" id="cliff-cap" value="" min="1" placeholder="any" /></label>
+          </div>
+          <div class="row">
+            <label class="field-inline" title="Cheap blocks placed under the map: some because the block above physically needs them, some because survival placement needs a face to click against."><span class="field-name">filler blocks</span>
+              <select id="support-mode">
+              <option value="none" title="nothing added: the map rests on whatever you built it on. Right for a flat map on a canvas, wrong under a staircase">none: canvas is already under it</option>
+              <option value="important" selected title="one filler under each block that needs it. Vanilla pops these off without it however you place them, so this is the minimum a working map needs">only where the block needs it</option>
+              <option value="all_optimized" title="also the neighbors that let you place a filler before the block resting on it, plus extra where the staircase steps. Without them a block falls before its support exists">what survival placement needs</option>
+              <option value="all_double_optimized" title="a full filler layer under the whole map (16,384 per map at minimum): lay all the filler first, then build color by color instead of carrying filler alongside every material">a full layer, filler first</option>
+            </select>
+            </label>
+          </div>
+        </div>
+        <p class="note" id="filler-notice" hidden></p>
+        <p class="note">Ordered dither lays a regular pattern and only changes the pixels
+          you affect when you toggle a color; diffusion spreads error across the whole
+          picture. Everything regenerates automatically as you change settings.</p>
+      </section>
+
+      <section id="preview-panel">
+        <h2>Preview
+          <span class="dim" id="preview-meta"></span>
+          <span class="preview-tools">
+            <button id="preview-toggle" class="mini preview-toggle"
+              title="collapse the preview panel">hide</button>
+            <span class="preview-zoom">
+            <button id="zoom-out" class="mini" title="zoom out">−</button>
+            <button id="zoom-fit" class="mini" title="fit the whole map in the panel">fit</button>
+            <button id="zoom-in" class="mini" title="zoom in; the preview grows over the page and keeps following your scroll">+</button>
+            <label class="mini-label" title="map panel boundaries, named the way the download names files"><input type="checkbox" id="grid-overlay" /> grid</label>
+            </span>
+            <button id="preview-place" class="mini"
+              title="sit the preview in the page under Source instead of the scrolling rail">into the page</button>
+            <button id="preview-popout" class="mini" hidden
+              title="open the preview in its own always-on-top window">pop out</button>
+          </span>
+        </h2>
+        <div id="preview-slot">
+          <div id="progress" class="progress idle" aria-hidden="true"><div id="progress-fill"></div></div>
+          <div id="preview-wrap" title="click to load an image, or drag and drop or paste anywhere">
+            <canvas id="preview" width="128" height="128"></canvas>
+            <div id="grid-lines"></div>
+            <div id="preview-empty">
+              <span class="preview-empty-mark">+</span>
+              <span>choose a picture</span>
+            </div>
+          </div>
+        </div>
+        <div id="preview-away" hidden>
+          <span class="away-text">The preview is in its own window.</span>
+          <button id="preview-return">bring it back</button>
+        </div>
+        <p class="note" id="preview-hint">drag and drop or paste a picture anywhere on the page</p>
+        <div class="panel-utility">
+          <a class="mini jump" href="#export-panel">go to download</a>
+          <span class="spacer"></span>
+          <button id="reset-default" class="mini danger"
+            title="back to the starting loadout, palette, filters and settings. Your saved presets are kept">reset all settings</button>
+        </div>
+      </section>
+
+      <section id="loadout-panel">
+        <h2>Loadout <span class="dim" id="loadout-meta"></span></h2>
+        <div class="row preset-bar">
+          <label title="a saved kit: your tools, the conditions you mine in, and the two filters that depend on what you carry">preset
+            <select id="loadout-preset"></select></label>
+          <button id="loadout-preset-save" class="mini"
+            title="save the current tools, conditions and tool-dependent filters under a name">save…</button>
+          <button id="loadout-preset-rename" class="mini">rename</button>
+          <button id="loadout-preset-delete" class="mini">delete</button>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-head">your tools</div>
+          <div id="loadout"></div>
+          <button id="tool-add" class="mini">+ tool</button>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-head">conditions</div>
+          <div class="row">
+            <label class="field-inline" title="beacon haste level; 0 = none. Each level is 20% faster"><span class="field-name">haste</span>
+              <input type="number" id="haste" value="0" min="0" max="10" /></label>
+            <span class="note" id="haste-note" hidden
+              title="a max-level beacon gives Haste 2. Higher levels exist with mods and servers, and are priced the same way">beacons stop at 2</span>
+          </div>
+          <div class="row">
+            <label class="checkbox"><input type="checkbox" id="flying" /> Mining While Flying?</label>
+          </div>
+          <p class="toggle-help">Every block takes <b>5× longer</b> to break whenever you are not
+            standing on solid ground.</p>
+          <div class="row">
+            <label class="checkbox" title="the game pauses 5 ticks after every non-instant break; a client mod some servers allow removes that pause"><input type="checkbox" id="no-cooldown" /> No Mining Cooldown mod</label>
+          </div>
+          <p class="toggle-help">Vanilla pauses a quarter second after each non-instant
+            break. Tick this if you run the mod that removes it, where allowed.</p>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-head">filters that depend on your tools
+            <span class="chip-filter some-off" id="loadout-empty" hidden
+              title="these colors have no block left that your tools and filters allow, so they place nothing"></span>
+          </div>
+          <div id="loadout-filters"></div>
+        </div>
+      </section>
+
+      <section id="io-panel">
+        <h2>Import / export</h2>
+
+        <div class="subsection">
+          <div class="sub-head">bring a palette in</div>
+          <div class="row">
+            <button id="import-open" class="mini">import a palette…</button>
+            <input type="file" id="import-file" accept=".txt,.json,text/plain,application/json" hidden />
+            <input type="text" id="import-paste" placeholder="or paste a mapartcraft preset or link" />
+            <button id="import-apply" class="mini">use it</button>
+          </div>
+          <p class="note" id="io-note">Takes a mapartcraft palette: the
+          <code>MapartcraftPalette.txt</code> they export, a link containing
+          <code>?preset=</code>, or the preset string itself. It also takes a settings
+          file exported here. Colors the palette leaves out are switched off,
+          the same as they are over there.</p>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-head">take yours out</div>
+          <div class="row">
+            <button id="share-link" class="mini"
+              title="a short link carrying just this palette: the colors you have on and the block you picked for each">copy a link to this palette</button>
+            <button id="export-settings" class="mini"
+              title="everything on this page as a file you can keep or send to someone">export my settings</button>
+          </div>
+          <div class="row" id="share-row" hidden>
+            <input type="text" id="share-out" readonly />
+          </div>
+          <ul class="note bullets">
+            <li>A link carries the palette only: which colors are on and the block picked for each.</li>
+            <li>A settings file carries everything on this page, including your loadout and picture settings.</li>
+          </ul>
+        </div>
+
+        <p class="note" id="io-result" hidden></p>
+      </section>
+
+      <section id="solver-panel">
+        <h2>Palette <span class="dim" id="palette-meta"></span></h2>
+        <p class="note">A map picture can only use these 61 colors. Every block
+          offered for a color renders the <b>exact same pixel</b>, so your pick
+          changes what you mine and haul. The picture looks identical either way.
+          Arachne preselects the cheapest one to break and get back with your
+          tools (highlighted green). Click another block to override, or
+          <b>×</b> to drop the color from the palette entirely. In table view,
+          click a row to see the alternatives.</p>
+
+        <div class="subsection">
+          <div class="sub-head">game version</div>
+          <div class="row">
+            <label class="field-inline"><span class="field-name">version</span>
+              <select id="game-version"></select></label>
+            <span class="note" id="version-note"></span>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-head">saved palettes</div>
+          <div class="row preset-bar">
+          <label title="a saved palette: which colors you use and which block you use for each">preset
+            <select id="palette-preset"></select></label>
+          <button id="palette-preset-save" class="mini"
+            title="save the enabled colors and your per-color block picks under a name">save…</button>
+          <button id="palette-preset-rename" class="mini">rename</button>
+          <button id="palette-preset-delete" class="mini">delete</button>
+        </div>
+        </div>
+
+        <div class="subsection" id="filters-section">
+          <details>
+            <summary>
+              <span class="filter-title">which blocks may be used</span>
+              <span class="chip-filter" id="filter-state"></span>
+            </summary>
+            <ul class="note bullets">
+              <li>Turn one off to keep it out of the palette entirely.</li>
+              <li>Each name is the same word the palette puts on a block.</li>
+              <li>These describe the block itself, so they save with your palette preset.
+                The two that depend on the tools you carry live in Loadout.</li>
+            </ul>
+            <div id="toggles"></div>
+          </details>
+        </div>
+
+        <div id="palette-notice"></div>
+
+        <div class="subsection">
+          <div class="sub-head">
+            <span id="color-meta"></span>
+            <span class="spacer"></span>
+            <button id="colors-all" class="mini">enable all</button>
+            <button id="colors-none" class="mini">disable all</button>
+          </div>
+          <div class="row opt-row">
+            <label><span class="field-name">view</span>
+              <select id="palette-view">
+              <option value="tiles" selected>pictures</option>
+              <option value="list">table</option>
+            </select></label>
+            <label><span class="field-name">sort</span>
+              <select id="palette-sort">
+              <option value="map" selected>classic</option>
+              <option value="name">color name</option>
+              <option value="spectrum">spectrum (hue)</option>
+              <option value="cost">teardown cost</option>
+              <option value="count">blocks used</option>
+              <option value="impact">error if dropped</option>
+            </select></label>
+            <label title="how big the block pictures are in the palette">
+              <span class="field-name">block size</span>
+              <select id="tile-size">
+              <option value="24">small</option>
+              <option value="32" selected>medium</option>
+              <option value="48">large</option>
+            </select></label>
+          </div>
+          <div id="palette"></div>
+        </div>
+      </section>
+
+      <section id="summary-panel">
+        <h2>Summary
+          <label class="mini-label" id="materials-basis-label" hidden>materials for
+            <select id="materials-basis"></select>
+          </label>
+        </h2>
+        <div id="summary"></div>
+      </section>
+
+      <section id="export-panel">
+        <h2>Download</h2>
+        <div class="row">
+          <label title="used for two things: the filler under blocks that need support, and the reference row along the north edge that keeps the top row of the map from rendering a shade light">filler
+            and north edge block <input type="text" id="support-block" value="netherrack" /></label>
+          <label title="each 128x128 map gets its own file, named for where it sits in the grid and which map id it carries. name_x0_z0_map_7.nbt is the north-west panel"><input
+            type="checkbox" id="split-export" checked /> one file per map (zip)</label>
+          <label title="Off: every panel carries its own filler noobline, and litematica flags the overlap with a finished panel in red.&#10;On: southern panels use the panel above's real last row instead, so nothing overlaps"><input
+            type="checkbox" id="borrow-edge" /> panels reuse the row above</label>
+          <label title="used for the schematic and zip filenames; map data files keep vanilla's map_&lt;id&gt;.dat, which the game requires">name
+            <input type="text" id="export-name" value="arachne" /></label>
+          <label title="numbers the panels, and the map data files if you export them; raise it if your world already has maps">first map id
+            <input type="number" id="first-map-id" value="0" min="0" step="1" /></label>
+        </div>
+        <div class="row">
+          <label class="checkbox" title="a plain text file listing every block and how many you need, with a link that reopens this exact palette in Arachne. Keep it with the schematic and the build can be remade or continued later"><input
+            type="checkbox" id="sheet-on" checked /> build sheet (materials, and a link back to this palette)</label>
+        </div>
+        <div class="row">
+          <label class="checkbox" title="a map data file puts the finished picture straight onto a map item with no blocks placed. It only works if you can write to the world save, so singleplayer or a server you run"><input
+            type="checkbox" id="mapdat-on" /> map data file (no build, needs world save access)</label>
+        </div>
+        <p class="note" id="mapdat-note" hidden>Drop the file into your world's
+          <code>data</code> folder, then give yourself the matching map:
+          <code>/give @p filled_map[map_id=<span id="mapdat-example">0</span>]</code>
+          on 1.20.5 and later, or <code>filled_map{map:<span id="mapdat-example-old">0</span>}</code>
+          before that. Nothing is built, so none of the block or teardown settings apply to it.</p>
+        <div class="row">
+          <button id="export-download" disabled title="one file, named what you named it: a vanilla structure .nbt that litematica and worldedit both read, zipped together with the rest when there is more than one">download</button>
+          <button id="view-build" disabled title="look at the schematic these settings produce, block by block, without downloading it">view the build</button>
+        </div>
+        <p class="note">Every schematic includes a reference row along its
+          north edge. Without it the map's top row renders a shade light, a
+          visible line across the top of each panel. Each split panel gets its
+          own; tick "panels reuse the row above" if you would rather they not
+          overlap a panel you have already built.</p>
+      </section>
+    </main>
+
+    <footer>
+      <p>GPL-3.0 · your image never leaves this browser · your palette and presets are
+        saved in this browser only</p>
+      <p class="build">build <code id="build-id" title="click to copy, then quote it when reporting anything">…</code>
+        · <a id="build-source" href="">download this build's source</a></p>
+      <p class="build">questions and bug reports:
+        <a href="mailto:arachne@b8b7.live">arachne@b8b7.live</a></p>
+      <p class="legal">Minecraft block textures and block data are the property of
+        Mojang. This project is independent and has no connection to Mojang or
+        Microsoft.</p>
+    </footer>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
