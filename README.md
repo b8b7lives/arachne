@@ -63,12 +63,13 @@ The Rust suites (`cargo test --workspace`) carry the logic tests and
 golden fixtures. The e2e run drives a real browser against the dev
 server and needs system chromium.
 
-## About this repository
+## Where this source lives
 
-This repository mirrors published builds of the running site, one
-commit per release, tagged with the build id the site's footer shows.
-It is the corresponding source for the build you are running, offered
-under the license below.
+This source ships two ways. The running site's footer offers an
+archive of the exact build you are using, and the GitHub mirror
+carries one commit per published build, tagged with the build id the
+footer shows. Either one is the corresponding source for the build,
+offered under the license below.
 
 ## License and lineage
 

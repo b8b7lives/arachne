@@ -2089,16 +2089,20 @@ function applyPreviewScale() {
   const zooming = !pipWindow && !inline && previewZoom > 1;
   if (!pipWindow && !inline && !zooming) {
     panel.classList.remove("zoomed");
-    panel.style.setProperty("--zoom-extra", "0px");
+    panel.style.setProperty("--zoom-left", "0px");
+    panel.style.setProperty("--zoom-right", "0px");
     railWidth = $("preview-slot").clientWidth || railWidth;
   }
   let avail: number;
+  let rightRoom = 0;
   if (pipWindow) {
     avail = Math.max(64, pipWindow.document.body.clientWidth - 16);
   } else if (inline) {
     avail = $("preview-slot").clientWidth || railWidth;
   } else if (zooming) {
-    const room = (panel.parentElement?.clientWidth ?? railWidth) - 48;
+    const mainEl = panel.parentElement as HTMLElement;
+    rightRoom = Math.max(0, Math.round(window.innerWidth - mainEl.getBoundingClientRect().right - 16));
+    const room = mainEl.clientWidth - 48 + rightRoom;
     const aspect = elCanvas.width / Math.max(1, elCanvas.height);
     const byHeight = Math.round((window.innerHeight - 160) * aspect);
     avail = Math.max(railWidth, Math.min(room, byHeight));
@@ -2107,8 +2111,10 @@ function applyPreviewScale() {
   }
   const target = pipWindow ? avail : Math.min(railWidth * previewZoom, avail);
   const extra = zooming ? Math.max(0, Math.ceil(target) - railWidth) : 0;
+  const right = Math.min(rightRoom, extra);
   panel.classList.toggle("zoomed", extra > 0);
-  panel.style.setProperty("--zoom-extra", `${extra}px`);
+  panel.style.setProperty("--zoom-left", `${extra - right}px`);
+  panel.style.setProperty("--zoom-right", `${right}px`);
   const scale = target / elCanvas.width;
   const w = Math.max(1, Math.round(elCanvas.width * scale));
   const h = Math.max(1, Math.round(elCanvas.height * scale));
