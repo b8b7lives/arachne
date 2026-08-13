@@ -7,7 +7,7 @@
   "scripts": {
     "wasm": "wasm-pack build ../wasm --target web --out-dir ../web/src/wasm-pkg --no-pack",
     "data": "mkdir -p public && cp ../data/blocks-26.2.json ../data/mapartcraft-presets-26.2.json public/",
-    "predev": "npm run data",
+    "predev": "npm run data && (node -e \"process.exit(require('fs').existsSync('src/wasm-pkg')?0:1)\" || npm run wasm)",
     "dev": "vite",
     "prebuild": "npm run wasm && npm run data",
     "build": "tsc --noEmit && vite build",
@@ -20,5 +20,8 @@
     "typescript": "~5.6.0",
     "vite": "^6.0.0",
     "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

@@ -2,6 +2,7 @@
 name = "arachne-wasm"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.85"
 license = "GPL-3.0-only"
 description = "Arachne WASM boundary (thin wrapper over arachne-core)"
 

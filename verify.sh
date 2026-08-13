@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Full gate, one verdict. Detail prints only on failure.
-# e2e needs the dev server up (DEPLOY.md, Dev environment).
+# e2e needs the dev server up (npm run dev in web/, see README Testing).
 set -u
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 LOG="$(mktemp)"

@@ -1012,7 +1012,7 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   check("filled, it places a block", bg.filledPixel[3] === 255,
     JSON.stringify(bg.filledPixel));
   check("flat fill snaps to a color a map can make",
-    /closest color a map can actually make/.test(bg.note || ""), bg.note);
+    /closest color a map can make/.test(bg.note || ""), bg.note);
   check("honoring transparency again stands the fill down",
     bg.modeAfterHonor === "off", bg.modeAfterHonor);
   check("and the see-through part is a hole again", bg.holeAgain[3] === 0,

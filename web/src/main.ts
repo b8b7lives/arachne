@@ -2360,7 +2360,7 @@ function syncBackgroundControls() {
   $("bg-note").textContent = mode === "off"
     ? `${why}, so they place no blocks`
     : mode === "smooth"
-      ? "filled with the closest color a map can actually make, so it stays one flat block"
+      ? "filled with the closest color a map can make, so it stays one flat block"
       : "filled with your color, dithered like the rest of the picture";
 }
 

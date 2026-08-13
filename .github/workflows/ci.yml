@@ -1,0 +1,33 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: install wasm-pack
+        run: curl -sSf https://rustwasm.github.io/wasm-pack/installer/init.sh | sh
+      - name: cargo test
+        run: cargo test --workspace
+      - name: npm ci
+        working-directory: web
+        run: npm ci
+      - name: build wasm pkg
+        working-directory: web
+        run: npm run wasm
+      - name: copy data
+        working-directory: web
+        run: npm run data
+      - name: typecheck
+        working-directory: web
+        run: npx tsc --noEmit

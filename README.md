@@ -4,6 +4,8 @@ Minecraft map art generator: image in, palette-optimized schematic out.
 It runs entirely in your browser, and it is live at
 **<https://b8b7.live/arachne/>**.
 
+![Arachne quantizing an image into a map art palette](media/screenshot.png)
+
 Arachne is in **beta**. The math is tested and the output is verified
 in game. The remaining rough edges are mostly cosmetic; phone layouts
 are a known one.
@@ -13,18 +15,18 @@ are a known one.
 - Turns a picture into a map art schematic for survival or creative
   building, staircased or flat, from a single map up to a 16x16 grid.
 - Prices every block choice by what it costs to build and tear down
-  with the tools you actually carry: tier, Efficiency, Silk Touch,
-  haste, flying, and whether the block drops itself when broken. The
-  cost formulas are checked against the game's own code.
+  with the tools you carry: tier, Efficiency, Silk Touch, haste,
+  flying, and whether the block drops itself when broken.
 - Dithers with error diffusion (Floyd-Steinberg, Jarvis, Burkes,
   Stucki, Atkinson, Sierra Lite), ordered patterns, and color mixing
   based on [Joel Yliluoma's arbitrary-palette positional
   dithering](https://bisqwit.iki.fi/story/howto/dither/jy/). An
   optional refinement pass optimizes for viewing distance using the
-  S-CIELAB perceptual metric of Zhang and Wandell.
+  S-CIELAB perceptual metric of Zhang and Wandell (1996; [journal
+  version](https://doi.org/10.1889/1.1985127)).
 - Handles transparency the way the game does: holes place no blocks,
   and pixels along a transparency edge are quantized against the
-  shades the game can actually render there.
+  shades the game can render there.
 - Targets any release from 1.13 to the current one. The palette, the
   blocks on offer, and the DataVersion your files carry all follow the
   release you pick.
@@ -35,6 +37,19 @@ are a known one.
   has no backend and collects nothing, and presets save inside your
   own browser.
 
+## How the numbers are grounded
+
+The harvest cost formulas implement the game's own block-breaking
+mechanics (tool tier and material multipliers, Efficiency and haste
+scaling, the per-break tick delay), read from the unobfuscated 26.x
+client. The [Minecraft Wiki's breaking
+article](https://minecraft.wiki/w/Breaking#Speed) documents the same
+formulas if you want to check them independently. Per-release palette
+and block availability are extracted from Mojang's published files by
+[`data-pipeline/`](data-pipeline/README.md), and the per-release map
+color counts are cross-verified against three independent sources in
+[`data-pipeline/research/map-color-versions.md`](data-pipeline/research/map-color-versions.md).
+
 ## Layout
 
     web/            the app: TypeScript shell, canvas preview, worker
@@ -44,24 +59,32 @@ are a known one.
     data-pipeline/  build-time extraction from the game's own files
     golden/         pinned fixtures the test suites verify against
 
+`data/` and the two atlas files under `web/public/` are pipeline
+output, committed so the app builds without the pipeline or its
+inputs. `media/` holds README assets.
+
 ## Building it
 
-You need Node 20 or newer, a Rust toolchain, and wasm-pack.
+You need Node 20 or newer, Rust 1.85 or newer, and
+[wasm-pack](https://rustwasm.github.io/wasm-pack/).
 
     cd web
     npm ci
     npm run build        # builds the wasm, copies data, bundles
 
-For development, `npm run dev` starts a dev server. Rust changes need
-`npm run wasm` to regenerate the pkg.
+For development, `npm run dev` starts a dev server (it builds the wasm
+package on first run). After Rust changes, `npm run wasm` regenerates
+it.
 
 ## Testing
 
     ./verify.sh          # the whole gate: cargo, tsc, e2e
 
 The Rust suites (`cargo test --workspace`) carry the logic tests and
-golden fixtures. The e2e run drives a real browser against the dev
-server and needs system chromium.
+golden fixtures. The e2e leg drives a real browser against the dev
+server, so it needs system chromium and `npm run dev` already running
+in another terminal; without it, cargo and tsc still verify everything
+except browser behavior.
 
 ## Where this source lives
 
@@ -71,11 +94,22 @@ carries one commit per published build, tagged with the build id the
 footer shows. Either one is the corresponding source for the build,
 offered under the license below.
 
+## Bugs and contributions
+
+Bug reports are welcome on the [GitHub issue
+tracker](https://github.com/b8b7lives/arachne/issues) or by mail to
+<arachne@b8b7.live>. Development happens outside this mirror, so a
+pull request has no branch to merge into; if you send one anyway, or
+attach a patch to an issue, it will be read, and carried into the next
+build with credit if it fits.
+
 ## License and lineage
 
 GPL-3.0. Arachne began as a study of
 [rebane2001/mapartcraft](https://github.com/rebane2001/mapartcraft)
-(GPL-3.0) and inherits its license with gratitude; the two tools have
-since diverged in most of what they do. Block textures and game data
-are extracted at build time from Minecraft's own files and remain the
-property of Mojang.
+(GPL-3.0) and inherits its license with gratitude. The two tools have
+since diverged in most of what they do, but the kinship is still live:
+Arachne imports mapartcraft preset links, and the table that decodes
+them is built by reading mapartcraft's own color data. Block textures
+and game data are extracted at build time from Minecraft's own files
+and remain the property of Mojang.
