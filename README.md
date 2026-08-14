@@ -27,6 +27,9 @@ are a known one.
 - Handles transparency the way the game does: holes place no blocks,
   and pixels along a transparency edge are quantized against the
   shades the game can render there.
+- Counts the filler and noobline blocks a build needs alongside the
+  art blocks, in the summary and on the build sheet, and lets you pick
+  the filler block from a searchable, version-aware list.
 - Targets any release from 1.13 to the current one. The palette, the
   blocks on offer, and the DataVersion your files carry all follow the
   release you pick.
@@ -94,7 +97,11 @@ carries one commit per published build, tagged with the build id the
 footer shows. Either one is the corresponding source for the build,
 offered under the license below.
 
-## Bugs and contributions
+## Community, bugs and contributions
+
+The community Discord lives at
+[b8b7.live/discord](https://b8b7.live/discord): help with a build
+plan, finished map art, and release notes for every published build.
 
 Bug reports are welcome on the [GitHub issue
 tracker](https://github.com/b8b7lives/arachne/issues) or by mail to

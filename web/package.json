@@ -9,12 +9,13 @@
     "data": "mkdir -p public && cp ../data/blocks-26.2.json ../data/mapartcraft-presets-26.2.json public/",
     "predev": "npm run data && (node -e \"process.exit(require('fs').existsSync('src/wasm-pkg')?0:1)\" || npm run wasm)",
     "dev": "vite",
-    "prebuild": "npm run wasm && npm run data",
+    "prebuild": "npm run wasm && npm run data && npm run feed",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "shot": "node tools/shot.js",
     "e2e": "node tools/e2e.js",
-    "dither-compare": "node tools/dither-compare.js"
+    "dither-compare": "node tools/dither-compare.js",
+    "feed": "node tools/feed.js"
   },
   "devDependencies": {
     "typescript": "~5.6.0",

@@ -9,3 +9,4 @@ web/public/mapartcraft-presets-26.2.json
 web/.shots/
 data-pipeline/.version-cache.json
 data-pipeline/.dataversion-cache.json
+web/public/feed.xml
