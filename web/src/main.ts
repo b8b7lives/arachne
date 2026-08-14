@@ -1551,8 +1551,8 @@ function renderFillerNotice() {
   const subject = blocks
     ? `${countText(blocks)} blocks`
     : `${needy.length} of your colors`;
+  if (el.hidden) ($("filler-section") as HTMLDetailsElement).open = true;
   el.hidden = false;
-  ($("filler-section") as HTMLDetailsElement).open = true;
   el.className = stepped ? "note warn-orange" : "note";
   el.replaceChildren(stepped
     ? `${subject} need something underneath and a staircase leaves air there, so they pop off. `
@@ -1887,12 +1887,16 @@ function refreshSupportTotals() {
   if (sig === supportTotalsSig || supportTotalsBusy) return;
   supportTotalsBusy = true;
   rpc<SupportTotals>({ cmd: "support_totals", opts })
-    .then((t) => { supportTotals = t; })
-    .catch(() => { supportTotals = null; })
-    .finally(() => {
+    .then((t) => {
+      supportTotals = t;
       supportTotalsSig = sig;
       supportTotalsBusy = false;
       renderSummary();
+    })
+    .catch(() => {
+      supportTotals = null;
+      supportTotalsSig = null;
+      supportTotalsBusy = false;
     });
 }
 
@@ -1962,6 +1966,7 @@ function renderFillerDrop() {
   }
   rest.sort((a, z) => a.b.display_name.localeCompare(z.b.display_name));
   drop.innerHTML = "";
+  let optIdx = 0;
   const group = (label: string, list: { b: CandidateBlock; index: number }[]) => {
     if (!list.length) return;
     const g = document.createElement("div");
@@ -1972,6 +1977,9 @@ function renderFillerDrop() {
       const row = document.createElement("div");
       row.className = "picker-row";
       row.dataset.id = e.b.block_id;
+      row.setAttribute("role", "option");
+      row.id = `filler-opt-${optIdx}`;
+      optIdx += 1;
       row.append(tileEl(e.index), document.createTextNode(e.b.display_name));
       row.onmousedown = (ev) => { ev.preventDefault(); commitFiller(e.b.block_id); };
       drop.append(row);
@@ -1986,11 +1994,17 @@ function renderFillerDrop() {
     drop.append(none);
   }
   fillerHot = -1;
+  const input = $("filler-search") as HTMLInputElement;
+  input.setAttribute("aria-expanded", "true");
+  input.removeAttribute("aria-activedescendant");
   drop.hidden = false;
 }
 
 function closeFillerDrop() {
   ($("filler-drop") as HTMLElement).hidden = true;
+  const input = $("filler-search") as HTMLInputElement;
+  input.setAttribute("aria-expanded", "false");
+  input.removeAttribute("aria-activedescendant");
   fillerHot = -1;
 }
 
@@ -2014,6 +2028,70 @@ function syncFillerUi() {
     ? ` (needs ${e.b.since})` : "";
   $("filler-meta").textContent =
     `${FILLER_MODE_SHORT[mode] ?? mode} · ${e ? e.b.display_name : id}${late}`;
+}
+
+interface ChangelogBuild { id: string; date: string; line: string; notes: string[] }
+
+async function initWhatsNew() {
+  try {
+    const res = await fetch(`${import.meta.env.BASE_URL}changelog.json`);
+    if (!res.ok) return;
+    const log = (await res.json()) as { builds: ChangelogBuild[] };
+    if (!log.builds?.length) return;
+    const latest = log.builds[0];
+    const notice = $("whatsnew-notice");
+    const panel = $("whatsnew-panel");
+    const renderPanel = () => {
+      panel.replaceChildren(...log.builds.slice(0, 3).map((b) => {
+        const d = document.createElement("div");
+        const h = document.createElement("p");
+        h.className = "whatsnew-head";
+        h.textContent = `${b.date}: ${b.line}`;
+        const ul = document.createElement("ul");
+        for (const n of Array.isArray(b.notes) ? b.notes : []) {
+          const li = document.createElement("li");
+          li.textContent = n;
+          ul.append(li);
+        }
+        d.append(h, ul);
+        return d;
+      }));
+      const tip = document.createElement("p");
+      tip.className = "whatsnew-tip";
+      tip.textContent = "Arachne acting strangely after an update? A hard refresh"
+        + " clears the old version: Ctrl+Shift+R, or Cmd+Shift+R on a Mac.";
+      panel.append(tip);
+    };
+    const link = $("whatsnew-link") as HTMLButtonElement;
+    link.onclick = () => {
+      if (panel.hidden) renderPanel();
+      panel.hidden = !panel.hidden;
+      link.setAttribute("aria-expanded", String(!panel.hidden));
+    };
+    let seen: string | null = null;
+    try { seen = localStorage.getItem("arachne.whatsnew.seen"); } catch { seen = latest.id; }
+    if (seen === latest.id) return;
+    notice.replaceChildren(`new in this build: ${latest.line} `);
+    const details = document.createElement("button");
+    details.className = "mini";
+    details.textContent = "details";
+    details.onclick = () => {
+      renderPanel();
+      panel.hidden = false;
+      link.setAttribute("aria-expanded", "true");
+    };
+    const dismiss = document.createElement("button");
+    dismiss.className = "mini";
+    dismiss.textContent = "hide";
+    dismiss.onclick = () => {
+      try { localStorage.setItem("arachne.whatsnew.seen", latest.id); } catch { void 0; }
+      notice.hidden = true;
+      panel.hidden = true;
+      link.setAttribute("aria-expanded", "false");
+    };
+    notice.append(details, " ", dismiss);
+    notice.hidden = false;
+  } catch { void 0; }
 }
 
 function syncMaterialsScope() {
@@ -2216,6 +2294,10 @@ function nerdDrawer(toolTicks: Map<number, number>, placed: number): string {
     </details>`;
 }
 
+function nColors(n: number): string {
+  return `${n} color${n === 1 ? "" : "s"}`;
+}
+
 function renderAuditSummary(a: AuditDto) {
   const s = a.summary;
   const tc = Object.entries(s.tool_class)
@@ -2228,10 +2310,10 @@ function renderAuditSummary(a: AuditDto) {
     <dl>
       <dt>tools it would need</dt><dd>${tc || "none"}</dd>
       <dt>breaks instantly</dt><dd>${s.instamine_colors} of 61 colors</dd>
-      <dt>needs silk touch</dt><dd>${s.silk_gated_colors} colors${
+      <dt>needs silk touch</dt><dd>${nColors(s.silk_gated_colors)}${
         s.silk_penalty_ticks ? `, ${fmtDuration(s.silk_penalty_ticks)} slower per full set` : ""}</dd>
-      <dt>changes over time</dt><dd>${s.unstable_colors} colors (grass, ice, unwaxed copper…)</dd>
-      <dt>can't be recovered</dt><dd>${s.no_recovery_colors} colors</dd>
+      <dt>changes over time</dt><dd>${nColors(s.unstable_colors)} (grass, ice, unwaxed copper…)</dd>
+      <dt>can't be recovered</dt><dd>${nColors(s.no_recovery_colors)}</dd>
     </dl>`;
 }
 
@@ -2714,6 +2796,18 @@ function download(name: string, bytes: ArrayBuffer) {
 
 function exportOpts(quiet = false): ExportOpts | null {
   if (!genResult) return null;
+  const fillerBlockId = fillerId();
+  const fe = fillerEntry(fillerBlockId);
+  if (!fe) {
+    if (!quiet) status(`filler block "${fillerBlockId}" is not a block this tool knows; pick one from the filler section`);
+    return null;
+  }
+  if (!fillerLegal(fe.b)) {
+    if (!quiet) status(versionIndex(fe.b.since) > versionIndex(gameVersion())
+      ? `your filler block ${fe.b.display_name} needs ${fe.b.since}; pick another or raise the game version`
+      : `${fe.b.display_name} cannot serve as filler; pick another in the filler section`);
+    return null;
+  }
   const selection: Record<string, number> = {};
   const blocked = unbuildableColors();
   if (blocked.length) {
@@ -2809,7 +2903,10 @@ async function buildSheet(name: string): Promise<string> {
     const opts = exportOpts(true);
     if (opts) {
       try {
-        const t = await rpc<SupportTotals>({ cmd: "support_totals", opts });
+        const sig = `${generateSeq}:${JSON.stringify(opts)}`;
+        const t = sig === supportTotalsSig && supportTotals
+          ? supportTotals
+          : await rpc<SupportTotals>({ cmd: "support_totals", opts });
         if (t.whole) rows.push([fillerLabel(opts.support_block_id), t.whole]);
       } catch {
         void 0;
@@ -2979,6 +3076,7 @@ async function boot() {
   const restored = saved ? " · your saved palette restored" : "";
   const nostore = persistenceAvailable ? "" : " · settings can't be saved in this browser";
   status(`ready: Minecraft 26.2, ${blocks.length} blocks` + restored + nostore);
+  void initWhatsNew();
   await refreshSolver();
 
   await consumeShareHash();
@@ -3124,7 +3222,11 @@ async function boot() {
       fillerHot = ev.key === "ArrowDown"
         ? (fillerHot + 1) % rows.length
         : (fillerHot - 1 + rows.length) % rows.length;
-      rows.forEach((r, i) => r.classList.toggle("hot", i === fillerHot));
+      rows.forEach((r, i) => {
+        r.classList.toggle("hot", i === fillerHot);
+        r.setAttribute("aria-selected", String(i === fillerHot));
+      });
+      fillerSearch.setAttribute("aria-activedescendant", rows[fillerHot].id);
       rows[fillerHot].scrollIntoView({ block: "nearest" });
     } else if (ev.key === "Enter") {
       ev.preventDefault();
@@ -3213,6 +3315,12 @@ async function boot() {
     dismissedStale = "";
     renderLoadout();
     syncMapdatControls();
+    syncFillerUi();
+    syncCropControls();
+    if (source) {
+      suggestRatio();
+      updatePreviewMeta();
+    }
     applyPreviewScale();
     void refreshSolver();
     scheduleGenerate();

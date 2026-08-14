@@ -4,24 +4,32 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Arachne</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
     <header>
-      <h1>Arachne</h1>
+      <h1>Arachne <span class="beta-chip">beta</span></h1>
       <p class="tag">Minecraft map art generator</p>
       <span id="status" class="status">loading…</span>
     </header>
-    <p class="about-strip"><span class="beta-chip">beta</span>
-      Free map art tool for survival builders, made and run by me, b8b7!
-      If you enjoyed the project,
-      <a href="https://ko-fi.com/b8b7live" target="_blank" rel="noopener noreferrer">a coffee on Ko-fi</a>
-      keeps it going.
-      <span class="about-links">
-        <a href="https://modrinth.com/user/b8b7" target="_blank" rel="noopener noreferrer">Modrinth</a>
-        · source on <a href="https://github.com/b8b7lives/arachne" target="_blank" rel="noopener noreferrer">GitHub</a>; the footer offers this exact build
-      </span>
-    </p>
+    <section id="about-panel">
+      <h2>About</h2>
+      <p class="note">Free map art tool for survival builders, made and run by me, b8b7!
+        Give it a picture and it plans the whole build: palette, schematics, and
+        materials. Below: the source, my other Minecraft work, and a tip jar if
+        you enjoyed the project.</p>
+      <div class="row brand-row">
+        <a class="brand-chip" href="https://github.com/b8b7lives/arachne" target="_blank" rel="noopener noreferrer" title="the footer offers the source of this exact build"><img class="brand-ico" src="/icons/github.svg" alt="" />source on GitHub</a>
+        <a class="brand-chip" href="https://modrinth.com/user/b8b7" target="_blank" rel="noopener noreferrer"><img class="brand-ico" src="/icons/modrinth.svg" alt="" />Modrinth</a>
+        <a class="brand-chip" href="https://ko-fi.com/b8b7live" target="_blank" rel="noopener noreferrer"><img class="brand-ico" src="/icons/kofi.svg" alt="" />Ko-fi</a>
+        <button type="button" class="brand-chip" id="whatsnew-link" aria-expanded="false" aria-controls="whatsnew-panel">what's new</button>
+      </div>
+      <p class="note whatsnew-notice" id="whatsnew-notice" hidden></p>
+      <div class="whatsnew-panel" id="whatsnew-panel" hidden></div>
+    </section>
 
     <main>
       <section id="source-panel">
@@ -163,7 +171,7 @@
               max step <input type="number" id="cliff-cap" value="" min="1" placeholder="any" /></label>
           </div>
         </div>
-        <details id="filler-section">
+        <details id="filler-section" open>
           <summary>filler <span class="dim" id="filler-meta"></span></summary>
           <div class="row">
             <label class="field-inline" title="Cheap blocks placed under the map: some because the block above physically needs them, some because survival placement needs a face to click against."><span class="field-name">where</span>
@@ -174,25 +182,34 @@
               <option value="all_double_optimized" title="a full filler layer under the whole map (16,384 per map at minimum): lay all the filler first, then build color by color instead of carrying filler alongside every material">a full layer, filler first</option>
             </select>
             </label>
-            <label class="field-inline" title="The block used for filler and for the noobline. It never shows on the picture, so pick whatever is cheapest for you to farm."><span class="field-name">block</span>
+          </div>
+          <div class="row">
+            <div class="field-inline" title="The block used for filler. It never shows on the picture, so pick whatever is cheapest for you to farm.">
+              <label class="field-name" for="filler-search">block</label>
               <span class="picker" id="filler-picker">
                 <span class="tile" id="filler-tile"></span>
-                <input type="text" id="filler-search" autocomplete="off" spellcheck="false" />
-                <div class="picker-drop" id="filler-drop" hidden></div>
+                <input type="text" id="filler-search" role="combobox" aria-expanded="false" aria-controls="filler-drop" aria-autocomplete="list" autocomplete="off" spellcheck="false" />
+                <div class="picker-drop" id="filler-drop" role="listbox" hidden></div>
               </span>
-            </label>
+            </div>
             <input type="hidden" id="support-block" value="netherrack" />
           </div>
           <p class="note" id="filler-notice" hidden></p>
-          <p class="note">Filler is the cheap block placed where the build needs
-            something the picture never shows: under blocks that pop off without
-            support, and along the noobline, the reference row on the north edge
-            that keeps the top row of the map from rendering a shade light.
-            Filler has its own row in the Summary.</p>
+          <p class="note">Filler is the block placed where the build needs
+            something that never shows in your image:</p>
+          <ul class="note">
+            <li>under blocks that pop off without support</li>
+            <li>along the noobline (the reference row on the north edge that
+              keeps the top row of your map from rendering a shade too bright)</li>
+          </ul>
+          <p class="note">Filler has its own row in the Summary.</p>
         </details>
-        <p class="note">Ordered dither lays a regular pattern and only changes the pixels
-          you affect when you toggle a color; diffusion spreads error across the whole
-          picture. Everything regenerates automatically as you change settings.</p>
+        <ul class="note">
+          <li>Ordered dither lays a regular pattern and only changes the pixels
+            you affect when you toggle a color.</li>
+          <li>Diffusion spreads error across the whole picture.</li>
+        </ul>
+        <p class="note">Everything regenerates automatically as you change settings.</p>
       </section>
 
       <section id="preview-panel">
@@ -416,14 +433,16 @@
       <section id="export-panel">
         <h2>Download</h2>
         <div class="row">
-          <label title="each 128x128 map gets its own file, named for where it sits in the grid and which map id it carries. name_x0_z0_map_7.nbt is the north-west panel"><input
-            type="checkbox" id="split-export" checked /> one file per map (zip)</label>
-          <label title="Off: every panel carries its own filler noobline, and litematica flags the overlap with a finished panel in red.&#10;On: southern panels use the panel above's real last row instead, so nothing overlaps"><input
-            type="checkbox" id="borrow-edge" /> panels reuse the row above</label>
           <label title="used for the schematic and zip filenames; map data files keep vanilla's map_&lt;id&gt;.dat, which the game requires">name
             <input type="text" id="export-name" value="arachne" /></label>
           <label title="numbers the panels, and the map data files if you export them; raise it if your world already has maps">first map id
             <input type="number" id="first-map-id" value="0" min="0" step="1" /></label>
+        </div>
+        <div class="row">
+          <label title="each 128×128 map gets its own file, named for where it sits in the grid and which map id it carries. name_x0_z0_map_7.nbt is the north-west panel"><input
+            type="checkbox" id="split-export" checked /> one file per map (zip)</label>
+          <label title="Off: every panel carries its own filler noobline, and litematica flags the overlap with a finished panel in red.&#10;On: southern panels use the panel above's real last row instead, so nothing overlaps"><input
+            type="checkbox" id="borrow-edge" /> panels reuse the row above</label>
         </div>
         <div class="row">
           <label class="checkbox" title="a plain text file listing every block and how many you need, with a link that reopens this exact palette in Arachne. Keep it with the schematic and the build can be remade or continued later"><input
@@ -434,16 +453,16 @@
             type="checkbox" id="mapdat-on" /> map data file (no build, needs world save access)</label>
         </div>
         <p class="note" id="mapdat-note" hidden>Drop the file into your world's
-          <code>data</code> folder, then give yourself the matching map:
+          <code>data</code> folder, then
           <code>/give @p filled_map[map_id=<span id="mapdat-example">0</span>]</code>
-          on 1.20.5 and later, or <code>filled_map{map:<span id="mapdat-example-old">0</span>}</code>
-          before that. Nothing is built, so none of the block or teardown settings apply to it.</p>
+          (1.20.5 and later) or <code>filled_map{map:<span id="mapdat-example-old">0</span>}</code>
+          before that. No blocks are placed, so block and teardown settings don't apply.</p>
         <div class="row">
           <button id="export-download" disabled title="one file, named what you named it: a vanilla structure .nbt that litematica and worldedit both read, zipped together with the rest when there is more than one">download</button>
           <button id="view-build" disabled title="look at the schematic these settings produce, block by block, without downloading it">view the build</button>
         </div>
         <p class="note">Every schematic includes a reference row along its
-          north edge. Without it the map's top row renders a shade light, a
+          north edge. Without it the map's top row renders a shade too bright, a
           visible line across the top of each panel. Each split panel gets its
           own; tick "panels reuse the row above" if you would rather they not
           overlap a panel you have already built.</p>

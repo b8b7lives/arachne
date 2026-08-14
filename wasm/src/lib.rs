@@ -621,6 +621,17 @@ impl Session {
             }
             selection.insert(cid, block);
         }
+        if !self
+            .data
+            .blocks
+            .iter()
+            .any(|b| b.block_id == opts.support_block_id)
+        {
+            return Err(format!(
+                "unknown filler block: {}",
+                opts.support_block_id
+            ));
+        }
         Ok(SchemConfig {
             height_mode,
             support_mode,

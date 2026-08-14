@@ -1,0 +1,24 @@
+{
+  "builds": [
+    {
+      "id": "2026-08-14-filler",
+      "date": "2026-08-14",
+      "line": "filler counts in your materials list, a proper filler picker, and this changelog",
+      "notes": [
+        "The Summary and the build sheet count filler as its own row, for the whole build or one panel, so what you farm matches what you place.",
+        "Filler moved to its own section in Source, with a searchable picker that shows sprites, lists your palette's blocks first, and only offers blocks that actually work as filler.",
+        "The picker follows the game version you export for. A filler pick that version does not have is flagged, and the export waits until you fix it.",
+        "The header grew an About panel with quick links, a spider favicon, and this what's new panel. Updates land here; nothing about your visit is tracked."
+      ]
+    },
+    {
+      "id": "2026-08-13-beta",
+      "date": "2026-08-13",
+      "line": "the beta opens",
+      "notes": [
+        "Public beta at b8b7.live/arachne, source on GitHub.",
+        "Transparency handling verified against a real in-game build."
+      ]
+    }
+  ]
+}

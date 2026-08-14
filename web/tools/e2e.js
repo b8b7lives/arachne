@@ -635,11 +635,11 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
 
   const garbage = await s.evaluate(`(() => {
     const fs = document.getElementById("filler-search");
-    fs.dispatchEvent(new Event("focus"));
+    fs.focus();
     fs.value = "zzz not a block";
     fs.dispatchEvent(new Event("input"));
     const empty = document.querySelector("#filler-drop .picker-empty") !== null;
-    fs.dispatchEvent(new Event("blur"));
+    fs.blur();
     return { empty, committed: document.getElementById("support-block").value,
       shown: fs.value };
   })()`);
@@ -661,15 +661,20 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     const offered = document.querySelectorAll("#filler-drop .picker-row").length;
     const meta = document.getElementById("filler-meta").textContent;
     fs.dispatchEvent(new Event("blur"));
+    document.getElementById("export-download").click();
+    await new Promise((r) => setTimeout(r, 400));
+    const refusal = document.getElementById("status").textContent;
     vsel.value = newest;
     vsel.dispatchEvent(new Event("change", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 800));
-    return { offered, meta };
+    return { offered, meta, refusal };
   })()`);
   check("a 1.13 export does not offer post-1.13 filler", versioned.offered === 0,
     `${versioned.offered} offered`);
   check("a pick from a later version is flagged in the heading",
     /needs 1\.16/.test(versioned.meta), versioned.meta);
+  check("the export refuses a filler the version does not have",
+    /needs 1\.16/.test(versioned.refusal), versioned.refusal);
 
   await s.evaluate(`(async () => {
     const fs = document.getElementById("filler-search");
@@ -1229,6 +1234,64 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   const refused = await s.evaluate(`document.getElementById("io-result").textContent`);
   check("a damaged link is refused rather than half-applied",
     /damaged|different block list|truncated|not in it/.test(refused), refused);
+
+  const whatsnew = await s.evaluate(`(() => {
+    const notice = document.getElementById("whatsnew-notice");
+    const panel = document.getElementById("whatsnew-panel");
+    const link = document.getElementById("whatsnew-link");
+    const shown = !notice.hidden;
+    const line = notice.textContent;
+    link.click();
+    const entries = panel.querySelectorAll(".whatsnew-head").length;
+    const tip = /Ctrl\\+Shift\\+R/.test(panel.textContent);
+    const openAfterLink = !panel.hidden;
+    [...notice.querySelectorAll("button")]
+      .find((b) => b.textContent === "hide")?.click();
+    return { shown, line, entries, tip, openAfterLink,
+      dismissed: notice.hidden && panel.hidden,
+      stored: localStorage.getItem("arachne.whatsnew.seen") };
+  })()`);
+  check("a new build announces itself once",
+    whatsnew.shown === true && /new in this build:/.test(whatsnew.line), whatsnew.line);
+  check("the what's new link opens the panel with entries",
+    whatsnew.openAfterLink === true && whatsnew.entries >= 2, `${whatsnew.entries} entries`);
+  check("the panel carries the hard-refresh tip", whatsnew.tip === true);
+  check("got it dismisses and remembers",
+    whatsnew.dismissed === true && whatsnew.stored === "2026-08-14-filler",
+    String(whatsnew.stored));
+  await s.send("Page.navigate", { url });
+  await s.evaluate(WAIT_READY);
+  await s.evaluate(`new Promise((r) => setTimeout(r, 600))`);
+  const quiet = await s.evaluate(
+    `document.getElementById("whatsnew-notice").hidden`);
+  check("a dismissed build stays quiet on the next visit", quiet === true);
+
+  await s.evaluate(`(async () => {
+    const c = document.createElement("canvas");
+    c.width = 64; c.height = 128;
+    const g = c.getContext("2d");
+    g.fillStyle = "#4a6"; g.fillRect(0, 0, 64, 128);
+    const blob = await new Promise((r) => c.toBlob(r));
+    const dt = new DataTransfer();
+    dt.items.add(new File([blob], "tall.png", { type: "image/png" }));
+    document.dispatchEvent(new DragEvent("drop", { dataTransfer: dt, bubbles: true, cancelable: true }));
+  })()`);
+  await s.evaluate(`new Promise((r) => setTimeout(r, 3000))`);
+  await s.evaluate(`(() => {
+    const w = document.getElementById("maps-w");
+    w.value = "3";
+    w.dispatchEvent(new Event("change", { bubbles: true }));
+  })()`);
+  await s.evaluate(`new Promise((r) => setTimeout(r, 1500))`);
+  await s.evaluate(`document.getElementById("reset-default").click()`, { userGesture: true });
+  await s.evaluate(`new Promise((r) => setTimeout(r, 1500))`);
+  const afterReset = await s.evaluate(`(() => ({
+    w: document.getElementById("maps-w").value,
+    h: document.getElementById("maps-h").value,
+  }))()`);
+  check("reset keeps the image and refits the grid to it",
+    afterReset.w === "1" && afterReset.h === "2",
+    `${afterReset.w} x ${afterReset.h}`);
 
   const errors = s.logs.filter((l) => /EXCEPTION|error:/i.test(l));
   check("no page errors", errors.length === 0, errors.slice(0, 3).join(" | "));
