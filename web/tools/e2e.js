@@ -545,21 +545,28 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     (await s.evaluate(`document.querySelector(".view2d") === null`)) === true);
 
   const basis = await s.evaluate(`(() => {
-    const total = () => [...document.querySelectorAll(".materials tbody tr")]
-      .map((tr) => Number(tr.children[2].textContent.replace(/,/g, "")))
-      .reduce((a, b) => a + b, 0);
+    const rows = () => [...document.querySelectorAll(".materials tbody tr")]
+      .map((tr) => [tr.children[0].textContent,
+        Number(tr.children[2].textContent.replace(/,/g, ""))]);
+    const art = () => rows().filter(([n]) => !n.endsWith(" (filler)"))
+      .reduce((a, [, c]) => a + c, 0);
+    const filler = () => rows().filter(([n]) => n.endsWith(" (filler)"))
+      .reduce((a, [, c]) => a + c, 0);
     const sel = document.getElementById("materials-basis");
     const shown = !document.getElementById("materials-basis-label").hidden;
     const options = [...sel.options].map((o) => o.textContent);
-    const build = total();
+    const build = art();
+    const buildFiller = filler();
     const panels = [];
+    const panelFiller = [];
     for (const o of [...sel.options].filter((o) => o.value !== "build")) {
       sel.value = o.value;
       sel.dispatchEvent(new Event("change", { bubbles: true }));
-      panels.push(total());
+      panels.push(art());
+      panelFiller.push(filler());
     }
     const note = document.querySelector("#summary .note")?.textContent ?? "";
-    return { shown, options, build, panels, note };
+    return { shown, options, build, buildFiller, panels, panelFiller, note };
   })()`);
   check("the panel selector appears once there is more than one map", basis.shown === true);
   check("panels are listed by position and map id",
@@ -574,8 +581,104 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     JSON.stringify(basis.panels));
   check("panels add up to the whole schematic",
     basis.panels.reduce((a, b) => a + b, 0) === basis.build);
+  check("filler is its own materials row", basis.buildFiller > 0,
+    `${basis.buildFiller} filler blocks`);
+  check("both north panels carry noobline filler",
+    basis.panelFiller[0] >= 128 && basis.panelFiller[1] >= 128,
+    JSON.stringify(basis.panelFiller));
+  check("panel filler adds up to the whole schematic's",
+    basis.panelFiller.reduce((a, b) => a + b, 0) === basis.buildFiller,
+    `${JSON.stringify(basis.panelFiller)} vs ${basis.buildFiller}`);
   check("a panel summary says which panel it is for", /panel 4 of 4, x1_z1_map_10/.test(basis.note),
     basis.note.slice(0, 60));
+
+  const pickerOpen = await s.evaluate(`(() => {
+    const fs = document.getElementById("filler-search");
+    fs.dispatchEvent(new Event("focus"));
+    const drop = document.getElementById("filler-drop");
+    const groups = [...drop.querySelectorAll(".picker-group")].map((g) => g.textContent);
+    const ids = [...drop.querySelectorAll(".picker-row")].map((r) => r.dataset.id);
+    const meta = document.getElementById("filler-meta").textContent;
+    return { hidden: drop.hidden, groups, count: ids.length, sand: ids.includes("sand"),
+      tiles: drop.querySelectorAll(".picker-row .tile").length, meta };
+  })()`);
+  check("the filler picker opens with palette blocks first",
+    pickerOpen.hidden === false
+      && JSON.stringify(pickerOpen.groups) === JSON.stringify(["in your palette", "all blocks"]),
+    JSON.stringify(pickerOpen.groups));
+  check("every offered block shows its sprite", pickerOpen.tiles === pickerOpen.count,
+    `${pickerOpen.tiles} tiles for ${pickerOpen.count} rows`);
+  check("blocks that cannot float are not offered as filler", pickerOpen.sand === false,
+    `sand offered among ${pickerOpen.count}`);
+  check("the heading carries mode and block", /where needed · Netherrack/.test(pickerOpen.meta),
+    pickerOpen.meta);
+
+  const fillerPick = await s.evaluate(`(async () => {
+    const fs = document.getElementById("filler-search");
+    fs.value = "block of netherite";
+    fs.dispatchEvent(new Event("input"));
+    fs.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    await new Promise((r) => setTimeout(r, 800));
+    const row = [...document.querySelectorAll(".materials tbody tr")]
+      .map((tr) => tr.children[0].textContent)
+      .find((n) => n.endsWith(" (filler)"));
+    return { committed: document.getElementById("support-block").value,
+      shown: fs.value, row,
+      meta: document.getElementById("filler-meta").textContent };
+  })()`);
+  check("picking a block commits its id", fillerPick.committed === "netherite_block",
+    fillerPick.committed);
+  check("the search box shows the display name", fillerPick.shown === "Block of Netherite",
+    fillerPick.shown);
+  check("the summary filler row follows the pick",
+    fillerPick.row === "Block of Netherite (filler)", String(fillerPick.row));
+
+  const garbage = await s.evaluate(`(() => {
+    const fs = document.getElementById("filler-search");
+    fs.dispatchEvent(new Event("focus"));
+    fs.value = "zzz not a block";
+    fs.dispatchEvent(new Event("input"));
+    const empty = document.querySelector("#filler-drop .picker-empty") !== null;
+    fs.dispatchEvent(new Event("blur"));
+    return { empty, committed: document.getElementById("support-block").value,
+      shown: fs.value };
+  })()`);
+  check("garbage matches nothing and commits nothing",
+    garbage.empty === true && garbage.committed === "netherite_block"
+      && garbage.shown === "Block of Netherite",
+    JSON.stringify(garbage));
+
+  const versioned = await s.evaluate(`(async () => {
+    const vsel = document.getElementById("game-version");
+    const newest = vsel.value;
+    vsel.value = "1.13";
+    vsel.dispatchEvent(new Event("change", { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 300));
+    const fs = document.getElementById("filler-search");
+    fs.dispatchEvent(new Event("focus"));
+    fs.value = "crying obsidian";
+    fs.dispatchEvent(new Event("input"));
+    const offered = document.querySelectorAll("#filler-drop .picker-row").length;
+    const meta = document.getElementById("filler-meta").textContent;
+    fs.dispatchEvent(new Event("blur"));
+    vsel.value = newest;
+    vsel.dispatchEvent(new Event("change", { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 800));
+    return { offered, meta };
+  })()`);
+  check("a 1.13 export does not offer post-1.13 filler", versioned.offered === 0,
+    `${versioned.offered} offered`);
+  check("a pick from a later version is flagged in the heading",
+    /needs 1\.16/.test(versioned.meta), versioned.meta);
+
+  await s.evaluate(`(async () => {
+    const fs = document.getElementById("filler-search");
+    fs.dispatchEvent(new Event("focus"));
+    fs.value = "netherrack";
+    fs.dispatchEvent(new Event("input"));
+    fs.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    await new Promise((r) => setTimeout(r, 500));
+  })()`);
 
   const clamped = await s.evaluate(`(() => {
     const typed = (id, v) => {

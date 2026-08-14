@@ -333,6 +333,24 @@ mod tests {
     }
 
     #[test]
+    fn split_spreads_anchors_across_north_panels() {
+        let (d, _) = setup();
+        let cells = vec![Some((8u8, Tone::Normal)); 256 * 256];
+        let grid = Grid {
+            width: 256,
+            height: 256,
+            cells,
+        };
+        let c = cfg(&d, HeightMode::Flat, SupportMode::None);
+        let s = build_schem(&grid, &c);
+        assert_eq!(s.support_count, 256);
+        let parts = split_schem(&s, 2, 2, SplitEdge::Filler);
+        let counts: Vec<u32> = parts.iter().map(|p| p.support_count).collect();
+        assert_eq!(counts.iter().sum::<u32>(), s.support_count, "{counts:?}");
+        assert_eq!(counts, vec![128, 128, 0, 0]);
+    }
+
+    #[test]
     fn only_a_run_on_the_north_border_gets_an_anchor() {
         let (d, _) = setup();
         let grid = Grid {

@@ -2,7 +2,7 @@ import type {
   AuditDto, CandidateBlock, ExportOpts, GenerateOpts, GenerateResult,
   Adjust, MapColor, MarginalErrors, OwnedTool, RankedDto, SharedPalette, SolverConfig, TierMeta,
   ToolMeta,
-  ViewModel, WorkerResponse,
+  SupportTotals, ViewModel, WorkerResponse,
 } from "./types";
 import { openView2D } from "./view2d";
 import { unframe, zip, type ZipEntry } from "./zip";
@@ -98,6 +98,10 @@ let genResult: GenerateResult | null = null;
 let rankedByColor = new Map<number, RankedDto[]>();
 let marginalDeltas: Map<number, number> | null = null;
 let tileMaterials: Record<string, number>[] | null = null;
+let supportTotals: SupportTotals | null = null;
+let supportTotalsSig: string | null = null;
+let supportTotalsBusy = false;
+let generateSeq = 0;
 let marginalTotal = 0;
 const selectionOverride = new Map<number, number>();
 const deliberate = new Set<number>();
@@ -1548,6 +1552,7 @@ function renderFillerNotice() {
     ? `${countText(blocks)} blocks`
     : `${needy.length} of your colors`;
   el.hidden = false;
+  ($("filler-section") as HTMLDetailsElement).open = true;
   el.className = stepped ? "note warn-orange" : "note";
   el.replaceChildren(stepped
     ? `${subject} need something underneath and a staircase leaves air there, so they pop off. `
@@ -1560,7 +1565,9 @@ function renderFillerNotice() {
   addFiller.onclick = () => {
     ($("support-mode") as HTMLSelectElement).value = "important";
     renderFillerNotice();
+    syncFillerUi();
     persist();
+    if (genResult) renderSummary();
   };
   const drop = document.createElement("button");
   drop.className = "mini";
@@ -1869,6 +1876,146 @@ function materialsBasis(): { counts: Record<string, number>; scope: string | nul
   };
 }
 
+function refreshSupportTotals() {
+  const opts = genResult ? exportOpts(true) : null;
+  if (!opts) {
+    supportTotals = null;
+    supportTotalsSig = null;
+    return;
+  }
+  const sig = `${generateSeq}:${JSON.stringify(opts)}`;
+  if (sig === supportTotalsSig || supportTotalsBusy) return;
+  supportTotalsBusy = true;
+  rpc<SupportTotals>({ cmd: "support_totals", opts })
+    .then((t) => { supportTotals = t; })
+    .catch(() => { supportTotals = null; })
+    .finally(() => {
+      supportTotalsSig = sig;
+      supportTotalsBusy = false;
+      renderSummary();
+    });
+}
+
+function fillerLabel(blockId: string): string {
+  const b = blocks.find((x) => x.block_id === blockId);
+  return `${b?.display_name ?? blockId} (filler)`;
+}
+
+const FILLER_MODE_SHORT: Record<string, string> = {
+  none: "none",
+  important: "where needed",
+  all_optimized: "survival placement",
+  all_double_optimized: "full layer",
+};
+
+function fillerId(): string {
+  return ($("support-block") as HTMLInputElement).value.trim() || "netherrack";
+}
+
+function fillerEntry(id: string): { b: CandidateBlock; index: number } | null {
+  const index = blocks.findIndex((x) => x.block_id === id);
+  return index >= 0 ? { b: blocks[index], index } : null;
+}
+
+function fillerLegal(b: CandidateBlock): boolean {
+  if (b.gravity || b.support_mandatory || b.fluid || b.constrained) return false;
+  const v = versionIndex(b.since);
+  return v === -1 || v <= versionIndex(gameVersion());
+}
+
+function paletteFillerEntries(): { b: CandidateBlock; index: number }[] {
+  const out = new Map<string, { b: CandidateBlock; index: number }>();
+  for (const cid of enabled) {
+    const r = chosen(cid);
+    const b = r ? blocks[r.block_index] : undefined;
+    if (b && r && fillerLegal(b) && !out.has(b.block_id)) {
+      out.set(b.block_id, { b, index: r.block_index });
+    }
+  }
+  return [...out.values()]
+    .sort((a, z) => a.b.display_name.localeCompare(z.b.display_name));
+}
+
+let fillerHot = -1;
+
+function fillerRows(): HTMLElement[] {
+  return [...$("filler-drop").querySelectorAll<HTMLElement>(".picker-row")];
+}
+
+function renderFillerDrop() {
+  const drop = $("filler-drop");
+  const cur = fillerEntry(fillerId());
+  let q = ($("filler-search") as HTMLInputElement).value.trim().toLowerCase();
+  if (cur && q === cur.b.display_name.toLowerCase()) q = "";
+  const match = (b: CandidateBlock) =>
+    !q || b.display_name.toLowerCase().includes(q) || b.block_id.includes(q);
+  const pal = paletteFillerEntries().filter((e) => match(e.b));
+  const palIds = new Set(pal.map((e) => e.b.block_id));
+  const seen = new Set<string>();
+  const rest: { b: CandidateBlock; index: number }[] = [];
+  for (let i = 0; i < blocks.length; i++) {
+    const b = blocks[i];
+    if (palIds.has(b.block_id) || seen.has(b.block_id)) continue;
+    if (!fillerLegal(b) || !match(b)) continue;
+    seen.add(b.block_id);
+    rest.push({ b, index: i });
+  }
+  rest.sort((a, z) => a.b.display_name.localeCompare(z.b.display_name));
+  drop.innerHTML = "";
+  const group = (label: string, list: { b: CandidateBlock; index: number }[]) => {
+    if (!list.length) return;
+    const g = document.createElement("div");
+    g.className = "picker-group";
+    g.textContent = label;
+    drop.append(g);
+    for (const e of list) {
+      const row = document.createElement("div");
+      row.className = "picker-row";
+      row.dataset.id = e.b.block_id;
+      row.append(tileEl(e.index), document.createTextNode(e.b.display_name));
+      row.onmousedown = (ev) => { ev.preventDefault(); commitFiller(e.b.block_id); };
+      drop.append(row);
+    }
+  };
+  group("in your palette", pal);
+  group("all blocks", rest);
+  if (!drop.childElementCount) {
+    const none = document.createElement("div");
+    none.className = "picker-empty";
+    none.textContent = `nothing matches "${q}" in ${gameVersion()}`;
+    drop.append(none);
+  }
+  fillerHot = -1;
+  drop.hidden = false;
+}
+
+function closeFillerDrop() {
+  ($("filler-drop") as HTMLElement).hidden = true;
+  fillerHot = -1;
+}
+
+function commitFiller(id: string) {
+  ($("support-block") as HTMLInputElement).value = id;
+  closeFillerDrop();
+  syncFillerUi();
+  persist();
+  if (genResult) renderSummary();
+}
+
+function syncFillerUi() {
+  const id = fillerId();
+  const e = fillerEntry(id);
+  const input = $("filler-search") as HTMLInputElement;
+  if (document.activeElement !== input) input.value = e ? e.b.display_name : id;
+  const tile = $("filler-tile") as HTMLElement;
+  tile.style.backgroundPosition = e ? tilePos(e.index) : "-9999px -9999px";
+  const mode = ($("support-mode") as HTMLSelectElement).value;
+  const late = e && versionIndex(e.b.since) > versionIndex(gameVersion())
+    ? ` (needs ${e.b.since})` : "";
+  $("filler-meta").textContent =
+    `${FILLER_MODE_SHORT[mode] ?? mode} · ${e ? e.b.display_name : id}${late}`;
+}
+
 function syncMaterialsScope() {
   const sel = $("materials-basis") as HTMLSelectElement;
   const n = tileMaterials?.length ?? 0;
@@ -1906,9 +2053,10 @@ function renderSummary() {
   const toolsUsed = new Set<number>();
   const wear = new Map<number, number>();
   const toolTicks = new Map<number, number>();
-  const lines: { name: string; color: string; shown: number; r: RankedDto;
+  const lines: { name: string; color: string; shown: number; r: RankedDto | null;
     totalTicks: number | null }[] = [];
   syncMaterialsScope();
+  refreshSupportTotals();
   const { counts, scope } = materialsBasis();
   for (const [cidStr, whole] of Object.entries(genResult.materials)) {
     const cid = Number(cidStr);
@@ -1940,6 +2088,17 @@ function renderSummary() {
     lines.push({ name: b?.display_name ?? String(cid), color: c?.name ?? "",
       shown, r, totalTicks });
   }
+  if (supportTotals) {
+    const basisSel = $("materials-basis") as HTMLSelectElement | null;
+    const fillerCount = scope && basisSel && basisSel.value !== "build"
+      ? (supportTotals.panels[Number(basisSel.value)] ?? 0)
+      : supportTotals.whole;
+    if (fillerCount) {
+      const id = ($("support-block") as HTMLInputElement).value.trim() || "netherrack";
+      lines.push({ name: fillerLabel(id), color: "", shown: fillerCount,
+        r: null, totalTicks: null });
+    }
+  }
   lines.sort((a, b) =>
     (b.totalTicks ?? -1) - (a.totalTicks ?? -1) || b.shown - a.shown
     || a.name.localeCompare(b.name));
@@ -1948,7 +2107,7 @@ function renderSummary() {
     `<td class="dim">${l.color}</td>` +
     `<td class="num" title="${countTitle(l.shown)}">${countText(l.shown)}</td>` +
     `<td class="num">${(l.shown / SHULKER).toFixed(2)}</td>` +
-    `<td class="num">${costText(l.r)}</td>` +
+    `<td class="num">${l.r ? costText(l.r) : ""}</td>` +
     `<td class="num">${l.totalTicks === null ? "" : ticksText(l.totalTicks)}</td></tr>`);
   const checklist = [...toolsUsed].sort((a, b) => a - b)
     .map((i) => {
@@ -2490,6 +2649,7 @@ async function generate() {
       { cmd: "generate", rgba: buf, width: src.width, height: src.height, opts },
       [buf],
     );
+    generateSeq += 1;
     const preview = await rpc<ArrayBuffer>({ cmd: "preview" });
     paintPreview(
       new ImageData(new Uint8ClampedArray(preview), genResult.width, genResult.height));
@@ -2510,6 +2670,8 @@ async function generate() {
     marginalDeltas = null;
     marginalTotal = 0;
     tileMaterials = null;
+    supportTotals = null;
+    supportTotalsSig = null;
     ($("export-download") as HTMLButtonElement).disabled = true;
     ($("view-build") as HTMLButtonElement).disabled = true;
     renderPalette();
@@ -2550,23 +2712,26 @@ function download(name: string, bytes: ArrayBuffer) {
   URL.revokeObjectURL(a.href);
 }
 
-function exportOpts(): ExportOpts | null {
+function exportOpts(quiet = false): ExportOpts | null {
   if (!genResult) return null;
   const selection: Record<string, number> = {};
   const blocked = unbuildableColors();
   if (blocked.length) {
-    status(`can't export: ${blocked.map((c) => c.name).join(", ")} `
+    if (!quiet) status(`can't export: ${blocked.map((c) => c.name).join(", ")} `
       + "have no usable block under your current filters");
     return null;
   }
   for (const cid of Object.keys(genResult.materials).map(Number)) {
     const r = chosen(cid);
-    if (!r) { status(`color ${cid}: no candidate under current filters`); return null; }
+    if (!r) {
+      if (!quiet) status(`color ${cid}: no candidate under current filters`);
+      return null;
+    }
     selection[String(cid)] = r.block_index;
   }
   const capRaw = ($("cliff-cap") as HTMLInputElement).value;
   if (capRaw && (!Number.isInteger(Number(capRaw)) || Number(capRaw) < 1)) {
-    status("max step must be a whole number, 1 or more (leave it blank for no limit)");
+    if (!quiet) status("max step must be a whole number, 1 or more (leave it blank for no limit)");
     return null;
   }
   return {
@@ -2640,6 +2805,15 @@ async function buildSheet(name: string): Promise<string> {
       const r = chosen(Number(cidStr));
       const b = r ? blocks[r.block_index] : undefined;
       rows.push([b?.display_name ?? `color ${cidStr}`, count]);
+    }
+    const opts = exportOpts(true);
+    if (opts) {
+      try {
+        const t = await rpc<SupportTotals>({ cmd: "support_totals", opts });
+        if (t.whole) rows.push([fillerLabel(opts.support_block_id), t.whole]);
+      } catch {
+        void 0;
+      }
     }
     rows.sort((a, b) => b[1] - a[1]);
     const pad = rows.reduce((n, [nm]) => Math.max(n, nm.length), 0);
@@ -2798,6 +2972,7 @@ async function boot() {
   syncAdjustControls();
   syncBackgroundControls();
   syncMapdatControls();
+  syncFillerUi();
   setPreviewHidden(previewHidden);
   syncPlacement();
   applyPreviewScale();
@@ -2925,12 +3100,43 @@ async function boot() {
   }
   $("dither").onchange = $("dbs-refine").onchange =
     () => { persist(); scheduleGenerate(); };
-  $("game-version").onchange = () => { persist(); refreshSolver(); };
+  $("game-version").onchange = () => { persist(); syncFillerUi(); refreshSolver(); };
   $("height-mode").onchange = () => { renderPalette(); scheduleGenerate(); };
-  $("support-mode").onchange = () => { renderFillerNotice(); persist(); };
-  $("cliff-cap").onchange = $("support-block").onchange =
-    $("split-export").onchange =
-    $("borrow-edge").onchange = $("export-name").onchange = () => persist();
+  $("support-mode").onchange = () => {
+    renderFillerNotice();
+    syncFillerUi();
+    persist();
+    if (genResult) renderSummary();
+  };
+  $("cliff-cap").onchange =
+    $("borrow-edge").onchange = () => { persist(); if (genResult) renderSummary(); };
+  $("split-export").onchange = $("export-name").onchange = () => persist();
+  const fillerSearch = $("filler-search") as HTMLInputElement;
+  fillerSearch.onfocus = () => { fillerSearch.select(); renderFillerDrop(); };
+  fillerSearch.oninput = () => renderFillerDrop();
+  fillerSearch.onblur = () => { closeFillerDrop(); syncFillerUi(); };
+  fillerSearch.onkeydown = (ev) => {
+    if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+      ev.preventDefault();
+      if (($("filler-drop") as HTMLElement).hidden) renderFillerDrop();
+      const rows = fillerRows();
+      if (!rows.length) return;
+      fillerHot = ev.key === "ArrowDown"
+        ? (fillerHot + 1) % rows.length
+        : (fillerHot - 1 + rows.length) % rows.length;
+      rows.forEach((r, i) => r.classList.toggle("hot", i === fillerHot));
+      rows[fillerHot].scrollIntoView({ block: "nearest" });
+    } else if (ev.key === "Enter") {
+      ev.preventDefault();
+      const rows = fillerRows();
+      const hot = fillerHot >= 0 ? rows[fillerHot] : rows[0];
+      if (hot?.dataset.id) commitFiller(hot.dataset.id);
+      fillerSearch.blur();
+    } else if (ev.key === "Escape") {
+      closeFillerDrop();
+      syncFillerUi();
+    }
+  };
   $("mapdat-on").onchange = $("first-map-id").onchange = () => {
     syncMapdatControls();
     applyPreviewScale();

@@ -453,6 +453,38 @@ impl Session {
         json(&tiles)
     }
 
+    pub fn support_totals(&self, opts_json: &str) -> Result<String, String> {
+        let grid = self
+            .grid
+            .as_ref()
+            .ok_or_else(|| "generate first".to_string())?;
+        let opts: ExportOpts = serde_json::from_str(opts_json).map_err(|e| e.to_string())?;
+        let edge = if opts.borrow_north_edge {
+            SplitEdge::Neighbor
+        } else {
+            SplitEdge::Filler
+        };
+        let cfg = self.schem_config(opts)?;
+        let missing = missing_selection(grid, &cfg);
+        if !missing.is_empty() {
+            return Err(self.missing_message(&missing));
+        }
+        let joined = build_schem(grid, &cfg);
+        let panels: Vec<u32> = split_schem(&joined, grid.width / 128, grid.height / 128, edge)
+            .iter()
+            .map(|s| s.support_count)
+            .collect();
+        #[derive(Serialize)]
+        struct SupportTotals {
+            whole: u32,
+            panels: Vec<u32>,
+        }
+        json(&SupportTotals {
+            whole: joined.support_count,
+            panels,
+        })
+    }
+
     pub fn rank(
         &self,
         color_id: u8,

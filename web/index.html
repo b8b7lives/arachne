@@ -162,8 +162,11 @@
             <label id="cliff-cap-label" title="biggest height jump allowed between neighboring rows; blank = no limit (lowest possible build), 1 = classic flat-ish terraces">
               max step <input type="number" id="cliff-cap" value="" min="1" placeholder="any" /></label>
           </div>
+        </div>
+        <details id="filler-section">
+          <summary>filler <span class="dim" id="filler-meta"></span></summary>
           <div class="row">
-            <label class="field-inline" title="Cheap blocks placed under the map: some because the block above physically needs them, some because survival placement needs a face to click against."><span class="field-name">filler blocks</span>
+            <label class="field-inline" title="Cheap blocks placed under the map: some because the block above physically needs them, some because survival placement needs a face to click against."><span class="field-name">where</span>
               <select id="support-mode">
               <option value="none" title="nothing added: the map rests on whatever you built it on. Right for a flat map on a canvas, wrong under a staircase">none: canvas is already under it</option>
               <option value="important" selected title="one filler under each block that needs it. Vanilla pops these off without it however you place them, so this is the minimum a working map needs">only where the block needs it</option>
@@ -171,9 +174,22 @@
               <option value="all_double_optimized" title="a full filler layer under the whole map (16,384 per map at minimum): lay all the filler first, then build color by color instead of carrying filler alongside every material">a full layer, filler first</option>
             </select>
             </label>
+            <label class="field-inline" title="The block used for filler and for the noobline. It never shows on the picture, so pick whatever is cheapest for you to farm."><span class="field-name">block</span>
+              <span class="picker" id="filler-picker">
+                <span class="tile" id="filler-tile"></span>
+                <input type="text" id="filler-search" autocomplete="off" spellcheck="false" />
+                <div class="picker-drop" id="filler-drop" hidden></div>
+              </span>
+            </label>
+            <input type="hidden" id="support-block" value="netherrack" />
           </div>
-        </div>
-        <p class="note" id="filler-notice" hidden></p>
+          <p class="note" id="filler-notice" hidden></p>
+          <p class="note">Filler is the cheap block placed where the build needs
+            something the picture never shows: under blocks that pop off without
+            support, and along the noobline, the reference row on the north edge
+            that keeps the top row of the map from rendering a shade light.
+            Filler has its own row in the Summary.</p>
+        </details>
         <p class="note">Ordered dither lays a regular pattern and only changes the pixels
           you affect when you toggle a color; diffusion spreads error across the whole
           picture. Everything regenerates automatically as you change settings.</p>
@@ -400,8 +416,6 @@
       <section id="export-panel">
         <h2>Download</h2>
         <div class="row">
-          <label title="used for two things: the filler under blocks that need support, and the reference row along the north edge that keeps the top row of the map from rendering a shade light">filler
-            and north edge block <input type="text" id="support-block" value="netherrack" /></label>
           <label title="each 128x128 map gets its own file, named for where it sits in the grid and which map id it carries. name_x0_z0_map_7.nbt is the north-west panel"><input
             type="checkbox" id="split-export" checked /> one file per map (zip)</label>
           <label title="Off: every panel carries its own filler noobline, and litematica flags the overlap with a finished panel in red.&#10;On: southern panels use the panel above's real last row instead, so nothing overlaps"><input

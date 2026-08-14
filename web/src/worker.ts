@@ -83,6 +83,11 @@ self.onmessage = async (ev: MessageEvent<WorkerRequest>) => {
         reply({ id: req.id, ok: true, result: JSON.parse(must().materials_split()) });
         break;
       }
+      case "support_totals": {
+        const out = must().support_totals(JSON.stringify(req.opts));
+        reply({ id: req.id, ok: true, result: JSON.parse(out) });
+        break;
+      }
       case "schem": {
         const bytes = must().export_schem(JSON.stringify(req.opts));
         reply({ id: req.id, ok: true, result: bytes.buffer }, [bytes.buffer]);

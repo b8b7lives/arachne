@@ -16,6 +16,7 @@ export interface CandidateBlock {
   color_id: number;
   block_id: string;
   display_name: string;
+  since: string;
   properties: Record<string, string>;
   hardness: number;
   tool: string;
@@ -150,6 +151,11 @@ export interface ExportOpts {
   version?: string;
 }
 
+export interface SupportTotals {
+  whole: number;
+  panels: number[];
+}
+
 export interface SharedPalette {
   enabled: number[];
   picks: Record<string, string>;
@@ -183,6 +189,7 @@ export type WorkerRequest =
   | { id: number; cmd: "share_code"; palette: SharedPalette }
   | { id: number; cmd: "read_share_code"; code: string }
   | { id: number; cmd: "materials_split" }
+  | { id: number; cmd: "support_totals"; opts: ExportOpts }
   | { id: number; cmd: "rank"; colorId: number; loadout: { tools: OwnedTool[] }; config: SolverConfig }
   | { id: number; cmd: "audit"; loadout: { tools: OwnedTool[] }; config: SolverConfig }
   | { id: number; cmd: "marginal"; enabled: number[]; tones: string[] };
