@@ -1,0 +1,13 @@
+{
+  "partners": [
+    {
+      "id": "blossomcraft",
+      "name": "BlossomCraft",
+      "url": "https://blossomcraft.org",
+      "logo": "partners/blossomcraft.webp",
+      "line": "I play and build my map art on BlossomCraft!",
+      "sub": "A grief-protected economy server with custom items",
+      "caption": null
+    }
+  ]
+}

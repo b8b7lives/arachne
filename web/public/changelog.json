@@ -1,6 +1,14 @@
 {
   "builds": [
     {
+      "id": "2026-08-14-blossom",
+      "date": "2026-08-14",
+      "line": "a Communities section, starting with BlossomCraft",
+      "notes": [
+        "The About panel has a Communities section now. First resident: BlossomCraft, where I play and build my map art. If you enjoy map art, come build with us at blossomcraft.org."
+      ]
+    },
+    {
       "id": "2026-08-14-community",
       "date": "2026-08-14",
       "line": "the community server opens, and release notes get a feed",

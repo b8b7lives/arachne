@@ -2032,14 +2032,59 @@ function syncFillerUi() {
 
 interface ChangelogBuild { id: string; date: string; line: string; notes: string[] }
 
+interface Partner {
+  id: string; name: string; url: string; logo: string;
+  line: string; sub: string | null; caption: string | null;
+}
+
+async function initCommunities() {
+  try {
+    const res = await fetch(`${import.meta.env.BASE_URL}partners.json`);
+    if (!res.ok) return;
+    const data = (await res.json()) as { partners: Partner[] };
+    if (!data.partners?.length) return;
+    const cards = $("communities-cards");
+    cards.replaceChildren(...data.partners.map((c) => {
+      const a = document.createElement("a");
+      a.className = "community-card";
+      a.href = c.url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      const img = document.createElement("img");
+      img.className = "community-logo";
+      img.src = `${import.meta.env.BASE_URL}${c.logo}`;
+      img.alt = c.name;
+      const text = document.createElement("div");
+      text.className = "community-text";
+      const line = document.createElement("p");
+      line.className = "community-line";
+      line.textContent = c.line;
+      text.append(line);
+      if (c.caption) {
+        const cap = document.createElement("p");
+        cap.className = "community-caption";
+        cap.textContent = c.caption;
+        text.append(cap);
+      }
+      if (c.sub) {
+        const sub = document.createElement("p");
+        sub.className = "community-sub";
+        sub.textContent = c.sub;
+        text.append(sub);
+      }
+      a.append(img, text);
+      return a;
+    }));
+    $("communities").hidden = false;
+  } catch { void 0; }
+}
+
 async function initWhatsNew() {
   try {
     const res = await fetch(`${import.meta.env.BASE_URL}changelog.json`);
     if (!res.ok) return;
     const log = (await res.json()) as { builds: ChangelogBuild[] };
     if (!log.builds?.length) return;
-    const latest = log.builds[0];
-    const notice = $("whatsnew-notice");
     const panel = $("whatsnew-panel");
     const renderPanel = () => {
       panel.replaceChildren(...log.builds.slice(0, 3).map((b) => {
@@ -2068,29 +2113,6 @@ async function initWhatsNew() {
       panel.hidden = !panel.hidden;
       link.setAttribute("aria-expanded", String(!panel.hidden));
     };
-    let seen: string | null = null;
-    try { seen = localStorage.getItem("arachne.whatsnew.seen"); } catch { seen = latest.id; }
-    if (seen === latest.id) return;
-    notice.replaceChildren(`new in this build: ${latest.line} `);
-    const details = document.createElement("button");
-    details.className = "mini";
-    details.textContent = "details";
-    details.onclick = () => {
-      renderPanel();
-      panel.hidden = false;
-      link.setAttribute("aria-expanded", "true");
-    };
-    const dismiss = document.createElement("button");
-    dismiss.className = "mini";
-    dismiss.textContent = "hide";
-    dismiss.onclick = () => {
-      try { localStorage.setItem("arachne.whatsnew.seen", latest.id); } catch { void 0; }
-      notice.hidden = true;
-      panel.hidden = true;
-      link.setAttribute("aria-expanded", "false");
-    };
-    notice.append(details, " ", dismiss);
-    notice.hidden = false;
   } catch { void 0; }
 }
 
@@ -3077,6 +3099,7 @@ async function boot() {
   const nostore = persistenceAvailable ? "" : " · settings can't be saved in this browser";
   status(`ready: Minecraft 26.2, ${blocks.length} blocks` + restored + nostore);
   void initWhatsNew();
+  void initCommunities();
   await refreshSolver();
 
   await consumeShareHash();

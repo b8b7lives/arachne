@@ -1236,35 +1236,32 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     /damaged|different block list|truncated|not in it/.test(refused), refused);
 
   const whatsnew = await s.evaluate(`(() => {
-    const notice = document.getElementById("whatsnew-notice");
     const panel = document.getElementById("whatsnew-panel");
     const link = document.getElementById("whatsnew-link");
-    const shown = !notice.hidden;
-    const line = notice.textContent;
     link.click();
     const entries = panel.querySelectorAll(".whatsnew-head").length;
     const tip = /Ctrl\\+Shift\\+R/.test(panel.textContent);
     const openAfterLink = !panel.hidden;
-    [...notice.querySelectorAll("button")]
-      .find((b) => b.textContent === "hide")?.click();
-    return { shown, line, entries, tip, openAfterLink,
-      dismissed: notice.hidden && panel.hidden,
-      stored: localStorage.getItem("arachne.whatsnew.seen") };
+    link.click();
+    return { entries, tip, openAfterLink, closedAgain: panel.hidden };
   })()`);
-  check("a new build announces itself once",
-    whatsnew.shown === true && /new in this build:/.test(whatsnew.line), whatsnew.line);
   check("the what's new link opens the panel with entries",
     whatsnew.openAfterLink === true && whatsnew.entries >= 2, `${whatsnew.entries} entries`);
   check("the panel carries the hard-refresh tip", whatsnew.tip === true);
-  check("got it dismisses and remembers",
-    whatsnew.dismissed === true && whatsnew.stored === "2026-08-14-filler",
-    String(whatsnew.stored));
+  check("the link toggles the panel closed again", whatsnew.closedAgain === true);
+  const communities = await s.evaluate(`(() => {
+    const wrap = document.getElementById("communities");
+    const card = wrap ? wrap.querySelector(".community-card") : null;
+    return { shown: !!wrap && !wrap.hidden,
+      href: card ? card.href : "",
+      line: card ? card.textContent : "" };
+  })()`);
+  check("the communities card shows and links out",
+    communities.shown === true && /blossomcraft\.org/.test(communities.href)
+    && /map art on BlossomCraft/.test(communities.line), communities.href);
   await s.send("Page.navigate", { url });
   await s.evaluate(WAIT_READY);
   await s.evaluate(`new Promise((r) => setTimeout(r, 600))`);
-  const quiet = await s.evaluate(
-    `document.getElementById("whatsnew-notice").hidden`);
-  check("a dismissed build stays quiet on the next visit", quiet === true);
 
   await s.evaluate(`(async () => {
     const c = document.createElement("canvas");

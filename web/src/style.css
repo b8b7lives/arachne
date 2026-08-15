@@ -758,7 +758,6 @@ a.mini.jump:hover { border-color: var(--accent); color: var(--ink); }
 .picker-row:hover, .picker-row.hot { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .picker-empty { padding: 0.4rem 0.6rem; color: var(--dim); font-size: var(--t-small); }
 
-.whatsnew-notice { margin: 0.35rem 1rem; }
 .whatsnew-panel {
   margin: 0.35rem 1rem;
   padding: 0.5rem 0.8rem;
@@ -774,4 +773,22 @@ a.mini.jump:hover { border-color: var(--accent); color: var(--ink); }
 
 ul.note { margin: 0.2rem 0 0.4rem 1.2rem; padding: 0; }
 ul.note li { margin: 0.15rem 0; }
-#about-panel .whatsnew-notice, #about-panel .whatsnew-panel { margin-left: 0; margin-right: 0; }
+#about-panel .whatsnew-panel { margin-left: 0; margin-right: 0; }
+
+.communities { margin-top: 0.7rem; }
+.community-card {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  max-width: 34rem;
+  text-decoration: none;
+}
+.community-card:hover { border-color: var(--accent); }
+.community-logo { width: 120px; height: auto; flex: none; }
+.community-text { flex: 1; text-align: center; }
+.community-line { margin: 0; color: var(--ink); }
+.community-caption { margin: 0.1rem 0 0; color: var(--accent); font-size: var(--t-small); }
+.community-sub { margin: 0.05rem 0 0; color: var(--dim); font-size: var(--t-small); font-style: italic; }
