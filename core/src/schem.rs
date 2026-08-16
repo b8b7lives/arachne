@@ -85,7 +85,16 @@ pub fn build_schem(grid: &Grid, cfg: &SchemConfig) -> Schem {
                     mandatory: cfg.selection[cid].support_mandatory,
                 })
                 .collect();
-            let supports = support_counts(&col, cfg.support_mode);
+            let steps: Vec<i32> = (0..run.len())
+                .map(|r| {
+                    if r == 0 && !anchored {
+                        0
+                    } else {
+                        heights[r + 1] - heights[r]
+                    }
+                })
+                .collect();
+            let supports = support_counts(&col, &steps, cfg.support_mode);
 
             let first = usize::from(!anchored);
             for i in first..=run.len() {
@@ -97,7 +106,7 @@ pub fn build_schem(grid: &Grid, cfg: &SchemConfig) -> Schem {
                 };
                 column.push((x as i32, y, (z0 + i) as i32, idx));
                 for k in 1..=supports[i] {
-                    column.push((x as i32, y - i32::from(k), (z0 + i) as i32, support_index));
+                    column.push((x as i32, y - k as i32, (z0 + i) as i32, support_index));
                     support_count += 1;
                 }
             }
@@ -171,6 +180,9 @@ pub fn split_schem(s: &Schem, maps_w: usize, maps_h: usize, edge: SplitEdge) -> 
             let mut support_count = 0u32;
             for b in &blocks {
                 if tz > 0 && b.2 == 0 {
+                    if edge == SplitEdge::Filler {
+                        support_count += 1;
+                    }
                     continue;
                 }
                 if b.3 == support_index {
@@ -346,6 +358,13 @@ mod tests {
         assert_eq!(s.support_count, 256);
         let parts = split_schem(&s, 2, 2, SplitEdge::Filler);
         let counts: Vec<u32> = parts.iter().map(|p| p.support_count).collect();
+        assert_eq!(
+            counts,
+            vec![128, 128, 128, 128],
+            "southern panels count the noobline they must place"
+        );
+        let neighbor = split_schem(&s, 2, 2, SplitEdge::Neighbor);
+        let counts: Vec<u32> = neighbor.iter().map(|p| p.support_count).collect();
         assert_eq!(counts.iter().sum::<u32>(), s.support_count, "{counts:?}");
         assert_eq!(counts, vec![128, 128, 0, 0]);
     }
@@ -685,6 +704,15 @@ mod tests {
 
         let picture: u32 = south.materials.values().sum();
         assert_eq!(picture, 128 * 128);
+        let filler_blocks = south
+            .blocks
+            .iter()
+            .filter(|b| b.3 == support_index)
+            .count() as u32;
+        assert_eq!(
+            south.support_count, filler_blocks,
+            "the count is every filler the panel builder places"
+        );
     }
 
     #[test]

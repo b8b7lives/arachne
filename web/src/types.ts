@@ -156,6 +156,30 @@ export interface SupportTotals {
   panels: number[];
 }
 
+export interface DitherSampleOpts {
+  modes: string[];
+  enabled_color_ids: number[];
+  tones: string[];
+  width: number;
+  height: number;
+}
+
+export interface HeightCapOpts {
+  max_height: number | null;
+  cliff_cap: number | null;
+  enabled_color_ids: number[];
+  tones: string[];
+}
+
+export interface HeightCapResult {
+  natural_peak: number;
+  edited_cells: number;
+  edited_columns: number;
+  infeasible_columns: number;
+  de_base: number;
+  de_capped: number;
+}
+
 export interface SharedPalette {
   enabled: number[];
   picks: Record<string, string>;
@@ -192,7 +216,9 @@ export type WorkerRequest =
   | { id: number; cmd: "support_totals"; opts: ExportOpts }
   | { id: number; cmd: "rank"; colorId: number; loadout: { tools: OwnedTool[] }; config: SolverConfig }
   | { id: number; cmd: "audit"; loadout: { tools: OwnedTool[] }; config: SolverConfig }
-  | { id: number; cmd: "marginal"; enabled: number[]; tones: string[] };
+  | { id: number; cmd: "marginal"; enabled: number[]; tones: string[] }
+  | { id: number; cmd: "height_cap"; opts: HeightCapOpts }
+  | { id: number; cmd: "dither_samples"; opts: DitherSampleOpts };
 
 export type WorkerResponse =
   | { id: number; ok: true; result: unknown }

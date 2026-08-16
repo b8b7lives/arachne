@@ -55,6 +55,16 @@ self.onmessage = async (ev: MessageEvent<WorkerRequest>) => {
         reply({ id: req.id, ok: true, result: bytes.buffer }, [bytes.buffer]);
         break;
       }
+      case "height_cap": {
+        const out = must().set_height_cap(JSON.stringify(req.opts));
+        reply({ id: req.id, ok: true, result: JSON.parse(out) });
+        break;
+      }
+      case "dither_samples": {
+        const bytes = must().dither_samples(JSON.stringify(req.opts));
+        reply({ id: req.id, ok: true, result: bytes.buffer }, [bytes.buffer]);
+        break;
+      }
       case "mapdat": {
         const bytes = must().export_mapdat(req.tx, req.tz, req.version);
         reply({ id: req.id, ok: true, result: bytes.buffer }, [bytes.buffer]);

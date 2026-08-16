@@ -1,4 +1,4 @@
-use crate::color::{LinRgb, OkLab, linear_to_oklab, oklab_dist2, srgb_to_linear};
+use crate::color::{LinRgb, OkLab, linear_to_oklab, srgb_to_linear};
 use crate::data::BlockData;
 use serde::Deserialize;
 
@@ -31,12 +31,38 @@ pub struct PaletteEntry {
     pub oklab: OkLab,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Matcher {
+    OkEuclid,
+    OkHyab,
+    OkLScaled(f32),
+}
+
+impl Matcher {
+    pub fn dist(self, a: OkLab, b: OkLab) -> f32 {
+        let dl = a[0] - b[0];
+        let da = a[1] - b[1];
+        let db = a[2] - b[2];
+        match self {
+            Matcher::OkEuclid => dl * dl + da * da + db * db,
+            Matcher::OkHyab => dl.abs() + (da * da + db * db).sqrt(),
+            Matcher::OkLScaled(w) => w * w * dl * dl + da * da + db * db,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Palette {
     pub entries: Vec<PaletteEntry>,
+    pub matcher: Matcher,
 }
 
 impl Palette {
+    pub fn with_matcher(mut self, matcher: Matcher) -> Self {
+        self.matcher = matcher;
+        self
+    }
+
     pub fn build(data: &BlockData, enabled_color_ids: &[u8], tones: &[Tone]) -> Self {
         let mut entries = Vec::new();
         for &cid in enabled_color_ids {
@@ -58,7 +84,10 @@ impl Palette {
                 });
             }
         }
-        Self { entries }
+        Self {
+            entries,
+            matcher: Matcher::OkEuclid,
+        }
     }
 
     pub fn nearest(&self, lin: LinRgb) -> &PaletteEntry {
@@ -66,8 +95,9 @@ impl Palette {
         self.entries
             .iter()
             .min_by(|a, b| {
-                oklab_dist2(a.oklab, lab)
-                    .partial_cmp(&oklab_dist2(b.oklab, lab))
+                self.matcher
+                    .dist(a.oklab, lab)
+                    .partial_cmp(&self.matcher.dist(b.oklab, lab))
                     .expect("finite distances")
             })
             .expect("non-empty palette")
@@ -78,7 +108,7 @@ impl Palette {
         let mut best: Option<(usize, f32)> = None;
         let mut second: Option<(usize, f32)> = None;
         for (i, e) in self.entries.iter().enumerate() {
-            let d = oklab_dist2(e.oklab, lab);
+            let d = self.matcher.dist(e.oklab, lab);
             match best {
                 None => best = Some((i, d)),
                 Some((_, bd)) if d < bd => {

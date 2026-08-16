@@ -2,6 +2,7 @@ use crate::color::{OkLab, linear_to_oklab, oklab_dist2};
 use crate::image::LinImage;
 use crate::palette::{Palette, Tone};
 use std::collections::HashMap;
+use std::sync::OnceLock;
 
 #[derive(Debug, Clone)]
 pub struct Grid {
@@ -90,13 +91,139 @@ pub fn ordered3() -> OrderedMatrix {
     }
 }
 
+const BLUE_SIDE: usize = 16;
+const BLUE_SIGMA: f32 = 1.9;
+const BLUE_SEED: u32 = 0x9e37_79b9;
+
+fn blue_kernel() -> Vec<f32> {
+    let mut k = vec![0.0f32; BLUE_SIDE * BLUE_SIDE];
+    for (i, out) in k.iter_mut().enumerate() {
+        let dx = (i % BLUE_SIDE).min(BLUE_SIDE - i % BLUE_SIDE) as f32;
+        let dy = (i / BLUE_SIDE).min(BLUE_SIDE - i / BLUE_SIDE) as f32;
+        *out = (-(dx * dx + dy * dy) / (2.0 * BLUE_SIGMA * BLUE_SIGMA)).exp();
+    }
+    k
+}
+
+#[derive(Clone)]
+struct VoidCluster {
+    kernel: Vec<f32>,
+    energy: Vec<f32>,
+    filled: Vec<bool>,
+}
+
+impl VoidCluster {
+    fn new() -> Self {
+        Self {
+            kernel: blue_kernel(),
+            energy: vec![0.0; BLUE_SIDE * BLUE_SIDE],
+            filled: vec![false; BLUE_SIDE * BLUE_SIDE],
+        }
+    }
+
+    fn stamp(&mut self, pos: usize, sign: f32) {
+        let (px, py) = (pos % BLUE_SIDE, pos / BLUE_SIDE);
+        for y in 0..BLUE_SIDE {
+            for x in 0..BLUE_SIDE {
+                let dx = (x + BLUE_SIDE - px) % BLUE_SIDE;
+                let dy = (y + BLUE_SIDE - py) % BLUE_SIDE;
+                self.energy[y * BLUE_SIDE + x] += sign * self.kernel[dy * BLUE_SIDE + dx];
+            }
+        }
+    }
+
+    fn insert(&mut self, pos: usize) {
+        self.filled[pos] = true;
+        self.stamp(pos, 1.0);
+    }
+
+    fn remove(&mut self, pos: usize) {
+        self.filled[pos] = false;
+        self.stamp(pos, -1.0);
+    }
+
+    fn tightest_cluster(&self) -> usize {
+        self.energy
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| self.filled[*i])
+            .max_by(|a, b| a.1.partial_cmp(b.1).expect("finite energy"))
+            .expect("non-empty pattern")
+            .0
+    }
+
+    fn largest_void(&self) -> usize {
+        self.energy
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| !self.filled[*i])
+            .min_by(|a, b| a.1.partial_cmp(b.1).expect("finite energy"))
+            .expect("non-full pattern")
+            .0
+    }
+}
+
+fn blue_thresholds() -> Vec<f32> {
+    let n = BLUE_SIDE * BLUE_SIDE;
+    let seeds = n / 10;
+    let mut field = VoidCluster::new();
+    let mut rng = BLUE_SEED;
+    let mut placed = 0;
+    while placed < seeds {
+        rng ^= rng << 13;
+        rng ^= rng >> 17;
+        rng ^= rng << 5;
+        let pos = rng as usize % n;
+        if !field.filled[pos] {
+            field.insert(pos);
+            placed += 1;
+        }
+    }
+    for _ in 0..n * n {
+        let c = field.tightest_cluster();
+        field.remove(c);
+        let v = field.largest_void();
+        field.insert(v);
+        if c == v {
+            break;
+        }
+    }
+    let mut ranks = vec![0usize; n];
+    let mut down = field.clone();
+    for rank in (0..seeds).rev() {
+        let c = down.tightest_cluster();
+        down.remove(c);
+        ranks[c] = rank;
+    }
+    let mut up = field;
+    for rank in seeds..n {
+        let v = up.largest_void();
+        up.insert(v);
+        ranks[v] = rank;
+    }
+    ranks.iter().map(|r| (r + 1) as f32).collect()
+}
+
+pub fn blue16() -> OrderedMatrix {
+    static CELL: OnceLock<Vec<f32>> = OnceLock::new();
+    OrderedMatrix {
+        w: BLUE_SIDE,
+        h: BLUE_SIDE,
+        thresholds: CELL.get_or_init(blue_thresholds).clone(),
+    }
+}
+
 pub const YLILUOMA_CANDIDATES: usize = 48;
 
 #[derive(Debug, Clone)]
 pub enum Dither {
     None,
     Ordered(OrderedMatrix),
-    Yliluoma { matrix: OrderedMatrix, candidates: usize },
+    Yliluoma {
+        matrix: OrderedMatrix,
+        candidates: usize,
+        levels: Option<usize>,
+    },
     Diffusion { kernel: Kernel, serpentine: bool },
 }
 
@@ -237,8 +364,10 @@ pub fn quantize_with_progress(
         Dither::Yliluoma {
             matrix: m,
             candidates,
+            levels,
         } => {
-            let n = m.w * m.h;
+            let cells_n = m.w * m.h;
+            let n = levels.unwrap_or(cells_n).clamp(1, cells_n);
             let mut cache: HashMap<[u16; 3], Vec<usize>> = HashMap::new();
             let mut edge_cache: HashMap<[u16; 3], Vec<usize>> = HashMap::new();
             for z in 0..h {
@@ -258,7 +387,8 @@ pub fn quantize_with_progress(
                     let plan = store
                         .entry(key)
                         .or_insert_with(|| mixing_plan(linear_to_oklab(lin), q, n, *candidates));
-                    let slot = m.thresholds[(z % m.h) * m.w + (x % m.w)] as usize - 1;
+                    let rank = m.thresholds[(z % m.h) * m.w + (x % m.w)] as usize - 1;
+                    let slot = rank * n / cells_n;
                     let e = &q.entries[plan[slot.min(n - 1)]];
                     cells[z * w + x] = Some((e.color_id, e.tone));
                 }
@@ -454,6 +584,7 @@ mod tests {
             &Dither::Yliluoma {
                 matrix: bayer4(),
                 candidates: YLILUOMA_CANDIDATES,
+                levels: None,
             },
             None,
         );
@@ -568,6 +699,7 @@ mod tests {
             Dither::Yliluoma {
                 matrix: bayer4(),
                 candidates: YLILUOMA_CANDIDATES,
+                levels: None,
             },
             Dither::Diffusion {
                 kernel: FLOYD_STEINBERG,
@@ -650,6 +782,78 @@ mod tests {
             Tone::Light,
             "fixture must be able to tell them apart"
         );
+    }
+
+    #[test]
+    fn blue16_ranks_are_a_permutation() {
+        let m = blue16();
+        assert_eq!((m.w, m.h), (16, 16));
+        let mut t: Vec<u32> = m.thresholds.iter().map(|v| *v as u32).collect();
+        t.sort_unstable();
+        let want: Vec<u32> = (1..=256).collect();
+        assert_eq!(t, want);
+    }
+
+    #[test]
+    fn blue16_half_pattern_avoids_clumps() {
+        let m = blue16();
+        let s = m.w;
+        let on: Vec<bool> = m.thresholds.iter().map(|t| *t <= 128.0).collect();
+        let mut same = 0usize;
+        let mut pairs = 0usize;
+        for y in 0..s {
+            for x in 0..s {
+                for (nx, ny) in [((x + 1) % s, y), (x, (y + 1) % s)] {
+                    pairs += 1;
+                    if on[y * s + x] == on[ny * s + nx] {
+                        same += 1;
+                    }
+                }
+            }
+        }
+        let frac = same as f32 / pairs as f32;
+        assert!(frac < 0.45, "half pattern clumps like white noise: {frac}");
+    }
+
+    #[test]
+    fn blue16_low_ranks_spread_out() {
+        let m = blue16();
+        let s = m.w as isize;
+        let pts: Vec<(isize, isize)> = (0..m.thresholds.len())
+            .filter(|i| m.thresholds[*i] <= 16.0)
+            .map(|i| ((i % m.w) as isize, (i / m.w) as isize))
+            .collect();
+        assert_eq!(pts.len(), 16);
+        for (i, a) in pts.iter().enumerate() {
+            for b in pts.iter().skip(i + 1) {
+                let dx = (a.0 - b.0).abs().min(s - (a.0 - b.0).abs());
+                let dy = (a.1 - b.1).abs().min(s - (a.1 - b.1).abs());
+                assert!(
+                    dx * dx + dy * dy >= 4,
+                    "ranks 1..16 should not touch: {a:?} vs {b:?}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn yliluoma_over_blue16_leaves_exact_colors_alone() {
+        let (d, p) = small_palette();
+        let white = d.color(8).unwrap().tones.light;
+        let img = flat_image(16, 16, [white[0], white[1], white[2], 255]);
+        let g = quantize(
+            &img,
+            &p,
+            &Dither::Yliluoma {
+                matrix: blue16(),
+                candidates: YLILUOMA_CANDIDATES,
+                levels: None,
+            },
+            None,
+        );
+        for c in &g.cells {
+            assert_eq!(*c, Some((8, Tone::Light)));
+        }
     }
 
     #[test]

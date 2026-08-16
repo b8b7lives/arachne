@@ -3,7 +3,6 @@ import fs from "node:fs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
-import WebSocket from "ws";
 
 const BROWSERS = ["chromium", "chromium-browser", "google-chrome"];
 
@@ -57,14 +56,14 @@ export async function withBrowser({ width = 1500, height = 1400 } = {}, fn) {
   try {
     chrome = launch(profile, width, height);
     const page = await firstPage(await devtoolsPort(profile));
-    const ws = new WebSocket(page.webSocketDebuggerUrl, { maxPayload: 256 * 1024 * 1024 });
+    const ws = new WebSocket(page.webSocketDebuggerUrl);
     const pending = new Map();
     const handlers = new Map();
     const logs = [];
     let id = 0;
 
-    ws.on("message", (raw) => {
-      const m = JSON.parse(raw);
+    ws.addEventListener("message", (ev) => {
+      const m = JSON.parse(ev.data);
       if (m.id && pending.has(m.id)) {
         pending.get(m.id)(m);
         pending.delete(m.id);
@@ -94,13 +93,13 @@ export async function withBrowser({ width = 1500, height = 1400 } = {}, fn) {
       for (const [, settle] of pending) settle({ error: { message: why } });
       pending.clear();
     };
-    ws.on("close", () => failPending("devtools websocket closed, the browser or tab died"));
-    ws.on("error", (e) => failPending(`devtools websocket error: ${e.message}`));
+    ws.addEventListener("close", () => failPending("devtools websocket closed, the browser or tab died"));
+    ws.addEventListener("error", (e) => failPending(`devtools websocket error: ${e.message ?? "socket error"}`));
 
     await new Promise((resolve, reject) => {
       const t = setTimeout(() => reject(new Error("devtools websocket never opened")), 15000);
-      ws.on("open", () => { clearTimeout(t); resolve(); });
-      ws.on("error", (e) => { clearTimeout(t); reject(e); });
+      ws.addEventListener("open", () => { clearTimeout(t); resolve(); });
+      ws.addEventListener("error", (e) => { clearTimeout(t); reject(new Error(e.message ?? "websocket error")); });
     });
     await send("Runtime.enable");
     await send("Log.enable");

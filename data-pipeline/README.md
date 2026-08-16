@@ -49,5 +49,12 @@ independent sources in
 
 ## Dependencies
 
-Python 3.11+ and [Pillow](https://pypi.org/project/pillow/) (atlas
-generation only). No other third-party packages.
+Run the two image scripts with [uv](https://docs.astral.sh/uv/), the
+estate's standard Python runner; their inline script metadata pins
+Pillow so no environment setup or system package is needed:
+
+    uv run build-blocks.py
+    uv run build-atlas.py
+
+The other scripts are stdlib only and run under either `uv run` or
+plain `python3`.

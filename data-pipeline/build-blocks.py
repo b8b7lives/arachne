@@ -1,3 +1,7 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["pillow"]
+# ///
 import collections
 import csv
 import io
@@ -108,6 +112,10 @@ def tag_members(zf, tag, seen=None, kind="block"):
 
 UNKNOWN_GATES = set()
 
+# Yield-boost tool tags, reviewed: guard shard/count branches only, so the
+# pessimistic silk classification for self-drop is correct. minecraft#26.
+REVIEWED_TOOL_TAGS = {"#minecraft:cluster_max_harvestables"}
+
 def gates_of(cond):
     """Which tool satisfies a match_tool condition: 'shears' or 'silk'.
 
@@ -129,6 +137,8 @@ def gates_of(cond):
     if "silk_touch" in json.dumps(pred.get("predicates", {})):
         out.add("silk")
     if not out:
+        if isinstance(items, str) and items in REVIEWED_TOOL_TAGS and not pred.get("predicates"):
+            return {"silk"}
         UNKNOWN_GATES.add(json.dumps(pred, sort_keys=True)[:80])
         return {"silk"}
     return out

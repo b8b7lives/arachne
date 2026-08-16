@@ -1,0 +1,32 @@
+name: Bug report
+description: Something in Arachne looks wrong or broken.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you got instead.
+    validations:
+      required: true
+  - type: input
+    id: build
+    attributes:
+      label: Build
+      description: The build stamp from the very bottom of the page, like "d9afaa3 · 2026-08-14".
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Browser and system
+      placeholder: Firefox on Windows 11
+    validations:
+      required: false
+  - type: textarea
+    id: settings
+    attributes:
+      label: Settings export
+      description: If you can, use "copy settings" in Import / export and paste the result here. It carries your whole setup and makes the problem reproducible.
+    validations:
+      required: false

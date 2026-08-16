@@ -1,6 +1,7 @@
 import type {
   AuditDto, CandidateBlock, ExportOpts, GenerateOpts, GenerateResult,
-  Adjust, MapColor, MarginalErrors, OwnedTool, RankedDto, SharedPalette, SolverConfig, TierMeta,
+  Adjust, HeightCapOpts, HeightCapResult, MapColor, MarginalErrors, OwnedTool, RankedDto,
+  SharedPalette, SolverConfig, TierMeta,
   ToolMeta,
   SupportTotals, ViewModel, WorkerResponse,
 } from "./types";
@@ -223,7 +224,7 @@ const FIELDS: [string, "value" | "checked"][] = [
   ["alpha-threshold", "value"],
   ["crop-zoom", "value"], ["crop-x", "value"], ["crop-y", "value"],
   ["dither", "value"], ["dbs-refine", "checked"], ["game-version", "value"],
-  ["height-mode", "value"], ["cliff-cap", "value"],
+  ["height-mode", "value"], ["cliff-cap", "value"], ["max-height", "value"],
   ["support-mode", "value"], ["support-block", "value"], ["grid-overlay", "checked"],
   ["split-export", "checked"], ["first-map-id", "value"], ["borrow-edge", "checked"],
   ["mapdat-on", "checked"], ["sheet-on", "checked"],
@@ -842,7 +843,10 @@ function applySettingsFile(doc: SettingsFile) {
   syncCropControls();
   syncMapdatControls();
   syncAdjustControls();
+  honorAlphaUser = null;
   syncBackgroundControls();
+  syncHeightControls();
+  persist();
   void refreshSolver();
   scheduleGenerate();
   const stale = doc.data_version && doc.data_version !== dataVersion
@@ -2154,7 +2158,7 @@ function renderSummary() {
   const wear = new Map<number, number>();
   const toolTicks = new Map<number, number>();
   const lines: { name: string; color: string; shown: number; r: RankedDto | null;
-    totalTicks: number | null }[] = [];
+    totalTicks: number | null; title?: string }[] = [];
   syncMaterialsScope();
   refreshSupportTotals();
   const { counts, scope } = materialsBasis();
@@ -2195,15 +2199,19 @@ function renderSummary() {
       : supportTotals.whole;
     if (fillerCount) {
       const id = ($("support-block") as HTMLInputElement).value.trim() || "netherrack";
+      const perPanel = scope && basisSel && basisSel.value !== "build";
+      const title = perPanel && !checked("borrow-edge")
+        ? "includes the reference row this panel stands on when built alone"
+        : undefined;
       lines.push({ name: fillerLabel(id), color: "", shown: fillerCount,
-        r: null, totalTicks: null });
+        r: null, totalTicks: null, title });
     }
   }
   lines.sort((a, b) =>
     (b.totalTicks ?? -1) - (a.totalTicks ?? -1) || b.shown - a.shown
     || a.name.localeCompare(b.name));
   const rows = lines.map((l) =>
-    `<tr><td>${l.name}</td>` +
+    `<tr><td${l.title ? ` title="${l.title}"` : ""}>${l.name}</td>` +
     `<td class="dim">${l.color}</td>` +
     `<td class="num" title="${countTitle(l.shown)}">${countText(l.shown)}</td>` +
     `<td class="num">${(l.shown / SHULKER).toFixed(2)}</td>` +
@@ -2599,6 +2607,8 @@ const ADJUST_DEFS: [string, number][] = [
 ];
 
 let sourceHasAlpha = false;
+let mapsTouched = false;
+let honorAlphaUser: boolean | null = null;
 
 function bgApplies(): boolean {
   return sourceHasAlpha || fitMode() === "contain";
@@ -2616,15 +2626,22 @@ function syncBackgroundControls() {
   const applies = bgApplies();
   $("background-row").hidden = !applies;
   if (!applies) return;
+  const honor = $("honor-alpha") as HTMLInputElement;
+  const contain = fitMode() === "contain";
+  if (honorAlphaUser === null) honorAlphaUser = honor.checked;
+  honor.disabled = contain;
+  honor.checked = contain || honorAlphaUser;
   const mode = ($("bg-mode") as HTMLSelectElement).value;
-  $("alpha-threshold-row").hidden =
-    mode !== "off" || !(checked("honor-alpha") || fitMode() === "contain");
+  const honored = honor.checked;
+  $("alpha-threshold-row").hidden = mode !== "off" || !honored;
   const why = sourceHasAlpha ? "your picture has see-through parts" : "padding leaves see-through bars";
-  $("bg-note").textContent = mode === "off"
-    ? `${why}, so they place no blocks`
-    : mode === "smooth"
+  $("bg-note").textContent = mode !== "off"
+    ? mode === "smooth"
       ? "filled with the closest color a map can make, so it stays one flat block"
-      : "filled with your color, dithered like the rest of the picture";
+      : "filled with your color, dithered like the rest of the picture"
+    : honored
+      ? `${why}, so they place no blocks`
+      : `${why}, and with transparency off they match like solid pixels and mostly come out dark. Turn it on or pick a fill`;
 }
 
 function adjustOpts(): Adjust | undefined {
@@ -2710,6 +2727,242 @@ function fittedRgba(): { data: Uint8ClampedArray; width: number; height: number 
   return { data: img.data, width: img.width, height: img.height };
 }
 
+const DITHER_MODES: { value: string; name: string; desc: string; adv: boolean }[] = [
+  { value: "none", name: "none",
+    desc: "every pixel snaps to its closest map color. Sharp edges, banded gradients", adv: false },
+  { value: "floyd_steinberg", name: "Floyd-Steinberg",
+    desc: "smooth error diffusion, the usual default", adv: false },
+  { value: "atkinson", name: "Atkinson",
+    desc: "lighter diffusion that keeps highlights clean", adv: false },
+  { value: "yliluoma_bayer4", name: "Yliluoma 4×4",
+    desc: "mixes the closest colors in a fixed grid. Truest color at display distance; the grid shows up close", adv: false },
+  { value: "yliluoma_blue16", name: "Yliluoma blue noise",
+    desc: "the same color mixing as irregular grain. Reads organic, like film", adv: false },
+  { value: "min_avg_err", name: "Jarvis",
+    desc: "error diffusion with a wider spread; close to Floyd-Steinberg", adv: true },
+  { value: "burkes", name: "Burkes",
+    desc: "error diffusion variant; close to Floyd-Steinberg", adv: true },
+  { value: "sierra_lite", name: "Sierra Lite",
+    desc: "error diffusion variant; close to Floyd-Steinberg", adv: true },
+  { value: "stucki", name: "Stucki",
+    desc: "error diffusion variant; close to Floyd-Steinberg", adv: true },
+  { value: "bayer2", name: "Ordered 2×2",
+    desc: "classic threshold pattern, no color mixing. Weak on smooth gradients", adv: true },
+  { value: "ordered3", name: "Ordered 3×3",
+    desc: "classic threshold pattern, no color mixing. Weak on smooth gradients", adv: true },
+  { value: "bayer4", name: "Ordered 4×4",
+    desc: "classic threshold pattern, no color mixing. Weak on smooth gradients", adv: true },
+  { value: "yliluoma_bayer2", name: "Yliluoma 2×2",
+    desc: "color mixing on the smallest pattern; coarser mixes than the 4×4", adv: true },
+  { value: "yliluoma_ordered3", name: "Yliluoma 3×3",
+    desc: "color mixing on a 3×3 pattern", adv: true },
+];
+const DITHER_SAMPLE_W = 72;
+const DITHER_SAMPLE_H = 24;
+const ditherChips = new Map<string, ImageData>();
+let ditherSampleKey = "";
+let ditherSampleBusy = false;
+let ditherHot = -1;
+
+function ditherSel(): HTMLSelectElement {
+  return $("dither") as HTMLSelectElement;
+}
+
+function paintChip(cv: HTMLCanvasElement, img: ImageData | undefined) {
+  if (img) cv.getContext("2d")!.putImageData(img, 0, 0);
+}
+
+function paintDitherChips() {
+  paintChip($("dither-btn-chip") as HTMLCanvasElement, ditherChips.get(ditherSel().value));
+  for (const cv of $("dither-drop").querySelectorAll<HTMLCanvasElement>("canvas[data-mode]")) {
+    paintChip(cv, ditherChips.get(cv.dataset.mode!));
+  }
+}
+
+async function refreshDitherSamples() {
+  const ids = usableIds();
+  if (!ids.length || ditherSampleBusy) return;
+  const key = JSON.stringify([ids, tonesFor()]);
+  if (key === ditherSampleKey) {
+    paintDitherChips();
+    return;
+  }
+  ditherSampleBusy = true;
+  try {
+    const buf = await rpc<ArrayBuffer>({
+      cmd: "dither_samples",
+      opts: {
+        modes: DITHER_MODES.map((m) => m.value),
+        enabled_color_ids: ids,
+        tones: tonesFor(),
+        width: DITHER_SAMPLE_W,
+        height: DITHER_SAMPLE_H,
+      },
+    });
+    const bytes = new Uint8ClampedArray(buf);
+    const per = DITHER_SAMPLE_W * DITHER_SAMPLE_H * 4;
+    DITHER_MODES.forEach((m, i) => {
+      ditherChips.set(
+        m.value,
+        new ImageData(bytes.slice(i * per, (i + 1) * per), DITHER_SAMPLE_W, DITHER_SAMPLE_H));
+    });
+    ditherSampleKey = key;
+    paintDitherChips();
+  } catch {
+    /* a starved palette has no samples; chips keep their last paint */
+  } finally {
+    ditherSampleBusy = false;
+  }
+}
+
+function ditherRows(): HTMLElement[] {
+  return [...$("dither-drop").querySelectorAll<HTMLElement>(".picker-row")];
+}
+
+function syncDitherButton() {
+  const m = DITHER_MODES.find((x) => x.value === ditherSel().value);
+  $("dither-btn-name").textContent = m?.name ?? ditherSel().value;
+  paintChip($("dither-btn-chip") as HTMLCanvasElement, ditherChips.get(ditherSel().value));
+  for (const row of ditherRows()) {
+    row.setAttribute("aria-selected", String(row.dataset.value === ditherSel().value));
+  }
+}
+
+function buildDitherDrop() {
+  const drop = $("dither-drop");
+  if (drop.childElementCount) return;
+  let advDone = false;
+  for (const m of DITHER_MODES) {
+    if (m.adv && !advDone) {
+      const g = document.createElement("div");
+      g.className = "picker-group";
+      g.textContent = "advanced";
+      drop.append(g);
+      advDone = true;
+    }
+    const row = document.createElement("div");
+    row.className = "picker-row dither-row";
+    row.setAttribute("role", "option");
+    row.dataset.value = m.value;
+    const cv = document.createElement("canvas");
+    cv.className = "dither-chip";
+    cv.width = DITHER_SAMPLE_W;
+    cv.height = DITHER_SAMPLE_H;
+    cv.dataset.mode = m.value;
+    const name = document.createElement("span");
+    name.className = "dither-name";
+    name.textContent = m.name;
+    const desc = document.createElement("span");
+    desc.className = "dither-desc";
+    desc.textContent = m.desc;
+    row.append(cv, name, desc);
+    row.onclick = () => pickDither(m.value);
+    drop.append(row);
+  }
+}
+
+function highlightDither() {
+  ditherRows().forEach((r, i) => r.classList.toggle("hot", i === ditherHot));
+  if (ditherHot >= 0) ditherRows()[ditherHot]?.scrollIntoView({ block: "nearest" });
+}
+
+function openDitherDrop() {
+  buildDitherDrop();
+  $("dither-drop").hidden = false;
+  $("dither-btn").setAttribute("aria-expanded", "true");
+  ditherHot = ditherRows().findIndex((r) => r.dataset.value === ditherSel().value);
+  highlightDither();
+  syncDitherButton();
+  void refreshDitherSamples();
+}
+
+function closeDitherDrop() {
+  $("dither-drop").hidden = true;
+  $("dither-btn").setAttribute("aria-expanded", "false");
+}
+
+function pickDither(value: string) {
+  ditherSel().value = value;
+  ditherSel().dispatchEvent(new Event("change", { bubbles: true }));
+  closeDitherDrop();
+  ($("dither-btn") as HTMLButtonElement).focus();
+}
+
+let heightCap: HeightCapResult | null = null;
+
+function maxHeightValue(): number | null {
+  if (($("height-mode") as HTMLSelectElement).value === "flat") return null;
+  const raw = ($("max-height") as HTMLInputElement).value;
+  if (raw === "") return null;
+  return Math.max(0, Math.round(Number(raw)));
+}
+
+function renderCapNote() {
+  const el = $("max-height-note");
+  if (!heightCap || ($("height-mode") as HTMLSelectElement).value === "flat") {
+    el.textContent = "";
+    return;
+  }
+  const cap = maxHeightValue();
+  const peak = heightCap.natural_peak;
+  if (cap === null) {
+    el.textContent = `staircases up to ${peak} tall on its own`;
+    return;
+  }
+  if (cap >= peak || heightCap.edited_cells === 0) {
+    el.textContent = `already fits: this picture staircases ${peak} tall`;
+    return;
+  }
+  const pct = heightCap.de_base > 0
+    ? (heightCap.de_capped / heightCap.de_base - 1) * 100
+    : 0;
+  const cost = pct < 0.5
+    ? "no visible cost from a few blocks back"
+    : `picture error up about ${pct.toFixed(pct < 10 ? 1 : 0)}%`;
+  const flatHint = cap === 0
+    ? ". A cap of 0 is a flat build; the flat height mode makes a better flat version"
+    : "";
+  el.textContent =
+    `recolored ${heightCap.edited_cells} blocks to fit under ${cap}; ${cost}${flatHint}`;
+}
+
+function syncHeightControls() {
+  const flat = ($("height-mode") as HTMLSelectElement).value === "flat";
+  $("max-height-label").hidden = flat;
+  $("cliff-cap-label").hidden = flat;
+  renderCapNote();
+}
+
+async function applyHeightCap(repaint: boolean) {
+  if (!genResult) return;
+  const capRaw = ($("cliff-cap") as HTMLInputElement).value;
+  const opts: HeightCapOpts = {
+    max_height: maxHeightValue(),
+    cliff_cap: capRaw ? Number(capRaw) : null,
+    enabled_color_ids: usableIds(),
+    tones: tonesFor(),
+  };
+  if (repaint) status("fitting the height cap");
+  try {
+    heightCap = await rpc<HeightCapResult>({ cmd: "height_cap", opts });
+  } catch {
+    heightCap = null;
+    renderCapNote();
+    if (repaint && source) status(source.name);
+    return;
+  }
+  ($("max-height") as HTMLInputElement).max = String(heightCap.natural_peak);
+  supportTotalsSig = null;
+  renderCapNote();
+  if (repaint && genResult) {
+    const preview = await rpc<ArrayBuffer>({ cmd: "preview" });
+    paintPreview(
+      new ImageData(new Uint8ClampedArray(preview), genResult.width, genResult.height));
+    renderSummary();
+    if (source) status(source.name);
+  }
+}
+
 let genTimer: ReturnType<typeof setTimeout> | undefined;
 let generating = false;
 let queued = false;
@@ -2754,11 +3007,13 @@ async function generate() {
       [buf],
     );
     generateSeq += 1;
+    await applyHeightCap(false);
     const preview = await rpc<ArrayBuffer>({ cmd: "preview" });
     paintPreview(
       new ImageData(new Uint8ClampedArray(preview), genResult.width, genResult.height));
     ($("export-download") as HTMLButtonElement).disabled = false;
     ($("view-build") as HTMLButtonElement).disabled = false;
+    ($("view-build-export") as HTMLButtonElement).disabled = false;
     status(source.name);
     updatePreviewMeta();
     await refreshSolver();
@@ -2778,6 +3033,7 @@ async function generate() {
     supportTotalsSig = null;
     ($("export-download") as HTMLButtonElement).disabled = true;
     ($("view-build") as HTMLButtonElement).disabled = true;
+    ($("view-build-export") as HTMLButtonElement).disabled = true;
     renderPalette();
     status(String(e).replace(/^Error:\s*/, ""));
   } finally {
@@ -2802,7 +3058,7 @@ async function loadFile(f: File) {
     return;
   }
   source = { bmp, name: f.name };
-  suggestRatio();
+  if (!mapsTouched) suggestRatio();
   updatePreviewMeta();
   status(`${f.name}: ${bmp.width}×${bmp.height}`);
   scheduleGenerate();
@@ -3090,6 +3346,9 @@ async function boot() {
   syncCropControls();
   syncAdjustControls();
   syncBackgroundControls();
+  syncHeightControls();
+  syncDitherButton();
+  void refreshDitherSamples();
   syncMapdatControls();
   syncFillerUi();
   setPreviewHidden(previewHidden);
@@ -3155,8 +3414,14 @@ async function boot() {
     if (f?.type.startsWith("image/")) void loadFile(f);
   });
 
-  $("maps-w").onchange = () => { suggestRatio(); updatePreviewMeta(); persist(); scheduleGenerate(); };
-  $("maps-h").onchange = () => { updatePreviewMeta(); persist(); scheduleGenerate(); };
+  $("maps-w").onchange = () => {
+    mapsTouched = true;
+    suggestRatio(); updatePreviewMeta(); persist(); scheduleGenerate();
+  };
+  $("maps-h").onchange = () => {
+    mapsTouched = true;
+    updatePreviewMeta(); persist(); scheduleGenerate();
+  };
   $("fit").onchange = () => {
     syncCropControls(); syncBackgroundControls(); updatePreviewMeta();
     persist(); scheduleGenerate();
@@ -3198,6 +3463,7 @@ async function boot() {
     syncAdjustControls(); persist(); scheduleGenerate();
   };
   $("honor-alpha").onchange = () => {
+    honorAlphaUser = checked("honor-alpha");
     const bg = $("bg-mode") as HTMLSelectElement;
     if (checked("honor-alpha") && bg.value !== "off") {
       bg.value = "off";
@@ -3220,17 +3486,51 @@ async function boot() {
     };
   }
   $("dither").onchange = $("dbs-refine").onchange =
-    () => { persist(); scheduleGenerate(); };
+    () => { persist(); syncDitherButton(); scheduleGenerate(); };
+  const dbtn = $("dither-btn") as HTMLButtonElement;
+  dbtn.onclick = () => {
+    if ($("dither-drop").hidden) openDitherDrop();
+    else closeDitherDrop();
+  };
+  dbtn.onkeydown = (ev) => {
+    if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+      ev.preventDefault();
+      if ($("dither-drop").hidden) {
+        openDitherDrop();
+        return;
+      }
+      const n = ditherRows().length;
+      ditherHot = ev.key === "ArrowDown" ? (ditherHot + 1) % n : (ditherHot - 1 + n) % n;
+      highlightDither();
+    } else if (ev.key === "Enter" && !$("dither-drop").hidden) {
+      ev.preventDefault();
+      const row = ditherRows()[ditherHot];
+      if (row?.dataset.value) pickDither(row.dataset.value);
+    } else if (ev.key === "Escape") {
+      closeDitherDrop();
+    }
+  };
+  document.addEventListener("click", (ev) => {
+    if (!$("dither-drop").hidden && !(ev.target as Element).closest?.(".dither-picker")) {
+      closeDitherDrop();
+    }
+  });
   $("game-version").onchange = () => { persist(); syncFillerUi(); refreshSolver(); };
-  $("height-mode").onchange = () => { renderPalette(); scheduleGenerate(); };
+  $("height-mode").onchange = () => { renderPalette(); syncHeightControls(); scheduleGenerate(); };
+  $("max-height").onchange = () => {
+    const el = $("max-height") as HTMLInputElement;
+    if (el.value !== "") clampNumberField(el);
+    persist();
+    void applyHeightCap(true);
+  };
   $("support-mode").onchange = () => {
     renderFillerNotice();
     syncFillerUi();
     persist();
     if (genResult) renderSummary();
   };
-  $("cliff-cap").onchange =
-    $("borrow-edge").onchange = () => { persist(); if (genResult) renderSummary(); };
+  $("cliff-cap").onchange = () => { persist(); void applyHeightCap(true); };
+  $("borrow-edge").onchange = () => { persist(); if (genResult) renderSummary(); };
   $("split-export").onchange = $("export-name").onchange = () => persist();
   const fillerSearch = $("filler-search") as HTMLInputElement;
   fillerSearch.onfocus = () => { fillerSearch.select(); renderFillerDrop(); };
@@ -3288,7 +3588,7 @@ async function boot() {
     persist();
   };
   $("export-download").onclick = () => void exportDownload();
-  $("view-build").onclick = () => void viewBuild();
+  $("view-build").onclick = $("view-build-export").onclick = () => void viewBuild();
   $("colors-all").onclick = () => { colors.forEach((c) => enabled.add(c.id)); renderPalette(); scheduleGenerate(); };
   $("colors-none").onclick = () => { enabled.clear(); renderPalette(); scheduleGenerate(); };
   $("haste").onchange = () => { syncHasteNote(); void refreshSolver(); };

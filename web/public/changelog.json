@@ -1,42 +1,55 @@
 {
-  "builds": [
-    {
-      "id": "2026-08-14-blossom",
-      "date": "2026-08-14",
-      "line": "a Communities section, starting with BlossomCraft",
-      "notes": [
-        "The About panel has a Communities section now. First resident: BlossomCraft, where I play and build my map art. If you enjoy map art, come build with us at blossomcraft.org."
-      ]
-    },
-    {
-      "id": "2026-08-14-community",
-      "date": "2026-08-14",
-      "line": "the community server opens, and release notes get a feed",
-      "notes": [
-        "Arachne has a community Discord now. The invite lives at b8b7.live/discord, and the About panel links it. Show off what you built or come ask questions.",
-        "Release notes are also a feed now, at b8b7.live/arachne/feed.xml. Any feed reader can follow along.",
-        "Search engines and link previews now get proper metadata: a page title, a description, and a preview card. These are static tags in the page itself, not code. They collect nothing, and the no-tracking stance is unchanged."
-      ]
-    },
-    {
-      "id": "2026-08-14-filler",
-      "date": "2026-08-14",
-      "line": "filler counts in your materials list, a proper filler picker, and this changelog",
-      "notes": [
-        "The Summary and the build sheet count filler as its own row, for the whole build or one panel, so what you farm matches what you place.",
-        "Filler moved to its own section in Source, with a searchable picker that shows sprites, lists your palette's blocks first, and only offers blocks that actually work as filler.",
-        "The picker follows the game version you export for. A filler pick that version does not have is flagged, and the export waits until you fix it.",
-        "The header grew an About panel with quick links, a spider favicon, and this what's new panel. Updates land here; nothing about your visit is tracked."
-      ]
-    },
-    {
-      "id": "2026-08-13-beta",
-      "date": "2026-08-13",
-      "line": "the beta opens",
-      "notes": [
-        "Public beta at b8b7.live/arachne, source on GitHub.",
-        "Transparency handling verified against a real in-game build."
-      ]
-    }
-  ]
+ "builds": [
+  {
+   "id": "2026-08-16-height-and-dither",
+   "date": "2026-08-16",
+   "line": "a max height cap, a dither picker with live samples, and a smaller download",
+   "notes": [
+    "You can cap how tall the staircased build stands. Arachne reports how tall the picture wants to be, recolors the fewest blocks it can to fit under your cap, and tells you what the squeeze costs in picture accuracy. Most pictures give up very little: a sky that wants to climb 100 blocks usually fits under 20 for a few percent.",
+    "The dither menu is a real picker now. Every mode shows a live sample made from your own enabled palette, so you can see the difference between smooth diffusion, grid mixing, and film grain before choosing. A new mode, Yliluoma blue noise, holds color like the 4×4 mix and reads like film grain.",
+    "The preview panel grew tidy controls, and view the build now sits right under the preview as well as next to download.",
+    "Material lists for standalone panels now include the reference row the panel stands on. Earlier lists ran up to 128 filler blocks short per panel; side by side builds were always correct.",
+    "The app is about 20 KB smaller to download. Big photos no longer strain memory, and imported settings save the moment they load.",
+    "Height modes are named the way players say them: staircased (3D) and flat (2D)."
+   ]
+  },
+  {
+   "id": "2026-08-14-blossom",
+   "date": "2026-08-14",
+   "line": "a Communities section, starting with BlossomCraft",
+   "notes": [
+    "The About panel has a Communities section now. First resident: BlossomCraft, where I play and build my map art. If you enjoy map art, come build with us at blossomcraft.org."
+   ]
+  },
+  {
+   "id": "2026-08-14-community",
+   "date": "2026-08-14",
+   "line": "the community server opens, and release notes get a feed",
+   "notes": [
+    "Arachne has a community Discord now. The invite lives at b8b7.live/discord, and the About panel links it. Show off what you built or come ask questions.",
+    "Release notes are also a feed now, at b8b7.live/arachne/feed.xml. Any feed reader can follow along.",
+    "Search engines and link previews now get proper metadata: a page title, a description, and a preview card. These are static tags in the page itself, not code. They collect nothing, and the no-tracking stance is unchanged."
+   ]
+  },
+  {
+   "id": "2026-08-14-filler",
+   "date": "2026-08-14",
+   "line": "filler counts in your materials list, a proper filler picker, and this changelog",
+   "notes": [
+    "The Summary and the build sheet count filler as its own row, for the whole build or one panel, so what you farm matches what you place.",
+    "Filler moved to its own section in Source, with a searchable picker that shows sprites, lists your palette's blocks first, and only offers blocks that actually work as filler.",
+    "The picker follows the game version you export for. A filler pick that version does not have is flagged, and the export waits until you fix it.",
+    "The header grew an About panel with quick links, a spider favicon, and this what's new panel. Updates land here; nothing about your visit is tracked."
+   ]
+  },
+  {
+   "id": "2026-08-13-beta",
+   "date": "2026-08-13",
+   "line": "the beta opens",
+   "notes": [
+    "Public beta at b8b7.live/arachne, source on GitHub.",
+    "Transparency handling verified against a real in-game build."
+   ]
+  }
+ ]
 }

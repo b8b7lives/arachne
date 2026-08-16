@@ -147,7 +147,7 @@
         <div class="subsection" id="background-row" hidden>
           <div class="sub-head">see-through parts</div>
           <div class="row">
-            <label title="transparent source pixels place no blocks at all, so no background color is needed">
+            <label title="transparent source pixels place no blocks at all, so no background color is needed. The pad fit keeps this on, because padding is always see-through">
               <input type="checkbox" id="honor-alpha" checked /> honor transparency</label>
             <label title="what fills the see-through parts of your picture instead of leaving holes in the build">fill
               <select id="bg-mode">
@@ -172,21 +172,34 @@
           <div class="sub-head">build</div>
           <div class="row">
             <label class="field-inline"><span class="field-name">dither</span>
-              <select id="dither">
+              <span class="picker dither-picker">
+              <select id="dither" class="dither-native" title="how colors between map colors are faked. Mixed modes hold color truest on a framed map seen from a few blocks; diffusion looks smoothest up close">
               <option value="none">none</option>
               <option value="floyd_steinberg" selected>Floyd-Steinberg</option>
-              <option value="min_avg_err">Jarvis</option>
-              <option value="burkes">Burkes</option>
-              <option value="sierra_lite">Sierra lite</option>
-              <option value="stucki">Stucki</option>
               <option value="atkinson">Atkinson</option>
-              <option value="bayer2">ordered 2×2</option>
-              <option value="bayer4">ordered 4×4</option>
-              <option value="ordered3">ordered 3×3</option>
-              <option value="yliluoma_bayer2">ordered 2×2 mixed (Yliluoma)</option>
-              <option value="yliluoma_bayer4">ordered 4×4 mixed (Yliluoma)</option>
-              <option value="yliluoma_ordered3">ordered 3×3 mixed (Yliluoma)</option>
+              <option value="yliluoma_bayer4">Yliluoma 4×4</option>
+              <option value="yliluoma_blue16">Yliluoma blue noise</option>
+              <optgroup label="advanced">
+                <option value="min_avg_err">Jarvis</option>
+                <option value="burkes">Burkes</option>
+                <option value="sierra_lite">Sierra Lite</option>
+                <option value="stucki">Stucki</option>
+                <option value="bayer2">Ordered 2×2</option>
+                <option value="ordered3">Ordered 3×3</option>
+                <option value="bayer4">Ordered 4×4</option>
+                <option value="yliluoma_bayer2">Yliluoma 2×2</option>
+                <option value="yliluoma_ordered3">Yliluoma 3×3</option>
+              </optgroup>
             </select>
+              <button type="button" id="dither-btn" class="dither-btn" aria-haspopup="listbox"
+                aria-expanded="false" aria-controls="dither-drop"
+                title="how colors between map colors are faked. Every mode shows a sample made with your own palette">
+                <canvas id="dither-btn-chip" class="dither-chip" width="72" height="24"></canvas>
+                <span id="dither-btn-name">Floyd-Steinberg</span>
+                <span class="caret">▾</span>
+              </button>
+              <div class="picker-drop dither-drop" id="dither-drop" role="listbox" hidden></div>
+              </span>
             </label>
             <label class="checkbox" title="Rearranges blocks to look right on a map framed a few blocks away. Slow, and slightly worse up close.">
               <input type="checkbox" id="dbs-refine" />refine for display (slow)</label>
@@ -194,12 +207,17 @@
           <div class="row">
             <label class="field-inline"><span class="field-name">height</span>
               <select id="height-mode">
-              <option value="stepped" selected>staircased</option>
-              <option value="flat">flat</option>
+              <option value="stepped" selected>staircased (3D)</option>
+              <option value="flat">flat (2D)</option>
             </select>
             </label>
-            <label id="cliff-cap-label" title="biggest height jump allowed between neighboring rows; blank = no limit (lowest possible build), 1 = classic flat-ish terraces">
+            <label id="cliff-cap-label" title="biggest height jump between neighboring rows. Blank allows any jump for the lowest possible build; 1 gives classic gentle terraces. This limits single steps; max height below limits the whole build">
               max step <input type="number" id="cliff-cap" value="" min="1" placeholder="any" /></label>
+            <label id="max-height-label" title="tallest the staircased build may stand, in blocks. Blank lets the picture staircase as tall as it wants. Lower is easier to build and recolors some blocks to fit; the note here reports what it costs">
+              max height <input type="number" id="max-height" value="" min="0" placeholder="any" /></label>
+          </div>
+          <div class="row">
+            <span class="note" id="max-height-note"></span>
           </div>
         </div>
         <details id="filler-section" open>
@@ -246,21 +264,22 @@
       <section id="preview-panel">
         <h2>Preview
           <span class="dim" id="preview-meta"></span>
-          <span class="preview-tools">
-            <button id="preview-toggle" class="mini preview-toggle"
-              title="collapse the preview panel">hide</button>
-            <span class="preview-zoom">
-            <button id="zoom-out" class="mini" title="zoom out">−</button>
-            <button id="zoom-fit" class="mini" title="fit the whole map in the panel">fit</button>
-            <button id="zoom-in" class="mini" title="zoom in; the preview grows over the page and keeps following your scroll">+</button>
-            <label class="mini-label" title="map panel boundaries, named the way the download names files"><input type="checkbox" id="grid-overlay" /> grid</label>
-            </span>
-            <button id="preview-place" class="mini"
-              title="sit the preview in the page under Source instead of the scrolling rail">into the page</button>
-            <button id="preview-popout" class="mini" hidden
-              title="open the preview in its own always-on-top window">pop out</button>
-          </span>
         </h2>
+        <div class="row preview-controls">
+          <span class="ctl-name">view</span>
+          <button id="preview-place" class="mini"
+            title="sit the preview in the page under Source instead of the scrolling rail">into the page</button>
+          <button id="preview-popout" class="mini" hidden
+            title="open the preview in its own always-on-top window">pop out</button>
+          <button id="preview-toggle" class="mini preview-toggle"
+            title="collapse the preview panel">hide</button>
+        </div>
+        <div class="row preview-controls preview-zoom">
+          <button id="zoom-out" class="mini" title="zoom out">−</button>
+          <button id="zoom-fit" class="mini" title="fit the whole map in the panel">fit</button>
+          <button id="zoom-in" class="mini" title="zoom in; the preview grows over the page and keeps following your scroll">+</button>
+          <label class="mini-label" title="map panel boundaries, named the way the download names files"><input type="checkbox" id="grid-overlay" /> grid</label>
+        </div>
         <div id="preview-slot">
           <div id="progress" class="progress idle" aria-hidden="true"><div id="progress-fill"></div></div>
           <div id="preview-wrap" title="click to load an image, or drag and drop or paste anywhere">
@@ -277,11 +296,16 @@
           <button id="preview-return">bring it back</button>
         </div>
         <p class="note" id="preview-hint">drag and drop or paste a picture anywhere on the page</p>
-        <div class="panel-utility">
-          <a class="mini jump" href="#export-panel">go to download</a>
-          <span class="spacer"></span>
-          <button id="reset-default" class="mini danger"
-            title="back to the starting loadout, palette, filters and settings. Your saved presets are kept">reset all settings</button>
+        <div class="panel-utility preview-utility">
+          <div class="utility-row">
+            <button id="view-build" class="mini" disabled
+              title="the whole schematic block by block: real textures, heights, and the exact blocks these settings pick. Nothing downloads and nothing leaves the page">view the build</button>
+            <a class="mini jump" href="#export-panel">go to download</a>
+          </div>
+          <div class="utility-row">
+            <button id="reset-default" class="mini danger"
+              title="back to the starting loadout, palette, filters and settings. Your saved presets are kept">reset all settings</button>
+          </div>
         </div>
       </section>
 
@@ -490,7 +514,7 @@
           before that. No blocks are placed, so block and teardown settings don't apply.</p>
         <div class="row">
           <button id="export-download" disabled title="one file, named what you named it: a vanilla structure .nbt that litematica and worldedit both read, zipped together with the rest when there is more than one">download</button>
-          <button id="view-build" disabled title="look at the schematic these settings produce, block by block, without downloading it">view the build</button>
+          <button id="view-build-export" disabled title="the whole schematic block by block: real textures, heights, and the exact blocks these settings pick. Nothing downloads and nothing leaves the page">view the build</button>
         </div>
         <p class="note">Every schematic includes a reference row along its
           north edge. Without it the map's top row renders a shade too bright, a

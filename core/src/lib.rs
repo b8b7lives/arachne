@@ -4,6 +4,7 @@ pub mod color;
 pub mod cost;
 pub mod data;
 pub mod dbs;
+pub mod heightcap;
 pub mod hints;
 pub mod image;
 pub mod mapdat;

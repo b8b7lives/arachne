@@ -4,15 +4,18 @@ use arachne_core::color::srgb_to_linear;
 use arachne_core::cost::Loadout;
 use arachne_core::data::BlockData;
 use arachne_core::dbs::{DbsConfig, refine_with_progress};
+use arachne_core::heightcap::{apply_height_cap, natural_peak};
 use arachne_core::hints::marginal_errors;
 use arachne_core::image::LinImage;
 use arachne_core::mapdat::mapdat_to_nbt;
+use arachne_core::metric::{Viewing, compare, grid_to_linear};
 use arachne_core::nbt::{read_root, write_root};
 use arachne_core::palette::{Palette, Tone};
 use arachne_core::quantize::{
     ATKINSON, BURKES, Dither, FLOYD_STEINBERG, Grid, Kernel, MIN_AVG_ERR, OrderedMatrix,
-    YLILUOMA_CANDIDATES,
-    SIERRA_LITE, STUCKI, Transparency, bayer2, bayer4, ordered3, quantize_with_progress,
+    YLILUOMA_CANDIDATES, blue16,
+    SIERRA_LITE, STUCKI, Transparency, bayer2, bayer4, ordered3, quantize,
+    quantize_with_progress,
 };
 use arachne_core::schem::{
     SchemConfig, SplitEdge, build_schem, missing_selection, schem_to_nbt, split_schem,
@@ -119,6 +122,7 @@ fn ordered_of(name: &str) -> Option<OrderedMatrix> {
         "bayer2" => bayer2(),
         "bayer4" => bayer4(),
         "ordered3" => ordered3(),
+        "blue16" => blue16(),
         _ => return None,
     })
 }
@@ -128,9 +132,11 @@ fn dither_of(name: &str, serpentine: bool) -> Result<Dither, String> {
         return Ok(Dither::None);
     }
     if let Some(m) = name.strip_prefix("yliluoma_").and_then(ordered_of) {
+        let levels = (m.w * m.h > 64).then_some(64);
         return Ok(Dither::Yliluoma {
             matrix: m,
             candidates: YLILUOMA_CANDIDATES,
+            levels,
         });
     }
     if let Some(m) = ordered_of(name) {
@@ -140,6 +146,23 @@ fn dither_of(name: &str, serpentine: bool) -> Result<Dither, String> {
         return Ok(Dither::Diffusion { kernel, serpentine });
     }
     Err(format!("unknown dither: {name}"))
+}
+
+const COMPARE_MAX_SIDE: usize = 512;
+
+fn shrink_for_compare(
+    a: &LinImage,
+    b: &LinImage,
+    c: &LinImage,
+) -> (LinImage, LinImage, LinImage) {
+    let side = a.width.max(a.height);
+    if side <= COMPARE_MAX_SIDE {
+        return (a.clone(), b.clone(), c.clone());
+    }
+    let f = COMPARE_MAX_SIDE as f64 / side as f64;
+    let w = ((a.width as f64 * f).round() as usize).max(1);
+    let h = ((a.height as f64 * f).round() as usize).max(1);
+    (a.resize_area(w, h), b.resize_area(w, h), c.resize_area(w, h))
 }
 
 fn gzip(bytes: &[u8]) -> Vec<u8> {
@@ -165,7 +188,35 @@ pub struct Session {
     data: BlockData,
     img: Option<LinImage>,
     grid: Option<Grid>,
+    base_grid: Option<Grid>,
     threshold: Option<f32>,
+}
+
+#[derive(Deserialize)]
+struct DitherSampleOpts {
+    modes: Vec<String>,
+    enabled_color_ids: Vec<u8>,
+    tones: Vec<Tone>,
+    width: usize,
+    height: usize,
+}
+
+#[derive(Deserialize)]
+struct HeightCapOpts {
+    max_height: Option<u32>,
+    cliff_cap: Option<u32>,
+    enabled_color_ids: Vec<u8>,
+    tones: Vec<Tone>,
+}
+
+#[derive(Serialize)]
+struct HeightCapResult {
+    natural_peak: u32,
+    edited_cells: u32,
+    edited_columns: u32,
+    infeasible_columns: u32,
+    de_base: f32,
+    de_capped: f32,
 }
 
 #[wasm_bindgen]
@@ -177,6 +228,7 @@ impl Session {
             data,
             img: None,
             grid: None,
+            base_grid: None,
             threshold: None,
         })
     }
@@ -218,7 +270,7 @@ impl Session {
         if out_w == 0 || out_h == 0 {
             return Err("maps_w/maps_h must be >= 1".to_string());
         }
-        let mut img = LinImage::from_srgb_rgba(width, height, rgba).resize_area(out_w, out_h);
+        let mut img = LinImage::resize_area_from_srgb(rgba, width, height, out_w, out_h);
         apply_adjust(&mut img, &opts.adjust);
         let palette = Palette::build(&self.data, &opts.enabled_color_ids, &opts.tones);
         if palette.entries.is_empty() {
@@ -283,8 +335,97 @@ impl Session {
             materials,
         };
         self.img = Some(img);
+        self.base_grid = Some(grid.clone());
         self.grid = Some(grid);
         self.threshold = opts.transparency_threshold;
+        json(&result)
+    }
+
+    pub fn dither_samples(&self, opts_json: &str) -> Result<Vec<u8>, String> {
+        let opts: DitherSampleOpts = serde_json::from_str(opts_json).map_err(|e| e.to_string())?;
+        let palette = Palette::build(&self.data, &opts.enabled_color_ids, &opts.tones);
+        if palette.entries.is_empty() {
+            return Err("no enabled colors".to_string());
+        }
+        let (w, h) = (opts.width.clamp(8, 256), opts.height.clamp(8, 256));
+        let mut rgba = Vec::with_capacity(w * h * 4);
+        for y in 0..h {
+            for x in 0..w {
+                let t = x as f32 / (w - 1).max(1) as f32;
+                let v = 1.0 - 0.15 * y as f32 / (h - 1).max(1) as f32;
+                rgba.push(((203.0 - 111.0 * t) * v) as u8);
+                rgba.push(((228.0 - 80.0 * t) * v) as u8);
+                rgba.push(((247.0 - 28.0 * t) * v) as u8);
+                rgba.push(255);
+            }
+        }
+        let img = LinImage::from_srgb_rgba(w, h, &rgba);
+        let mut out = Vec::with_capacity(opts.modes.len() * w * h * 4);
+        for name in &opts.modes {
+            let dither = dither_of(name, true)?;
+            let grid = quantize(&img, &palette, &dither, None);
+            for cell in &grid.cells {
+                match cell {
+                    Some((cid, tone)) => {
+                        let c = self
+                            .data
+                            .color(*cid)
+                            .ok_or_else(|| "grid color missing from data".to_string())?;
+                        let rgb = match tone {
+                            Tone::Dark => c.tones.dark,
+                            Tone::Normal => c.tones.normal,
+                            Tone::Light => c.tones.light,
+                            Tone::Unobtainable => c.tones.unobtainable,
+                        };
+                        out.extend_from_slice(&[rgb[0], rgb[1], rgb[2], 255]);
+                    }
+                    None => out.extend_from_slice(&[0, 0, 0, 0]),
+                }
+            }
+        }
+        Ok(out)
+    }
+
+    pub fn set_height_cap(&mut self, opts_json: &str) -> Result<String, String> {
+        let opts: HeightCapOpts = serde_json::from_str(opts_json).map_err(|e| e.to_string())?;
+        let base = self
+            .base_grid
+            .as_ref()
+            .ok_or_else(|| "generate first".to_string())?;
+        let img = self.img.as_ref().ok_or_else(|| "generate first".to_string())?;
+        let peak = natural_peak(base, opts.cliff_cap);
+        let mut result = HeightCapResult {
+            natural_peak: peak,
+            edited_cells: 0,
+            edited_columns: 0,
+            infeasible_columns: 0,
+            de_base: 0.0,
+            de_capped: 0.0,
+        };
+        let grid = match opts.max_height {
+            Some(h) if h < peak => {
+                let palette = Palette::build(&self.data, &opts.enabled_color_ids, &opts.tones);
+                if palette.entries.is_empty() {
+                    return Err("no enabled colors".to_string());
+                }
+                let (capped, report) =
+                    apply_height_cap(base, &self.data, &opts.tones, opts.cliff_cap, h);
+                result.edited_cells = report.edited_cells;
+                result.edited_columns = report.edited_columns;
+                result.infeasible_columns = report.infeasible_columns;
+                let view = Viewing::framed(5.0);
+                let (src, base_lin, capped_lin) = shrink_for_compare(
+                    img,
+                    &grid_to_linear(base, &palette),
+                    &grid_to_linear(&capped, &palette),
+                );
+                result.de_base = compare(&src, &base_lin, view).scielab_mean;
+                result.de_capped = compare(&src, &capped_lin, view).scielab_mean;
+                capped
+            }
+            _ => base.clone(),
+        };
+        self.grid = Some(grid);
         json(&result)
     }
 
@@ -753,6 +894,44 @@ mod tests {
         )
         .unwrap();
         assert_eq!(m["per_color"].as_array().unwrap().len(), 5);
+    }
+
+    #[test]
+    fn height_cap_edits_the_grid_and_restores_it() {
+        let mut s = session();
+        let rgba: Vec<u8> = (0..256u32 * 256)
+            .flat_map(|i| {
+                let v = ((i / 256) % 256) as u8;
+                [v, v, v, 255]
+            })
+            .collect();
+        let opts = r#"{"maps_w":1,"maps_h":1,
+            "enabled_color_ids":[8,29,28,25,18],
+            "tones":["dark","normal","light"],
+            "dither":"floyd_steinberg"}"#;
+        s.generate(&rgba, 256, 256, opts, None).unwrap();
+        let uncapped = s.preview_rgba().unwrap();
+
+        let probe = r#"{"max_height":null,"cliff_cap":null,
+            "enabled_color_ids":[8,29,28,25,18],"tones":["dark","normal","light"]}"#;
+        let v: serde_json::Value = serde_json::from_str(&s.set_height_cap(probe).unwrap()).unwrap();
+        let peak = v["natural_peak"].as_u64().unwrap();
+        assert!(peak > 2, "gray ramp should staircase: {peak}");
+        assert_eq!(v["edited_cells"], 0);
+        assert_eq!(s.preview_rgba().unwrap(), uncapped);
+
+        let capped = format!(
+            r#"{{"max_height":1,"cliff_cap":null,
+              "enabled_color_ids":[8,29,28,25,18],"tones":["dark","normal","light"]}}"#
+        );
+        let v: serde_json::Value =
+            serde_json::from_str(&s.set_height_cap(&capped).unwrap()).unwrap();
+        assert!(v["edited_cells"].as_u64().unwrap() > 0);
+        assert!(v["de_capped"].as_f64().unwrap() >= v["de_base"].as_f64().unwrap() - 0.35);
+        assert_ne!(s.preview_rgba().unwrap(), uncapped, "the preview shows the cap");
+
+        s.set_height_cap(probe).unwrap();
+        assert_eq!(s.preview_rgba().unwrap(), uncapped, "blank cap restores");
     }
 
     #[test]

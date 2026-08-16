@@ -1,0 +1,18 @@
+name: Feature request
+description: Something Arachne should do that it does not.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What you want and the map art problem it solves.
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: How you handle it today
+      description: The workaround you use now, if any.
+    validations:
+      required: false

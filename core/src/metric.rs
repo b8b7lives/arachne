@@ -286,9 +286,7 @@ pub fn compare(src: &LinImage, out: &LinImage, view: Viewing) -> Report {
         "compared images share a size"
     );
     let max_radius = src.width.max(src.height);
-    let spd = view.samples_per_degree;
     let kernels = opponent_kernels(view, max_radius);
-    let _ = spd;
     let a = perceive(src, &kernels);
     let b = perceive(out, &kernels);
 

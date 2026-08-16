@@ -586,9 +586,12 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   check("both north panels carry noobline filler",
     basis.panelFiller[0] >= 128 && basis.panelFiller[1] >= 128,
     JSON.stringify(basis.panelFiller));
-  check("panel filler adds up to the whole schematic's",
-    basis.panelFiller.reduce((a, b) => a + b, 0) === basis.buildFiller,
-    `${JSON.stringify(basis.panelFiller)} vs ${basis.buildFiller}`);
+  check("panel filler is the whole schematic's plus each southern panel's own reference row",
+    basis.panelFiller.reduce((a, b) => a + b, 0) === basis.buildFiller + 2 * 128,
+    `${JSON.stringify(basis.panelFiller)} vs ${basis.buildFiller} + 256`);
+  check("southern panels count the reference row they stand on",
+    basis.panelFiller[2] >= 128 && basis.panelFiller[3] >= 128,
+    JSON.stringify(basis.panelFiller));
   check("a panel summary says which panel it is for", /panel 4 of 4, x1_z1_map_10/.test(basis.note),
     basis.note.slice(0, 60));
 
@@ -898,6 +901,105 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     filler.stepped.palette === "59 of 61 colors, 2 turned off", filler.stepped.palette);
   check("the notice clears once filler is on", filler.withFiller === true);
 
+  const heightCap = await s.evaluate(`(async () => {
+    const set = (id, v) => {
+      const el = document.getElementById(id);
+      el.value = v;
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    };
+    set("height-mode", "stepped");
+    const note = () => document.getElementById("max-height-note").textContent;
+    const until = async (pred) => {
+      for (let i = 0; i < 120 && !pred(); i++) await new Promise((r) => setTimeout(r, 250));
+      return note();
+    };
+    const blank = await until(() => /staircases up to/.test(note()));
+    const shown = !document.getElementById("max-height-label").hidden;
+    set("max-height", "1");
+    const capped = await until(() => /recolored/.test(note()));
+    set("max-height", "");
+    const restored = await until(() => /staircases up to/.test(note()));
+    set("height-mode", "flat");
+    const flatHidden = document.getElementById("max-height-label").hidden;
+    set("height-mode", "stepped");
+    await new Promise((r) => setTimeout(r, 2000));
+    return { shown, blank, capped, restored, flatHidden };
+  })()`);
+  const ditherPicker = await s.evaluate(`(async () => {
+    const btn = document.getElementById("dither-btn");
+    const drop = document.getElementById("dither-drop");
+    const sel = document.getElementById("dither");
+    btn.click();
+    for (let i = 0; i < 40; i++) {
+      await new Promise((r) => setTimeout(r, 250));
+      const cv = drop.querySelector('canvas[data-mode="floyd_steinberg"]');
+      if (cv) {
+        const px = cv.getContext("2d").getImageData(0, 0, cv.width, 1).data;
+        const first = px[0] + px[1] * 256 + px[2] * 65536;
+        let varied = false;
+        for (let j = 4; j < px.length; j += 4) {
+          if (px[j] + px[j + 1] * 256 + px[j + 2] * 65536 !== first) { varied = true; break; }
+        }
+        if (varied) break;
+      }
+    }
+    const rows = [...drop.querySelectorAll(".picker-row")];
+    const opts = [...sel.options].map((o) => o.value);
+    const info = {
+      open: !drop.hidden,
+      rows: rows.length,
+      options: opts.length,
+      matched: rows.every((r) => opts.includes(r.dataset.value)),
+      described: rows.every((r) =>
+        (r.querySelector(".dither-desc")?.textContent ?? "").length > 10),
+      groups: [...drop.querySelectorAll(".picker-group")].map((g) => g.textContent),
+    };
+    const cv = drop.querySelector('canvas[data-mode="yliluoma_blue16"]');
+    const px = cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data;
+    const colors = new Set();
+    for (let j = 0; j < px.length; j += 4) {
+      colors.add(px[j] + px[j + 1] * 256 + px[j + 2] * 65536);
+    }
+    info.sampleColors = colors.size;
+    rows.find((r) => r.dataset.value === "yliluoma_blue16").click();
+    await new Promise((r) => setTimeout(r, 400));
+    info.picked = sel.value;
+    info.label = document.getElementById("dither-btn-name").textContent;
+    info.closed = drop.hidden;
+    sel.value = "floyd_steinberg";
+    sel.dispatchEvent(new Event("change", { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 300));
+    info.restoredLabel = document.getElementById("dither-btn-name").textContent;
+    return info;
+  })()`);
+  check("the dither picker opens with every mode as a row",
+    ditherPicker.open === true && ditherPicker.rows === ditherPicker.options
+      && ditherPicker.matched === true,
+    `${ditherPicker.rows} rows for ${ditherPicker.options} options`);
+  check("every dither row explains itself in place", ditherPicker.described === true);
+  check("the advanced group separates the rarely picked modes",
+    JSON.stringify(ditherPicker.groups) === JSON.stringify(["advanced"]),
+    JSON.stringify(ditherPicker.groups));
+  check("sample chips render with the current palette",
+    ditherPicker.sampleColors > 4, `${ditherPicker.sampleColors} distinct colors`);
+  check("picking a row commits the mode and closes the picker",
+    ditherPicker.picked === "yliluoma_blue16" && ditherPicker.closed === true
+      && ditherPicker.label === "Yliluoma blue noise",
+    `${ditherPicker.picked} / ${ditherPicker.label}`);
+  check("the hidden select still drives the button label",
+    ditherPicker.restoredLabel === "Floyd-Steinberg", ditherPicker.restoredLabel);
+
+  check("the max height field appears beside max step", heightCap.shown === true);
+  check("a blank cap reports the natural peak",
+    /staircases up to \d+ tall on its own/.test(heightCap.blank), heightCap.blank);
+  check("a tight cap reports what it recolored and what it costs",
+    /recolored \d+ blocks to fit under 1; (no visible cost|picture error up about)/
+      .test(heightCap.capped),
+    heightCap.capped);
+  check("clearing the cap restores the natural staircase note",
+    /staircases up to \d+ tall on its own/.test(heightCap.restored), heightCap.restored);
+  check("flat height hides the cap", heightCap.flatHidden === true);
+
   const hostile = await s.evaluate(`(async () => {
     const doc = {
       arachne: 1,
@@ -915,7 +1017,12 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     const input = document.getElementById("import-file");
     input.files = dt.files;
     input.dispatchEvent(new Event("change", { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 3000));
+    for (let i = 0; i < 60; i++) {
+      await new Promise((r) => setTimeout(r, 250));
+      const w = ${WORKSPACE};
+      if (w && w.tools[0] && w.tools[0].kind === "pickaxe"
+        && w.tools[0].nick && w.tools[0].nick.length === 40) break;
+    }
     const ws = ${WORKSPACE};
     return {
       status: document.getElementById("status").textContent,
@@ -950,7 +1057,12 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     };
     set("maps-w", "4"); set("maps-h", "4");
     document.getElementById("zoom-fit").click();   // earlier sections raised it
-    await new Promise((r) => setTimeout(r, 6000));
+    for (let i = 0; i < 120; i++) {
+      await new Promise((r) => setTimeout(r, 250));
+      if (document.getElementById("preview").width === 512) break;
+    }
+    document.getElementById("zoom-fit").click();
+    await new Promise((r) => setTimeout(r, 300));
     const probe = () => {
       const panel = document.getElementById("preview-panel");
       const slot = document.getElementById("preview-slot");
