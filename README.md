@@ -7,8 +7,7 @@ It runs entirely in your browser, and it is live at
 ![Arachne quantizing an image into a map art palette](media/screenshot.png)
 
 Arachne is in **beta**. The math is tested and the output is verified
-in game. The remaining rough edges are mostly cosmetic; phone layouts
-are a known one.
+in game. The remaining rough edges are mostly cosmetic.
 
 ## What it does
 

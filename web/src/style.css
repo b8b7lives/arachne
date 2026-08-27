@@ -36,6 +36,7 @@
   --t-head: 1.05rem;
   --t-body: 0.95rem;
   --t-small: 0.82rem;
+  --tile-size: var(--tile-pref, 32px);
   color-scheme: dark;
 }
 
@@ -142,6 +143,7 @@ section {
 
 h2 { margin: 0 0 0.4rem; font-size: var(--t-head); }
 .note { max-width: 68ch; }
+#palette-state { line-height: 20px; margin: 0 0 8px; }
 section > .note:first-of-type { margin-top: 0; }
 .dim { color: var(--dim); font-weight: normal; font-size: 0.85rem; }
 .note { color: var(--dim); font-size: var(--t-small); }
@@ -830,3 +832,112 @@ ul.note li { margin: 0.15rem 0; }
 .community-line { margin: 0; color: var(--ink); }
 .community-caption { margin: 0.1rem 0 0; color: var(--accent); font-size: var(--t-small); }
 .community-sub { margin: 0.05rem 0 0; color: var(--dim); font-size: var(--t-small); font-style: italic; }
+
+@media (max-width: 40rem) {
+  header { flex-wrap: wrap; gap: 0.1rem 0.8rem; padding: 0.6rem 0.8rem; }
+  .status { margin-left: 0; width: 100%; font-size: var(--t-small); }
+  #about-panel { margin: 0.6rem 0.8rem 0; max-width: none; }
+  #about-panel h2 { cursor: pointer; }
+  #about-panel.collapsed h2::after {
+    content: "\25B8  links and community";
+    margin-left: 0.5rem;
+    color: var(--dim);
+    font-weight: normal;
+    font-size: var(--t-small);
+  }
+  main { padding: 0.6rem 0.8rem; gap: 0.6rem; }
+  section { padding: 0.7rem 0.75rem; }
+  select, input[type="text"], input[type="search"] { max-width: 100%; }
+  .field-inline { grid-template-columns: minmax(0, 1fr); }
+  .palette-row {
+    grid-template-columns: 36px minmax(0, 1fr) 36px auto;
+    grid-template-areas: "sw name none badges" "strip strip strip strip";
+  }
+  .palette-row > .swatchbox { grid-area: sw; }
+  .palette-row > .row-name { grid-area: name; }
+  .palette-row > .tile.none-tile { grid-area: none; }
+  .palette-row > .tile-strip { grid-area: strip; padding: 4px 0 2px; }
+  .palette-row > .row-badges { grid-area: badges; }
+  #summary dl { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  #summary dt { margin-top: 0.3rem; }
+  .dither-row { flex-wrap: wrap; }
+  .dither-name { width: auto; }
+  #explain-bar { margin: 0.6rem 0.8rem 0; }
+}
+
+@media (max-width: 900px) {
+  .palette-table, .palette-table tbody, .materials, .materials tbody { display: block; }
+  .palette-table thead, .palette-table colgroup, .materials thead { display: none; }
+  .palette-table tr, .materials tr {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 0.1rem 0.4rem;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid var(--edge);
+  }
+  .palette-table td, .materials td { display: block; border: 0; padding: 0.05rem 0.1rem; overflow: visible; }
+  .palette-table td:nth-child(1), .materials td:nth-child(1) { grid-column: span 4; }
+  .palette-table td:nth-child(2), .materials td:nth-child(2) { grid-column: span 6; }
+  .palette-table td:nth-child(3), .palette-table td:nth-child(5), .materials td:nth-child(3), .materials td:nth-child(5) { grid-column: span 3; }
+  .palette-table td:nth-child(4), .palette-table td:nth-child(6), .materials td:nth-child(4), .materials td:nth-child(6) { grid-column: span 2; }
+  .palette-table td:nth-child(n+3), .materials td:nth-child(n+3) { font-size: 0.72rem; line-height: 1.3; white-space: normal; text-align: left; }
+  .palette-table td:nth-child(n+3)::before { content: attr(data-label) " "; color: var(--dim); }
+  .materials td:nth-child(3)::before { content: "count "; color: var(--dim); font-family: var(--font-ui); }
+  .materials td:nth-child(4)::before { content: "shulkers "; color: var(--dim); font-family: var(--font-ui); }
+  .materials td:nth-child(5)::before { content: "each takes "; color: var(--dim); font-family: var(--font-ui); }
+  .materials td:nth-child(6)::before { content: "all together "; color: var(--dim); font-family: var(--font-ui); }
+  .palette-table td:nth-child(n+3) .cell { display: inline-flex; }
+  .palette-table .prow-expand > td { grid-column: 1 / -1; }
+  .palette-table .blocksel { width: 100%; }
+  .flag { white-space: normal; }
+  body.has-jump-bar { padding-bottom: 3.4rem; }
+  #jump-bar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    display: flex;
+    justify-content: space-around;
+    gap: 0.2rem;
+    padding: 0.35rem 0.5rem calc(0.35rem + env(safe-area-inset-bottom));
+    background: var(--panel);
+    border-top: 1px solid var(--edge);
+    z-index: 6;
+  }
+  #jump-bar a {
+    flex: 1;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink);
+    text-decoration: none;
+    font-size: var(--t-small);
+    border: 1px solid var(--edge);
+    border-radius: 4px;
+  }
+}
+
+@media (pointer: coarse) {
+  :root { --tile-size: max(44px, var(--tile-pref, 32px)); }
+  button.mini { min-width: 44px; }
+  input, select, button, textarea { font-size: 16px; }
+  button, select, input:not([type="checkbox"]):not([type="range"]) { min-height: 44px; }
+  button.mini, .brand-chip { min-height: 40px; padding-top: 0.3rem; padding-bottom: 0.3rem; }
+  input[type="number"] { width: 5.5rem; }
+  input[type="checkbox"] { width: 22px; height: 22px; margin: 0 0.3rem 0 0; }
+  label:has(> input[type="checkbox"]) { min-height: 44px; padding: 0.15rem 0; }
+  .tile-strip { gap: 6px; }
+  .row-badges { gap: 0.4rem; }
+  .preview-controls, .utility-row, .brand-row, .preset-bar { gap: 0.6rem; }
+  .cand-row { min-height: 44px; }
+  .prow > td { padding-top: 0.6rem; padding-bottom: 0.6rem; }
+  .palette-item summary { min-height: 44px; }
+  #preview-wrap { touch-action: manipulation; }
+  #explain-bar { display: flex; align-items: center; gap: 0.6rem; }
+  .explain { display: block; flex-basis: 100%; grid-column: 1 / -1; color: var(--dim); font-size: var(--t-small); line-height: 1.4; margin: 0.1rem 0 0.35rem; }
+  dl.palette-legend { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.15rem 0.6rem; margin: 0.2rem 0 0.6rem; }
+  dl.palette-legend dt { color: var(--ink); }
+  dl.palette-legend dd { margin: 0; }
+  #import-paste, .slider-num, input.nick, .blocksel { font-size: 16px; }
+  label:has(> .explain) { flex-wrap: wrap; white-space: normal; }
+  .ench-row:has(.explain) { flex-direction: column; align-items: stretch; }
+}

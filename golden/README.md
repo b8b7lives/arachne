@@ -10,6 +10,11 @@ Regenerate after a deliberate behavior change:
 
     cargo test -p arachne-core --test golden bless_fixtures -- --ignored
 
+Re-blessed 2026-08-27: full-layer fixture lost its per-step pillar
+extras when `all_optimized` was removed (support_count 27525 to 16640,
+one filler per position). The `allopt` fixtures were deleted with the
+mode.
+
 Re-bless only when a diff is intended and understood; the point of the
 suite is that unintended diffs fail.
 

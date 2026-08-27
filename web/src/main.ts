@@ -8,6 +8,7 @@ import type {
 import { openView2D } from "./view2d";
 import { unframe, zip, type ZipEntry } from "./zip";
 import { extractPreset, PresetTable, presetToPalette } from "./mapartcraft";
+import { initMobile, isNarrow, registerWorker, touchDefaults } from "./mobile";
 import {
   BlockIndex, buildBlockIndex, clearWorkspace, KEY_LOADOUT_PRESETS, KEY_PALETTE_PRESETS,
   LoadoutPreset, loadPresets, loadWorkspace, newId, PalettePreset, persistenceAvailable,
@@ -348,6 +349,40 @@ function fluidOnly(cid: number): boolean {
   return cands.length > 0 && cands.every((b) => b.fluid);
 }
 
+const B8B7_PICKS: Record<string, string> = {
+    "1": "slime_block", "2": "sandstone", "3": "mushroom_stem",
+    "4": "tnt", "5": "packed_ice", "6": "iron_block",
+    "7": "oak_leaves[persistent=true]", "8": "snow_block", "9": "clay",
+    "10": "dirt", "11": "stone", "13": "oak_planks",
+    "14": "quartz_block", "15": "red_sandstone", "16": "magenta_concrete",
+    "17": "light_blue_concrete", "18": "sponge", "19": "lime_concrete",
+    "20": "cherry_leaves[persistent=true]", "21": "gray_concrete", "22": "light_gray_concrete",
+    "23": "cyan_concrete", "24": "amethyst_block", "25": "blue_concrete",
+    "26": "soul_sand", "27": "dried_kelp_block", "28": "red_concrete",
+    "29": "sculk", "30": "gold_block", "31": "prismarine_bricks",
+    "32": "lapis_block", "33": "emerald_block", "34": "podzol",
+    "35": "netherrack", "36": "calcite", "37": "orange_terracotta",
+    "38": "magenta_terracotta", "39": "light_blue_terracotta", "40": "yellow_terracotta",
+    "41": "lime_terracotta", "42": "pink_terracotta", "43": "gray_terracotta",
+    "44": "light_gray_terracotta", "45": "mud", "46": "purple_terracotta",
+    "47": "blue_terracotta", "48": "brown_terracotta", "49": "green_terracotta",
+    "50": "red_terracotta", "51": "black_terracotta", "52": "crimson_nylium",
+    "53": "crimson_planks", "54": "crimson_hyphae", "55": "warped_nylium",
+    "56": "warped_planks", "57": "warped_hyphae", "58": "warped_wart_block",
+    "59": "deepslate", "60": "raw_iron_block", "61": "verdant_froglight",
+};
+
+function pinnedPreset(id: string, name: string, picks: Record<string, string>): PalettePreset {
+  const enabled: number[] = [];
+  const kept: Record<string, string> = {};
+  for (const [cid, key] of Object.entries(picks)) {
+    if (blockIndex?.indexOf(key) === undefined) continue;
+    enabled.push(Number(cid));
+    kept[cid] = key;
+  }
+  return { id, name, builtin: true, enabled, picks: kept, deliberate: enabled, toggles: blockFilterDefaults() };
+}
+
 function builtinPalettes(): PalettePreset[] {
   return [
     {
@@ -364,6 +399,7 @@ function builtinPalettes(): PalettePreset[] {
       enabled: colors.filter((c) => saturation(c) < GRAY_SAT).map((c) => c.id), picks: {},
       toggles: blockFilterDefaults(),
     },
+    pinnedPreset("builtin:b8b7", "b8b7's choice", B8B7_PICKS),
     familyPreset("builtin:carpet", "carpets only", (b) => b.endsWith("_carpet")),
     familyPreset(
       "builtin:concrete", "concrete + terracotta",
@@ -471,6 +507,13 @@ function syncPresetSelects() {
     const sig = paletteSig(currentPalette());
     const match = palettePresets().find((p) => paletteSig(p) === sig);
     ps.value = match?.id ?? "";
+    const state = document.getElementById("palette-state");
+    if (state) {
+      state.textContent = enabled.size === 0
+        ? "No palette selected. Try a preset or create your own."
+        : match?.builtin ? `This is the ${match.name} preset. Try another or make your own.` : "";
+      state.hidden = !state.textContent;
+    }
     const meta = document.getElementById("palette-meta");
     if (meta) {
       meta.textContent = match?.name ?? "edited, not saved";
@@ -1585,7 +1628,7 @@ function renderFillerNotice() {
 
 function applyTileSize() {
   const px = ($("tile-size") as HTMLSelectElement | null)?.value || "32";
-  document.documentElement.style.setProperty("--tile-size", `${px}px`);
+  document.documentElement.style.setProperty("--tile-pref", `${px}px`);
 }
 
 function renderPalette() {
@@ -1596,6 +1639,8 @@ function renderPalette() {
   driftByColor = new Map(currentDrift.stale.map((d) => [d.cid, d]));
   div.innerHTML = "";
   div.className = view === "list" ? "view-list" : "view-tiles";
+  const sizeCtl = $("tile-size").closest("label") as HTMLElement | null;
+  if (sizeCtl) sizeCtl.hidden = view === "list";
   if (view === "list") renderPaletteTable(div);
   else renderPaletteTiles(div);
   const off = colors.length - enabled.size;
@@ -1622,7 +1667,7 @@ const COLUMNS: Column[] = [
   { key: "color", label: "Color", width: "15rem", sortable: true,
     help: "the map color. A picture can only use these 61" },
   { key: "block", label: "Block", width: "17rem",
-    help: "what gets placed for this color; click the row to change it" },
+    help: "what gets placed for this color. Pick another from the dropdown to change it" },
   { key: "cost", label: "Teardown", width: "9.5rem", sortable: true,
     help: "time to break one and get it back, with your tools" },
   { key: "count", label: "Blocks", width: "6rem", num: true, sortable: true, imageOnly: true,
@@ -1691,6 +1736,7 @@ function renderPaletteTable(root: HTMLElement) {
 
     for (const col of cols) {
       const td = document.createElement("td");
+      td.dataset.label = col.label;
       if (col.num) td.classList.add("num");
       switch (col.key) {
         case "color": {
@@ -1707,9 +1753,11 @@ function renderPaletteTable(root: HTMLElement) {
           sel.className = "blocksel";
           sel.add(new Option("(not used)", ""));
           const cheapest = ranked[0];
+          const narrow = isNarrow();
           for (const r of [...ranked].sort((a, b) => a.display_name.localeCompare(b.display_name))) {
             const mark = cheapest && r.block_index === cheapest.block_index ? " · cheapest" : "";
-            sel.add(new Option(`${r.display_name} · ${costText(r)}${mark}`, String(r.block_index)));
+            const text = narrow ? r.display_name : `${r.display_name} · ${costText(r)}${mark}`;
+            sel.add(new Option(text, String(r.block_index)));
           }
           sel.value = cur ? String(cur.block_index) : "";
           sel.title = cur ? costTitle(cur) : "this color is not in your palette";
@@ -1912,8 +1960,7 @@ function fillerLabel(blockId: string): string {
 const FILLER_MODE_SHORT: Record<string, string> = {
   none: "none",
   important: "where needed",
-  all_optimized: "survival placement",
-  all_double_optimized: "full layer",
+  full_layer: "full layer",
 };
 
 function fillerId(): string {
@@ -3012,6 +3059,7 @@ async function generate() {
     paintPreview(
       new ImageData(new Uint8ClampedArray(preview), genResult.width, genResult.height));
     ($("export-download") as HTMLButtonElement).disabled = false;
+    ($("export-share") as HTMLButtonElement).disabled = false;
     ($("view-build") as HTMLButtonElement).disabled = false;
     ($("view-build-export") as HTMLButtonElement).disabled = false;
     status(source.name);
@@ -3032,6 +3080,7 @@ async function generate() {
     supportTotals = null;
     supportTotalsSig = null;
     ($("export-download") as HTMLButtonElement).disabled = true;
+    ($("export-share") as HTMLButtonElement).disabled = true;
     ($("view-build") as HTMLButtonElement).disabled = true;
     ($("view-build-export") as HTMLButtonElement).disabled = true;
     renderPalette();
@@ -3200,13 +3249,14 @@ async function buildSheet(name: string): Promise<string> {
   return lines.join("\n") + "\n";
 }
 
-async function exportDownload() {
-  if (!genResult) return;
+interface ExportFile { name: string; bytes: ArrayBuffer; type: string; count: number }
+
+async function buildExport(): Promise<ExportFile | null> {
+  if (!genResult) return null;
   const opts = exportOpts();
-  if (!opts) return;
+  if (!opts) return null;
   const name = exportName();
-  try {
-    const entries: ZipEntry[] = [];
+  const entries: ZipEntry[] = [];
     if (checked("split-export")) {
       const framed = await rpc<ArrayBuffer>({ cmd: "schem_split", opts });
       unframe(framed).forEach((bytes, i) =>
@@ -3231,16 +3281,34 @@ async function exportDownload() {
         bytes: new TextEncoder().encode(await buildSheet(name)),
       });
     }
-    if (entries.length === 1) {
-      const only = entries[0];
-      download(only.name, only.bytes.slice().buffer as ArrayBuffer);
-      status(`downloaded ${only.name}`);
-      return;
-    }
-    download(`${name}.zip`, zip(entries).buffer as ArrayBuffer);
-    status(`${entries.length} files in ${name}.zip`);
+  if (entries.length === 1) {
+    const only = entries[0];
+    const type = only.name.endsWith(".txt") ? "text/plain" : "application/octet-stream";
+    return { name: only.name, bytes: only.bytes.slice().buffer as ArrayBuffer, type, count: 1 };
+  }
+  return { name: `${name}.zip`, bytes: zip(entries).buffer as ArrayBuffer, type: "application/zip", count: entries.length };
+}
+
+async function exportDownload() {
+  try {
+    const file = await buildExport();
+    if (!file) return;
+    download(file.name, file.bytes);
+    status(file.count === 1 ? `downloaded ${file.name}` : `${file.count} files in ${file.name}`);
   } catch (e) {
     status(String(e).replace(/^Error:\s*/, ""));
+  }
+}
+
+async function exportShare() {
+  try {
+    const file = await buildExport();
+    if (!file) return;
+    const f = new File([file.bytes], file.name, { type: file.type });
+    await navigator.share({ files: [f], title: file.name });
+    status(`shared ${file.name}`);
+  } catch (e) {
+    if ((e as Error).name !== "AbortError") status(String(e).replace(/^Error:\s*/, ""));
   }
 }
 
@@ -3318,10 +3386,13 @@ async function boot() {
     + (atlasMeta.hash ? `?v=${atlasMeta.hash}` : "");
   document.documentElement.style.setProperty("--atlas-url", `url("${atlasUrl}")`);
 
+  touchDefaults();
   factoryFields = fieldValues();
   const saved = loadWorkspace();
   if (saved) {
     applyFields(saved.fields);
+    const sm = $("support-mode") as HTMLSelectElement;
+    if (!sm.value) sm.value = "important";
     for (const [k, v] of Object.entries(saved.toggles ?? {})) if (k in toggles) toggles[k] = v;
     const restored = sanitizeTools(saved.tools);
     if (restored.length) loadout = restored;
@@ -3588,6 +3659,7 @@ async function boot() {
     persist();
   };
   $("export-download").onclick = () => void exportDownload();
+  $("export-share").onclick = () => void exportShare();
   $("view-build").onclick = $("view-build-export").onclick = () => void viewBuild();
   $("colors-all").onclick = () => { colors.forEach((c) => enabled.add(c.id)); renderPalette(); scheduleGenerate(); };
   $("colors-none").onclick = () => { enabled.clear(); renderPalette(); scheduleGenerate(); };
@@ -3650,4 +3722,7 @@ async function boot() {
   };
 }
 
-void boot().catch((e) => status(`init failed: ${e}`));
+void boot().then(() => {
+  initMobile();
+  registerWorker(import.meta.env.BASE_URL);
+}).catch((e) => status(`init failed: ${e}`));

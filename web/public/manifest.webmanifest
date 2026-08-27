@@ -1,0 +1,14 @@
+{
+  "name": "Arachne",
+  "short_name": "Arachne",
+  "description": "Turn a picture into Minecraft map art in your browser. Free, no account, no tracking.",
+  "start_url": "/arachne/",
+  "scope": "/arachne/",
+  "display": "standalone",
+  "background_color": "#16181d",
+  "theme_color": "#16181d",
+  "icons": [
+    { "src": "/arachne/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/arachne/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

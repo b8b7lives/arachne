@@ -234,22 +234,12 @@ fn classic_important() {
 }
 
 #[test]
-fn classic_all_optimized() {
-    assert_schem_matches(
-        "nbt-classic-allopt.nbt.gz",
-        "materials-classic-allopt.json",
-        HeightMode::Stepped { cliff_cap: Some(1) },
-        SupportMode::AllOptimized,
-    );
-}
-
-#[test]
-fn classic_all_double_optimized() {
+fn classic_full_layer() {
     assert_schem_matches(
         "nbt-classic-alldouble.nbt.gz",
         "materials-classic-alldouble.json",
         HeightMode::Stepped { cliff_cap: Some(1) },
-        SupportMode::AllDoubleOptimized,
+        SupportMode::FullLayer,
     );
 }
 
@@ -270,56 +260,6 @@ fn mapdat_bytes_exact() {
     let ours = write_root("", &tag);
     let theirs = fixture_bytes("mapdat.dat.gz");
     assert_eq!(ours, theirs, "map.dat byte-exact regression");
-}
-
-#[test]
-#[ignore = "writes the in-game cliff support probe: ARACHNE_PROBE_DIR=<dir> cargo test -p arachne-core --test golden write_cliff_probe -- --ignored"]
-fn write_cliff_probe() {
-    use flate2::{Compression, write::GzEncoder};
-    use std::io::Write;
-
-    let Ok(dir) = std::env::var("ARACHNE_PROBE_DIR") else {
-        return;
-    };
-    let data = load_data();
-    let jump = [Tone::Light, Tone::Dark, Tone::Dark, Tone::Dark, Tone::Dark,
-        Tone::Light, Tone::Light, Tone::Light];
-    let drop = [Tone::Light, Tone::Light, Tone::Light, Tone::Dark, Tone::Normal,
-        Tone::Normal, Tone::Light, Tone::Dark];
-    let mut cells = Vec::with_capacity(64);
-    for z in 0..8 {
-        for x in 0..8 {
-            let tone = if x < 4 { jump[z] } else { drop[z] };
-            cells.push(Some((8u8, tone)));
-        }
-    }
-    let grid = Grid {
-        width: 8,
-        height: 8,
-        cells,
-    };
-    let mut selection = BTreeMap::new();
-    let cand = data.candidates_for(8).next().expect("color 8 candidate");
-    selection.insert(8u8, &*Box::leak(Box::new(cand.clone())));
-    let cfg = SchemConfig {
-        height_mode: HeightMode::Stepped { cliff_cap: None },
-        support_mode: SupportMode::AllOptimized,
-        support_block_id: "cobblestone".into(),
-        selection,
-        data_version: data.meta.data_version,
-        author: "arachne".into(),
-    };
-    let schem = build_schem(&grid, &cfg);
-    let bytes = write_root("", &schem_to_nbt(&schem, &cfg));
-    let mut e = GzEncoder::new(Vec::new(), Compression::default());
-    e.write_all(&bytes).unwrap();
-    std::fs::write(format!("{dir}/cliff-probe.nbt"), e.finish().unwrap()).unwrap();
-    println!(
-        "cliff-probe.nbt: west half jumps +5 then walks down, east half climbs then drops -3; \
-         {} art blocks, {} filler",
-        schem.materials.values().sum::<u32>(),
-        schem.support_count
-    );
 }
 
 #[test]
@@ -431,15 +371,13 @@ fn bless_fixtures() {
             .as_bytes(),
     );
 
-    let cases: [(&str, &str, HeightMode, SupportMode); 5] = [
+    let cases: [(&str, &str, HeightMode, SupportMode); 4] = [
         ("nbt-classic-none.nbt.gz", "materials-classic-none.json",
             HeightMode::Stepped { cliff_cap: Some(1) }, SupportMode::None),
         ("nbt-classic-important.nbt.gz", "materials-classic-important.json",
             HeightMode::Stepped { cliff_cap: Some(1) }, SupportMode::Important),
-        ("nbt-classic-allopt.nbt.gz", "materials-classic-allopt.json",
-            HeightMode::Stepped { cliff_cap: Some(1) }, SupportMode::AllOptimized),
         ("nbt-classic-alldouble.nbt.gz", "materials-classic-alldouble.json",
-            HeightMode::Stepped { cliff_cap: Some(1) }, SupportMode::AllDoubleOptimized),
+            HeightMode::Stepped { cliff_cap: Some(1) }, SupportMode::FullLayer),
         ("nbt-flat-important.nbt.gz", "materials-flat-important.json",
             HeightMode::Flat, SupportMode::Important),
     ];

@@ -34,6 +34,8 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#16181d" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
@@ -223,12 +225,11 @@
         <details id="filler-section" open>
           <summary>filler <span class="dim" id="filler-meta"></span></summary>
           <div class="row">
-            <label class="field-inline" title="Cheap blocks placed under the map: some because the block above physically needs them, some because survival placement needs a face to click against."><span class="field-name">where</span>
+            <label class="field-inline" title="Cheap blocks placed under the map because the block above physically needs them. How you place the map is up to you, so nothing is added for placement."><span class="field-name">where</span>
               <select id="support-mode">
-              <option value="none" title="nothing added: the map rests on whatever you built it on. Right for a flat map on a canvas, wrong under a staircase">none: canvas is already under it</option>
+              <option value="none" title="nothing added: the map rests on whatever you built it on. Right when nothing in your palette falls or pops off">none: canvas is already under it</option>
               <option value="important" selected title="one filler under each block that needs it. Vanilla pops these off without it however you place them, so this is the minimum a working map needs">only where the block needs it</option>
-              <option value="all_optimized" title="also the neighbors that let you place a filler before the block resting on it, plus extra where the staircase steps. Without them a block falls before its support exists">what survival placement needs</option>
-              <option value="all_double_optimized" title="a full filler layer under the whole map (16,384 per map at minimum): lay all the filler first, then build color by color instead of carrying filler alongside every material">a full layer, filler first</option>
+              <option value="full_layer" title="a full filler layer under the whole map (16,384 per map at minimum): lay all the filler first, then build color by color instead of carrying filler alongside every material">a full layer, filler first</option>
             </select>
             </label>
           </div>
@@ -395,13 +396,14 @@
 
       <section id="solver-panel">
         <h2>Palette <span class="dim" id="palette-meta"></span></h2>
+        <p class="note" id="palette-state" hidden></p>
         <p class="note">A map picture can only use these 61 colors. Every block
           offered for a color renders the <b>exact same pixel</b>, so your pick
           changes what you mine and haul. The picture looks identical either way.
           Arachne preselects the cheapest one to break and get back with your
           tools (highlighted green). Click another block to override, or
           <b>×</b> to drop the color from the palette entirely. In table view,
-          click a row to see the alternatives.</p>
+          each row has a dropdown with the same choices.</p>
 
         <div class="subsection">
           <div class="sub-head">game version</div>
@@ -515,6 +517,7 @@
         <div class="row">
           <button id="export-download" disabled title="one file, named what you named it: a vanilla structure .nbt that litematica and worldedit both read, zipped together with the rest when there is more than one">download</button>
           <button id="view-build-export" disabled title="the whole schematic block by block: real textures, heights, and the exact blocks these settings pick. Nothing downloads and nothing leaves the page">view the build</button>
+          <button id="export-share" hidden disabled title="the same file, handed to another app on this device such as Discord, mail or a drive">share</button>
         </div>
         <p class="note">Every schematic includes a reference row along its
           north edge. Without it the map's top row renders a shade too bright, a

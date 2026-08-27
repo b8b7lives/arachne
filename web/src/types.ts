@@ -144,7 +144,7 @@ export interface GenerateOpts {
 export interface ExportOpts {
   height_mode: "flat" | "stepped";
   cliff_cap?: number | null;
-  support_mode: "none" | "important" | "all_optimized" | "all_double_optimized";
+  support_mode: "none" | "important" | "full_layer";
   support_block_id: string;
   selection: Record<string, number>;
   borrow_north_edge?: boolean;

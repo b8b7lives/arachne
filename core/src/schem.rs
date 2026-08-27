@@ -85,16 +85,7 @@ pub fn build_schem(grid: &Grid, cfg: &SchemConfig) -> Schem {
                     mandatory: cfg.selection[cid].support_mandatory,
                 })
                 .collect();
-            let steps: Vec<i32> = (0..run.len())
-                .map(|r| {
-                    if r == 0 && !anchored {
-                        0
-                    } else {
-                        heights[r + 1] - heights[r]
-                    }
-                })
-                .collect();
-            let supports = support_counts(&col, &steps, cfg.support_mode);
+            let supports = support_counts(&col, cfg.support_mode);
 
             let first = usize::from(!anchored);
             for i in first..=run.len() {

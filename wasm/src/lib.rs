@@ -743,8 +743,7 @@ impl Session {
         let support_mode = match opts.support_mode.as_str() {
             "none" => SupportMode::None,
             "important" => SupportMode::Important,
-            "all_optimized" => SupportMode::AllOptimized,
-            "all_double_optimized" => SupportMode::AllDoubleOptimized,
+            "full_layer" => SupportMode::FullLayer,
             m => return Err(format!("unknown support_mode: {m}")),
         };
         let mut selection = BTreeMap::new();
