@@ -9,7 +9,17 @@ pub enum HeightMode {
 pub fn column_heights(tones: &[Tone], mode: HeightMode) -> Vec<i32> {
     let n = tones.len();
     match mode {
-        HeightMode::Flat => vec![2; n + 1],
+        HeightMode::Flat => {
+            // Flat builds sit at one level; only the reference row moves,
+            // for the forced-light edge of a run that starts a panel.
+            let mut h = vec![2; n + 1];
+            match tones.first() {
+                Some(Tone::Light) => h[0] = 1,
+                Some(Tone::Dark) => h[0] = 3,
+                _ => {}
+            }
+            h
+        }
         HeightMode::Stepped { cliff_cap } => {
             let cap = cliff_cap.map_or(i64::MAX, |c| i64::from(c.max(1)));
             let mut m = vec![0i64; n + 1];

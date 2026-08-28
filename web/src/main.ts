@@ -1,5 +1,5 @@
 import type {
-  AuditDto, CandidateBlock, ExportOpts, GenerateOpts, GenerateResult,
+  AuditDto, BuildMode, CandidateBlock, ExportOpts, GenerateOpts, GenerateResult,
   Adjust, HeightCapOpts, HeightCapResult, MapColor, MarginalErrors, OwnedTool, RankedDto,
   SharedPalette, SolverConfig, TierMeta,
   ToolMeta,
@@ -227,7 +227,7 @@ const FIELDS: [string, "value" | "checked"][] = [
   ["dither", "value"], ["dbs-refine", "checked"], ["game-version", "value"],
   ["height-mode", "value"], ["cliff-cap", "value"], ["max-height", "value"],
   ["support-mode", "value"], ["support-block", "value"], ["grid-overlay", "checked"],
-  ["split-export", "checked"], ["first-map-id", "value"], ["borrow-edge", "checked"],
+  ["build-mode", "value"], ["first-map-id", "value"],
   ["mapdat-on", "checked"], ["sheet-on", "checked"],
   ["export-name", "value"],
   ["adjust-on", "checked"], ["bg-mode", "value"], ["bg-color", "value"],
@@ -261,6 +261,12 @@ function applyFields(vals: Record<string, string | boolean> | undefined) {
 }
 
 function applyFieldValues(vals: Record<string, string | boolean>) {
+  if (!("build-mode" in vals) && ("split-export" in vals || "borrow-edge" in vals)) {
+    const off = (v: unknown) => v === false || v === "false";
+    const on = (v: unknown) => v === true || v === "true";
+    vals["build-mode"] = off(vals["split-export"]) ? "one_piece"
+      : on(vals["borrow-edge"]) ? "continued" : "panels";
+  }
   for (const [id, prop] of FIELDS) {
     if (!(id in vals)) continue;
     const el = document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null;
@@ -2247,7 +2253,7 @@ function renderSummary() {
     if (fillerCount) {
       const id = ($("support-block") as HTMLInputElement).value.trim() || "netherrack";
       const perPanel = scope && basisSel && basisSel.value !== "build";
-      const title = perPanel && !checked("borrow-edge")
+      const title = perPanel && buildMode() === "panels"
         ? "includes the reference row this panel stands on when built alone"
         : undefined;
       lines.push({ name: fillerLabel(id), color: "", shown: fillerCount,
@@ -2937,6 +2943,11 @@ function pickDither(value: string) {
 
 let heightCap: HeightCapResult | null = null;
 
+function buildMode(): BuildMode {
+  const v = ($("build-mode") as HTMLSelectElement).value;
+  return v === "one_piece" || v === "continued" ? v : "panels";
+}
+
 function maxHeightValue(): number | null {
   if (($("height-mode") as HTMLSelectElement).value === "flat") return null;
   const raw = ($("max-height") as HTMLInputElement).value;
@@ -2952,12 +2963,13 @@ function renderCapNote() {
   }
   const cap = maxHeightValue();
   const peak = heightCap.natural_peak;
+  const who = heightCap.per_panel ? "the tallest panel" : "this picture";
   if (cap === null) {
-    el.textContent = `staircases up to ${peak} tall on its own`;
+    el.textContent = `${who} staircases up to ${peak} tall on its own`;
     return;
   }
   if (cap >= peak || heightCap.edited_cells === 0) {
-    el.textContent = `already fits: this picture staircases ${peak} tall`;
+    el.textContent = `already fits: ${who} staircases ${peak} tall`;
     return;
   }
   const pct = heightCap.de_base > 0
@@ -2969,8 +2981,9 @@ function renderCapNote() {
   const flatHint = cap === 0
     ? ". A cap of 0 is a flat build; the flat height mode makes a better flat version"
     : "";
+  const scope = heightCap.per_panel ? "every panel " : "";
   el.textContent =
-    `recolored ${heightCap.edited_cells} blocks to fit under ${cap}; ${cost}${flatHint}`;
+    `recolored ${heightCap.edited_cells} blocks to fit ${scope}under ${cap}; ${cost}${flatHint}`;
 }
 
 function syncHeightControls() {
@@ -2988,12 +3001,14 @@ async function applyHeightCap(repaint: boolean) {
     cliff_cap: capRaw ? Number(capRaw) : null,
     enabled_color_ids: usableIds(),
     tones: tonesFor(),
+    build_mode: buildMode(),
   };
   if (repaint) status("fitting the height cap");
   try {
     heightCap = await rpc<HeightCapResult>({ cmd: "height_cap", opts });
   } catch {
     heightCap = null;
+    supportTotalsSig = null;
     renderCapNote();
     if (repaint && source) status(source.name);
     return;
@@ -3160,7 +3175,7 @@ function exportOpts(quiet = false): ExportOpts | null {
     cliff_cap: capRaw ? Number(capRaw) : null,
     support_mode: ($("support-mode") as HTMLSelectElement).value as ExportOpts["support_mode"],
     support_block_id: ($("support-block") as HTMLInputElement).value.trim() || "netherrack",
-    borrow_north_edge: checked("borrow-edge"),
+    build_mode: buildMode(),
     selection,
     version: gameVersion(),
   };
@@ -3170,7 +3185,7 @@ async function viewBuild() {
   if (!genResult) return;
   const opts = exportOpts();
   if (!opts) return;
-  const split = checked("split-export");
+  const split = buildMode() !== "one_piece";
   const panels = split ? maps("maps-w") * maps("maps-h") : 1;
   try {
     await openView2D({
@@ -3197,6 +3212,12 @@ async function buildSheet(name: string): Promise<string> {
     let placed = 0;
     for (const n of Object.values(genResult.materials)) placed += n;
     lines.push(`${w} x ${h} maps · ${fmtBulk(placed)}`);
+    const mode = buildMode();
+    if (w * h > 1 && mode === "panels") {
+      lines.push("Separate panels: each starts on the ground with its own reference row. Build them anywhere.");
+    } else if (w * h > 1 && mode === "continued") {
+      lines.push("Panels continue each other: paste every panel at the same Y. Southern panels stand on the row above.");
+    }
   }
   lines.push("");
 
@@ -3257,10 +3278,13 @@ async function buildExport(): Promise<ExportFile | null> {
   if (!opts) return null;
   const name = exportName();
   const entries: ZipEntry[] = [];
-    if (checked("split-export")) {
+  const skipped: string[] = [];
+    if (buildMode() !== "one_piece") {
       const framed = await rpc<ArrayBuffer>({ cmd: "schem_split", opts });
-      unframe(framed).forEach((bytes, i) =>
-        entries.push({ name: `${name}_${panelTag(i)}.nbt`, bytes }));
+      unframe(framed).forEach((bytes, i) => {
+        if (bytes.length) entries.push({ name: `${name}_${panelTag(i)}.nbt`, bytes });
+        else skipped.push(panelTag(i));
+      });
     } else {
       const buf = await rpc<ArrayBuffer>({ cmd: "schem", opts });
       entries.push({ name: `${name}.nbt`, bytes: new Uint8Array(buf) });
@@ -3281,6 +3305,11 @@ async function buildExport(): Promise<ExportFile | null> {
         bytes: new TextEncoder().encode(await buildSheet(name)),
       });
     }
+  const skipNote = $("export-skipped");
+  skipNote.hidden = skipped.length === 0;
+  skipNote.textContent = skipped.length === 0 ? "" : skipped.length === 1
+    ? `Panel ${skipped[0]} has no blocks to place, so it has no schematic file.`
+    : `Panels ${skipped.join(", ")} have no blocks to place, so they have no schematic files.`;
   if (entries.length === 1) {
     const only = entries[0];
     const type = only.name.endsWith(".txt") ? "text/plain" : "application/octet-stream";
@@ -3601,8 +3630,8 @@ async function boot() {
     if (genResult) renderSummary();
   };
   $("cliff-cap").onchange = () => { persist(); void applyHeightCap(true); };
-  $("borrow-edge").onchange = () => { persist(); if (genResult) renderSummary(); };
-  $("split-export").onchange = $("export-name").onchange = () => persist();
+  $("build-mode").onchange = () => { persist(); void applyHeightCap(true); };
+  $("export-name").onchange = () => persist();
   const fillerSearch = $("filler-search") as HTMLInputElement;
   fillerSearch.onfocus = () => { fillerSearch.select(); renderFillerDrop(); };
   fillerSearch.oninput = () => renderFillerDrop();

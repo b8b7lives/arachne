@@ -141,6 +141,47 @@ pub fn apply_height_cap(
     (out, report)
 }
 
+// Panels mode (minecraft#59): each 128x128 window is built on its own
+// noobline, so its peak and its cap are its own. A window's row 0 is
+// anchored here exactly as build_schem anchors it, which lets the cap
+// recolor a forced-light edge cell; the result only shades right when
+// built in Panels mode. Callers re-run the cap from the base grid on
+// every mode change.
+pub fn natural_peak_panels(grid: &Grid, cliff_cap: Option<u32>) -> u32 {
+    grid.panel_windows()
+        .into_iter()
+        .map(|(x0, z0)| natural_peak(&grid.window(x0, z0, 128, 128), cliff_cap))
+        .max()
+        .unwrap_or(0)
+}
+
+pub fn apply_height_cap_panels(
+    grid: &Grid,
+    data: &BlockData,
+    allowed_tones: &[Tone],
+    cliff_cap: Option<u32>,
+    max_height: u32,
+) -> (Grid, CapReport) {
+    let mut out = grid.clone();
+    let mut report = CapReport::default();
+    for (x0, z0) in grid.panel_windows() {
+        let win = grid.window(x0, z0, 128, 128);
+        if natural_peak(&win, cliff_cap) <= max_height {
+            continue;
+        }
+        let (capped, r) = apply_height_cap(&win, data, allowed_tones, cliff_cap, max_height);
+        for z in 0..win.height {
+            for x in 0..win.width {
+                out.cells[(z0 + z) * grid.width + x0 + x] = capped.cells[z * win.width + x];
+            }
+        }
+        report.edited_cells += r.edited_cells;
+        report.edited_columns += r.edited_columns;
+        report.infeasible_columns += r.infeasible_columns;
+    }
+    (out, report)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -260,5 +301,47 @@ mod tests {
         let (out, report) = apply_height_cap(&g, &d, &ALL, Some(1), 4);
         assert!(peak(&out, Some(1)) <= 4);
         assert!(report.edited_cells > 0);
+    }
+
+    fn two_panel_column(top: &[Tone], bottom: &[Tone]) -> Grid {
+        let mut cells: Vec<Option<(u8, Tone)>> = Vec::with_capacity(256);
+        for z in 0..128 {
+            cells.push(Some((8u8, top[z % top.len()])));
+        }
+        for z in 0..128 {
+            cells.push(Some((8u8, bottom[z % bottom.len()])));
+        }
+        Grid {
+            width: 1,
+            height: 256,
+            cells,
+        }
+    }
+
+    #[test]
+    fn panel_peak_is_the_tallest_panel_not_the_whole_column() {
+        let dark64 = [[Tone::Dark; 64].as_slice(), [Tone::Normal; 64].as_slice()].concat();
+        let grid = two_panel_column(&dark64, &dark64);
+        assert_eq!(natural_peak(&grid, None), 128);
+        assert_eq!(natural_peak_panels(&grid, None), 64);
+    }
+
+    #[test]
+    fn panel_cap_leaves_panels_that_already_fit_alone() {
+        let d = data();
+        let dark64 = [[Tone::Dark; 64].as_slice(), [Tone::Normal; 64].as_slice()].concat();
+        let grid = two_panel_column(&dark64, &dark64);
+        let (same, r) = apply_height_cap_panels(&grid, &d, &ALL, None, 100);
+        assert_eq!(r.edited_cells, 0, "each panel is 64 tall, nothing to recolor");
+        assert_eq!(same.cells, grid.cells);
+        let (_, global) = apply_height_cap(&grid, &d, &ALL, None, 100);
+        assert!(global.edited_cells > 0, "the one-piece cap would have recolored");
+
+        let (capped, r) = apply_height_cap_panels(&grid, &d, &ALL, None, 10);
+        assert!(r.edited_cells > 0);
+        assert!(natural_peak_panels(&capped, None) <= 10);
+        let untouched = capped.cells[64..128] == grid.cells[64..128]
+            && capped.cells[192..256] == grid.cells[192..256];
+        assert!(untouched, "rows that were already flat stay as they were");
     }
 }

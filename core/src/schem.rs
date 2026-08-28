@@ -4,7 +4,7 @@ use crate::palette::Tone;
 use crate::quantize::Grid;
 use crate::staircase::{HeightMode, column_heights};
 use crate::support::{ColBlock, SupportMode, support_counts};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 #[derive(Debug, Clone)]
 pub struct SchemConfig<'a> {
@@ -127,13 +127,35 @@ pub fn build_schem(grid: &Grid, cfg: &SchemConfig) -> Schem {
     }
 }
 
+// Heights realize the tone grid; the grid is the color truth (minecraft#59).
+// OnePiece: one noobline, one solve. Panels: every 128x128 window solved on
+// its own noobline, built anywhere. Continued: the one-piece solve sliced,
+// absolute heights kept, panels pasted at one Y so seams shade correctly.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SplitEdge {
-    Filler,
-    Neighbor,
+pub enum BuildMode {
+    OnePiece,
+    Panels,
+    Continued,
 }
 
-pub fn split_schem(s: &Schem, maps_w: usize, maps_h: usize, edge: SplitEdge) -> Vec<Schem> {
+pub fn build_panels(grid: &Grid, cfg: &SchemConfig, mode: BuildMode) -> Vec<Schem> {
+    match mode {
+        BuildMode::OnePiece => vec![build_schem(grid, cfg)],
+        BuildMode::Panels => grid
+            .panel_windows()
+            .into_iter()
+            .map(|(x0, z0)| build_schem(&grid.window(x0, z0, 128, 128), cfg))
+            .collect(),
+        BuildMode::Continued => {
+            let joined = build_schem(grid, cfg);
+            split_continued(&joined, grid.width.div_ceil(128), grid.height.div_ceil(128))
+        }
+    }
+}
+
+// Every panel keeps the joined build's heights and carries the row north of
+// it (the joined noobline or the previous panel's last row) for placement.
+pub fn split_continued(s: &Schem, maps_w: usize, maps_h: usize) -> Vec<Schem> {
     let support_index = s.palette_colors.len() as u32;
     let mut out = Vec::with_capacity(maps_w * maps_h);
     for tz in 0..maps_h {
@@ -142,38 +164,17 @@ pub fn split_schem(s: &Schem, maps_w: usize, maps_h: usize, edge: SplitEdge) -> 
         for tx in 0..maps_w {
             let x_lo = tx as i32 * 128;
             let x_hi = x_lo + 128;
-            let mut blocks: Vec<(i32, i32, i32, u32)> = s
+            let blocks: Vec<(i32, i32, i32, u32)> = s
                 .blocks
                 .iter()
                 .filter(|b| b.0 >= x_lo && b.0 < x_hi && b.2 >= z_lo && b.2 < z_hi)
                 .map(|b| (b.0 - x_lo, b.1, b.2 - z_lo, b.3))
                 .collect();
-            if tz > 0 && edge == SplitEdge::Filler {
-                let referenced: BTreeSet<i32> = blocks
-                    .iter()
-                    .filter(|b| b.2 == 1 && b.3 != support_index)
-                    .map(|b| b.0)
-                    .collect();
-                let mut top: BTreeMap<i32, i32> = BTreeMap::new();
-                for b in blocks
-                    .iter()
-                    .filter(|b| b.2 == 0 && referenced.contains(&b.0))
-                {
-                    let e = top.entry(b.0).or_insert(b.1);
-                    *e = (*e).max(b.1);
-                }
-                blocks.retain(|b| b.2 != 0);
-                blocks.extend(top.into_iter().map(|(x, y)| (x, y, 0, support_index)));
-                blocks.sort_unstable();
-            }
             let max_y = blocks.iter().map(|b| b.1).max().unwrap_or(0);
             let mut materials: BTreeMap<u8, u32> = BTreeMap::new();
             let mut support_count = 0u32;
             for b in &blocks {
                 if tz > 0 && b.2 == 0 {
-                    if edge == SplitEdge::Filler {
-                        support_count += 1;
-                    }
                     continue;
                 }
                 if b.3 == support_index {
@@ -185,7 +186,11 @@ pub fn split_schem(s: &Schem, maps_w: usize, maps_h: usize, edge: SplitEdge) -> 
             out.push(Schem {
                 blocks,
                 palette_colors: s.palette_colors.clone(),
-                size: [128, max_y + 1, z_hi - z_lo],
+                size: [
+                    (s.size[0] - x_lo).min(128),
+                    max_y + 1,
+                    (s.size[2] - z_lo).min(129),
+                ],
                 materials,
                 support_count,
             });
@@ -260,14 +265,19 @@ pub fn schem_to_nbt(s: &Schem, cfg: &SchemConfig) -> Tag {
 mod tests {
     use super::*;
     use crate::data::BlockData;
+    use crate::heightcap::natural_peak;
 
-    fn setup() -> (BlockData, Grid) {
+    fn data() -> BlockData {
         let json = std::fs::read_to_string(concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/../data/blocks-26.2.json"
         ))
         .unwrap();
-        let d = BlockData::from_json(&json).unwrap();
+        BlockData::from_json(&json).unwrap()
+    }
+
+    fn setup() -> (BlockData, Grid) {
+        let d = data();
         let cells = vec![
             Some((8u8, Tone::Normal)),
             Some((29u8, Tone::Light)),
@@ -301,13 +311,151 @@ mod tests {
         }
     }
 
+    fn carpet_cfg(d: &BlockData, cliff_cap: Option<u32>, support_mode: SupportMode) -> SchemConfig<'_> {
+        let mut c = cfg(d, HeightMode::Stepped { cliff_cap }, support_mode);
+        let carpet = d
+            .candidates_for(8)
+            .find(|b| b.support_mandatory)
+            .expect("color 8 has a support-mandatory candidate");
+        c.selection.insert(8, carpet);
+        c
+    }
+
+    struct Lcg(u64);
+    impl Lcg {
+        fn next(&mut self) -> u32 {
+            self.0 = self.0.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            (self.0 >> 33) as u32
+        }
+        fn chance(&mut self, num: u32, den: u32) -> bool {
+            self.next() % den < num
+        }
+    }
+
+    // Random tone grid honoring the pipeline invariant: a cell whose north
+    // neighbor is transparent is Light (the jar renders it light regardless).
+    fn random_grid(seed: u64, w: usize, h: usize) -> Grid {
+        let mut rng = Lcg(seed);
+        let band = 120 + (rng.next() % 16) as usize;
+        let mut cells: Vec<Option<(u8, Tone)>> = vec![None; w * h];
+        for z in 0..h {
+            for x in 0..w {
+                let hole = rng.chance(2, 25)
+                    || (z >= band && z < band + 3 && x % 4 == 0)
+                    || (x >= w / 3 && x < w / 3 + 5 && z > h / 2);
+                if hole {
+                    continue;
+                }
+                let cid = if rng.chance(1, 3) { 29u8 } else { 8u8 };
+                let north_gone = z > 0 && cells[(z - 1) * w + x].is_none();
+                let tone = if north_gone {
+                    Tone::Light
+                } else {
+                    match rng.next() % 3 {
+                        0 => Tone::Dark,
+                        1 => Tone::Normal,
+                        _ => Tone::Light,
+                    }
+                };
+                cells[z * w + x] = Some((cid, tone));
+            }
+        }
+        Grid {
+            width: w,
+            height: h,
+            cells,
+        }
+    }
+
+    // Flat pictures carry Normal everywhere except the forced-light edge.
+    fn flat_grid(seed: u64, w: usize, h: usize) -> Grid {
+        let mut g = random_grid(seed, w, h);
+        for z in 0..h {
+            for x in 0..w {
+                if let Some((cid, _)) = g.cells[z * w + x] {
+                    let north_gone = z > 0 && g.cells[(z - 1) * w + x].is_none();
+                    g.cells[z * w + x] = Some((cid, if north_gone { Tone::Light } else { Tone::Normal }));
+                }
+            }
+        }
+        g
+    }
+
+    // The jar rule: a pixel's tone is the sign of its top block's height
+    // against the top block one row north; no block north renders light.
+    // Returns tones keyed by picture cell (x, z-1) for every non-filler top.
+    fn shade(blocks: &[(i32, i32, i32, u32)], support_index: u32) -> BTreeMap<(i32, i32), Tone> {
+        let mut tops: BTreeMap<(i32, i32), (i32, u32)> = BTreeMap::new();
+        for b in blocks {
+            let e = tops.entry((b.0, b.2)).or_insert((b.1, b.3));
+            if b.1 > e.0 {
+                *e = (b.1, b.3);
+            }
+        }
+        let mut out = BTreeMap::new();
+        for (&(x, z), &(y, idx)) in &tops {
+            if idx == support_index {
+                continue;
+            }
+            let tone = match tops.get(&(x, z - 1)) {
+                None => Tone::Light,
+                Some(&(ny, _)) => match y.cmp(&ny) {
+                    std::cmp::Ordering::Greater => Tone::Light,
+                    std::cmp::Ordering::Equal => Tone::Normal,
+                    std::cmp::Ordering::Less => Tone::Dark,
+                },
+            };
+            out.insert((x, z - 1), tone);
+        }
+        out
+    }
+
+    fn assert_shades_match(grid: &Grid, shaded: &BTreeMap<(i32, i32), Tone>, label: &str) {
+        let mut seen = 0usize;
+        for z in 0..grid.height {
+            for x in 0..grid.width {
+                let Some((_, tone)) = grid.cell(x, z) else {
+                    assert!(
+                        !shaded.contains_key(&(x as i32, z as i32)),
+                        "{label}: a block sits on transparent cell ({x}, {z})"
+                    );
+                    continue;
+                };
+                let got = shaded
+                    .get(&(x as i32, z as i32))
+                    .unwrap_or_else(|| panic!("{label}: cell ({x}, {z}) has no block"));
+                assert_eq!(*got, tone, "{label}: cell ({x}, {z}) shades wrong");
+                seen += 1;
+            }
+        }
+        assert_eq!(seen, grid.cells.iter().flatten().count(), "{label}: every cell checked");
+    }
+
+    fn placed_union(parts: &[Schem], maps_w: usize) -> Vec<(i32, i32, i32, u32)> {
+        let mut union = Vec::new();
+        for (i, part) in parts.iter().enumerate() {
+            let (tx, tz) = (i % maps_w, i / maps_w);
+            for b in &part.blocks {
+                union.push((b.0 + tx as i32 * 128, b.1, b.2 + tz as i32 * 128, b.3));
+            }
+        }
+        union.sort_unstable();
+        union.dedup();
+        union
+    }
+
     #[test]
     fn flat_no_supports() {
         let (d, grid) = setup();
         let c = cfg(&d, HeightMode::Flat, SupportMode::None);
         let s = build_schem(&grid, &c);
         assert_eq!(s.blocks.len(), 6);
-        assert!(s.blocks.iter().all(|b| b.1 == 2));
+        let ys: Vec<(i32, i32, i32)> = s.blocks.iter().map(|b| (b.0, b.2, b.1)).collect();
+        assert_eq!(
+            ys,
+            vec![(0, 0, 2), (0, 1, 2), (0, 2, 2), (1, 0, 1), (1, 1, 2), (1, 2, 2)],
+            "flat sits at one level; the light top row of column 1 drops its reference row"
+        );
         assert_eq!(s.size, [2, 3, 3]);
         assert_eq!(s.materials.get(&8), Some(&2));
         assert_eq!(s.materials.get(&29), Some(&2));
@@ -336,7 +484,7 @@ mod tests {
     }
 
     #[test]
-    fn split_spreads_anchors_across_north_panels() {
+    fn every_mode_counts_nooblines_where_the_builder_places_them() {
         let (d, _) = setup();
         let cells = vec![Some((8u8, Tone::Normal)); 256 * 256];
         let grid = Grid {
@@ -345,19 +493,19 @@ mod tests {
             cells,
         };
         let c = cfg(&d, HeightMode::Flat, SupportMode::None);
-        let s = build_schem(&grid, &c);
-        assert_eq!(s.support_count, 256);
-        let parts = split_schem(&s, 2, 2, SplitEdge::Filler);
-        let counts: Vec<u32> = parts.iter().map(|p| p.support_count).collect();
-        assert_eq!(
-            counts,
-            vec![128, 128, 128, 128],
-            "southern panels count the noobline they must place"
-        );
-        let neighbor = split_schem(&s, 2, 2, SplitEdge::Neighbor);
-        let counts: Vec<u32> = neighbor.iter().map(|p| p.support_count).collect();
-        assert_eq!(counts.iter().sum::<u32>(), s.support_count, "{counts:?}");
-        assert_eq!(counts, vec![128, 128, 0, 0]);
+        let one = build_panels(&grid, &c, BuildMode::OnePiece);
+        assert_eq!(one.len(), 1);
+        assert_eq!(one[0].support_count, 256);
+        let counts: Vec<u32> = build_panels(&grid, &c, BuildMode::Panels)
+            .iter()
+            .map(|p| p.support_count)
+            .collect();
+        assert_eq!(counts, vec![128, 128, 128, 128], "every panel places its own noobline");
+        let counts: Vec<u32> = build_panels(&grid, &c, BuildMode::Continued)
+            .iter()
+            .map(|p| p.support_count)
+            .collect();
+        assert_eq!(counts, vec![128, 128, 0, 0], "southern panels stand on the row above");
     }
 
     #[test]
@@ -399,12 +547,7 @@ mod tests {
 
     #[test]
     fn no_filler_ever_lands_inside_the_view() {
-        let json = std::fs::read_to_string(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/../data/blocks-26.2.json"
-        ))
-        .unwrap();
-        let d = BlockData::from_json(&json).unwrap();
+        let d = data();
         let (w, h) = (128usize, 256usize);
         let cells: Vec<Option<(u8, Tone)>> = (0..w * h)
             .map(|i| {
@@ -433,9 +576,6 @@ mod tests {
             HeightMode::Stepped { cliff_cap: None },
             SupportMode::Important,
         );
-        let joined = build_schem(&grid, &c);
-        let support_index = joined.palette_colors.len() as u32;
-
         let top = |blocks: &[(i32, i32, i32, u32)], x: i32, z: i32| {
             blocks
                 .iter()
@@ -443,33 +583,21 @@ mod tests {
                 .max_by_key(|b| b.1)
                 .map(|b| b.3)
         };
-        for x in 0..w as i32 {
-            for z in 1..=h as i32 {
-                if let Some(idx) = top(&joined.blocks, x, z) {
-                    assert_ne!(
-                        idx,
-                        support_index,
-                        "filler paints the map pixel at ({x}, {})",
-                        z - 1
-                    );
-                }
-            }
-        }
-
-        for edge in [SplitEdge::Filler, SplitEdge::Neighbor] {
-            for (i, part) in split_schem(&joined, 1, 2, edge).iter().enumerate() {
-                for x in 0..128 {
-                    for z in 1..=128 {
+        for mode in [BuildMode::OnePiece, BuildMode::Panels, BuildMode::Continued] {
+            for (i, part) in build_panels(&grid, &c, mode).iter().enumerate() {
+                let support_index = part.palette_colors.len() as u32;
+                for x in 0..part.size[0] {
+                    for z in 1..part.size[2] {
                         if let Some(idx) = top(&part.blocks, x, z) {
                             assert_ne!(
                                 idx,
                                 support_index,
-                                "{edge:?}: panel {i} filler paints ({x}, {})",
+                                "{mode:?}: panel {i} filler paints ({x}, {})",
                                 z - 1
                             );
                         }
                     }
-                    if edge == SplitEdge::Filler && top(&part.blocks, x, 0).is_some() {
+                    if mode == BuildMode::Panels && top(&part.blocks, x, 0).is_some() {
                         assert!(
                             top(&part.blocks, x, 1).is_some(),
                             "panel {i} noobline at {x} references nothing"
@@ -477,6 +605,335 @@ mod tests {
                     }
                 }
             }
+        }
+    }
+
+    #[test]
+    fn panels_mode_gives_every_panel_its_own_noobline_from_the_ground() {
+        let d = data();
+        let (mw, mh) = (1usize, 2usize);
+        let (w, h) = (mw * 128, mh * 128);
+        let cells: Vec<Option<(u8, Tone)>> = (0..w * h)
+            .map(|i| {
+                let tone = match (i / 5) % 3 {
+                    0 => Tone::Dark,
+                    1 => Tone::Normal,
+                    _ => Tone::Light,
+                };
+                Some((8u8, tone))
+            })
+            .collect();
+        let grid = Grid {
+            width: w,
+            height: h,
+            cells,
+        };
+        let c = carpet_cfg(&d, None, SupportMode::Important);
+        let parts = build_panels(&grid, &c, BuildMode::Panels);
+        let support_index = parts[0].palette_colors.len() as u32;
+
+        for (i, part) in parts.iter().enumerate() {
+            let edge: Vec<_> = part.blocks.iter().filter(|b| b.2 == 0).collect();
+            assert_eq!(edge.len(), 128, "panel {i}: one reference block per column");
+            assert!(
+                edge.iter().all(|b| b.3 == support_index),
+                "panel {i}: the reference row is filler, not picture blocks"
+            );
+            for x in 0..128 {
+                let min = part.blocks.iter().filter(|b| b.0 == x).map(|b| b.1).min().unwrap();
+                assert_eq!(min, 0, "panel {i} column {x} does not start on the ground");
+            }
+            let picture: u32 = part.materials.values().sum();
+            assert_eq!(picture, 128 * 128);
+            let filler_blocks = part
+                .blocks
+                .iter()
+                .filter(|b| b.3 == support_index)
+                .count() as u32;
+            assert_eq!(
+                part.support_count, filler_blocks,
+                "the count is every filler the panel builder places"
+            );
+        }
+    }
+
+    #[test]
+    fn panels_mode_peaks_at_each_panels_own_natural_peak() {
+        let d = data();
+        for seed in [3u64, 11, 42] {
+            let grid = random_grid(seed, 256, 256);
+            for cliff_cap in [None, Some(1), Some(3)] {
+                let c = cfg(&d, HeightMode::Stepped { cliff_cap }, SupportMode::None);
+                let parts = build_panels(&grid, &c, BuildMode::Panels);
+                for (i, (x0, z0)) in grid.panel_windows().into_iter().enumerate() {
+                    let win = grid.window(x0, z0, 128, 128);
+                    let peak = natural_peak(&win, cliff_cap) as i32;
+                    assert_eq!(parts[i].size[1], peak + 1, "seed {seed} cap {cliff_cap:?} panel {i}");
+                }
+                let joined = build_schem(&grid, &c);
+                let tallest = parts.iter().map(|p| p.size[1]).max().unwrap();
+                assert!(tallest <= joined.size[1], "a panel never needs more than the whole");
+            }
+        }
+    }
+
+    #[test]
+    fn shading_matches_the_tone_grid_in_every_mode() {
+        let d = data();
+        for seed in [1u64, 7, 99] {
+            let grid = random_grid(seed, 256, 256);
+            for cliff_cap in [None, Some(1)] {
+                for support in [SupportMode::None, SupportMode::Important, SupportMode::FullLayer] {
+                    let c = carpet_cfg(&d, cliff_cap, support);
+                    let label = |m: &str| format!("seed {seed} cap {cliff_cap:?} {support:?} {m}");
+
+                    let one = build_schem(&grid, &c);
+                    let si = one.palette_colors.len() as u32;
+                    assert_shades_match(&grid, &shade(&one.blocks, si), &label("one piece"));
+
+                    let parts = build_panels(&grid, &c, BuildMode::Panels);
+                    for (i, (x0, z0)) in grid.panel_windows().into_iter().enumerate() {
+                        let win = grid.window(x0, z0, 128, 128);
+                        let si = parts[i].palette_colors.len() as u32;
+                        assert_shades_match(&win, &shade(&parts[i].blocks, si), &label(&format!("panel {i} alone")));
+                    }
+
+                    let parts = build_panels(&grid, &c, BuildMode::Continued);
+                    let union = placed_union(&parts, 2);
+                    let si = parts[0].palette_colors.len() as u32;
+                    assert_shades_match(&grid, &shade(&union, si), &label("continued, pasted at one Y"));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn flat_shading_matches_the_tone_grid_in_every_mode() {
+        let d = data();
+        for seed in [2u64, 8] {
+            let grid = flat_grid(seed, 256, 256);
+            assert!(
+                grid.cells.iter().flatten().any(|c| c.1 == Tone::Light),
+                "seed {seed} carries forced-light edges"
+            );
+            for support in [SupportMode::None, SupportMode::Important, SupportMode::FullLayer] {
+                let mut c = cfg(&d, HeightMode::Flat, support);
+                let carpet = d.candidates_for(8).find(|b| b.support_mandatory).unwrap();
+                c.selection.insert(8, carpet);
+                let label = |m: &str| format!("flat seed {seed} {support:?} {m}");
+
+                let one = build_schem(&grid, &c);
+                let si = one.palette_colors.len() as u32;
+                assert_shades_match(&grid, &shade(&one.blocks, si), &label("one piece"));
+
+                let parts = build_panels(&grid, &c, BuildMode::Panels);
+                for (i, (x0, z0)) in grid.panel_windows().into_iter().enumerate() {
+                    let win = grid.window(x0, z0, 128, 128);
+                    let si = parts[i].palette_colors.len() as u32;
+                    assert_shades_match(&win, &shade(&parts[i].blocks, si), &label(&format!("panel {i} alone")));
+                }
+
+                let parts = build_panels(&grid, &c, BuildMode::Continued);
+                let union = placed_union(&parts, 2);
+                let si = parts[0].palette_colors.len() as u32;
+                assert_shades_match(&grid, &shade(&union, si), &label("continued"));
+            }
+        }
+    }
+
+    #[test]
+    fn continued_seams_step_the_way_the_tone_says() {
+        let d = data();
+        let grid = random_grid(5, 128, 256);
+        let c = cfg(&d, HeightMode::Stepped { cliff_cap: None }, SupportMode::None);
+        let parts = build_panels(&grid, &c, BuildMode::Continued);
+        let support_index = parts[0].palette_colors.len() as u32;
+        let top = |part: &Schem, x: i32, z: i32| {
+            part.blocks
+                .iter()
+                .filter(|b| b.0 == x && b.2 == z && b.3 != support_index)
+                .map(|b| b.1)
+                .max()
+        };
+        let mut checked = 0;
+        for x in 0..128 {
+            let (Some(north), Some(south)) = (top(&parts[0], x, 128), top(&parts[1], x, 1)) else {
+                continue;
+            };
+            let (_, tone) = grid.cell(x as usize, 128).unwrap();
+            let expect = match south.cmp(&north) {
+                std::cmp::Ordering::Greater => Tone::Light,
+                std::cmp::Ordering::Equal => Tone::Normal,
+                std::cmp::Ordering::Less => Tone::Dark,
+            };
+            assert_eq!(expect, tone, "column {x} seam");
+            checked += 1;
+        }
+        assert!(checked > 100, "seam columns compared: {checked}");
+    }
+
+    #[test]
+    fn materials_are_identical_across_modes() {
+        let d = data();
+        let grid = random_grid(13, 256, 256);
+        let c = carpet_cfg(&d, None, SupportMode::Important);
+        let one = build_schem(&grid, &c);
+        for mode in [BuildMode::Panels, BuildMode::Continued] {
+            let mut summed: BTreeMap<u8, u32> = BTreeMap::new();
+            for part in build_panels(&grid, &c, mode) {
+                for (cid, n) in &part.materials {
+                    *summed.entry(*cid).or_insert(0) += n;
+                }
+            }
+            assert_eq!(summed, one.materials, "{mode:?}");
+        }
+    }
+
+    #[test]
+    fn continued_partitions_the_joined_build() {
+        let d = data();
+        let (mw, mh) = (2usize, 2usize);
+        let (w, h) = (mw * 128, mh * 128);
+        let cells: Vec<Option<(u8, Tone)>> = (0..w * h)
+            .map(|i| {
+                let tone = match (i / 7) % 3 {
+                    0 => Tone::Dark,
+                    1 => Tone::Normal,
+                    _ => Tone::Light,
+                };
+                Some((if (i / 13) % 2 == 0 { 8u8 } else { 29u8 }, tone))
+            })
+            .collect();
+        let grid = Grid {
+            width: w,
+            height: h,
+            cells,
+        };
+        let c = cfg(
+            &d,
+            HeightMode::Stepped { cliff_cap: None },
+            SupportMode::Important,
+        );
+        let joined = build_schem(&grid, &c);
+        let parts = build_panels(&grid, &c, BuildMode::Continued);
+        assert_eq!(parts.len(), mw * mh);
+        for part in &parts {
+            assert_eq!(part.size[2], 129);
+        }
+
+        let mut rebuilt: Vec<(i32, i32, i32, u32)> = Vec::new();
+        for (i, part) in parts.iter().enumerate() {
+            let (tx, tz) = (i % mw, i / mw);
+            for b in &part.blocks {
+                rebuilt.push((b.0 + tx as i32 * 128, b.1, b.2 + tz as i32 * 128, b.3));
+            }
+        }
+        let mut union = rebuilt.clone();
+        union.sort_unstable();
+        let repeats = union.len() - {
+            let mut u = union.clone();
+            u.dedup();
+            u.len()
+        };
+        union.dedup();
+        let mut joined_blocks = joined.blocks.clone();
+        joined_blocks.sort_unstable();
+        assert_eq!(union, joined_blocks, "panels must cover the joined build exactly");
+        assert!(repeats > 0, "southern panels should repeat the reference row");
+
+        let mut supports = 0u32;
+        for part in &parts {
+            supports += part.support_count;
+        }
+        assert_eq!(supports, joined.support_count);
+    }
+
+    #[test]
+    fn every_picture_block_belongs_to_one_panel_with_transparency() {
+        let d = data();
+        let (mw, mh) = (2usize, 2usize);
+        let (w, h) = (mw * 128, mh * 128);
+        let cells: Vec<Option<(u8, Tone)>> = (0..w * h)
+            .map(|i| {
+                let (x, z) = (i % w, i / w);
+                if ((120..136).contains(&z) && x % 5 == 0) || (x % 17 == 3 && z % 11 == 4) {
+                    return None;
+                }
+                let tone = match (i / 3) % 3 {
+                    0 => Tone::Dark,
+                    1 => Tone::Normal,
+                    _ => Tone::Light,
+                };
+                Some((8u8, tone))
+            })
+            .collect();
+        let grid = Grid {
+            width: w,
+            height: h,
+            cells,
+        };
+        let c = cfg(
+            &d,
+            HeightMode::Stepped { cliff_cap: None },
+            SupportMode::Important,
+        );
+        let joined = build_schem(&grid, &c);
+        let support_index = joined.palette_colors.len() as u32;
+        let total = joined.blocks.iter().filter(|b| b.3 != support_index).count();
+
+        for mode in [BuildMode::Panels, BuildMode::Continued] {
+            let parts = build_panels(&grid, &c, mode);
+            let owned: usize = parts
+                .iter()
+                .enumerate()
+                .map(|(i, p)| {
+                    let tz = i / mw;
+                    p.blocks
+                        .iter()
+                        .filter(|b| !(tz > 0 && b.2 == 0))
+                        .filter(|b| b.3 != support_index)
+                        .count()
+                })
+                .sum();
+            assert_eq!(owned, total, "{mode:?}: every picture block belongs to one panel");
+        }
+
+        let parts = build_panels(&grid, &c, BuildMode::Continued);
+        let union = placed_union(&parts, mw);
+        let seam = |z: i32| z % 128 == 0 && z > 0;
+        let a: Vec<_> = union.iter().filter(|b| !seam(b.2)).copied().collect();
+        let mut e: Vec<_> = joined.blocks.iter().filter(|b| !seam(b.2)).copied().collect();
+        e.sort_unstable();
+        assert_eq!(a, e, "continued panels cover the joined build off-seam");
+    }
+
+    #[test]
+    fn one_panel_is_the_joined_build_in_every_mode() {
+        let d = data();
+        let cells: Vec<Option<(u8, Tone)>> = (0..128 * 128)
+            .map(|i| Some((8u8, if i % 2 == 0 { Tone::Dark } else { Tone::Light })))
+            .collect();
+        let grid = Grid {
+            width: 128,
+            height: 128,
+            cells,
+        };
+        let c = cfg(
+            &d,
+            HeightMode::Stepped { cliff_cap: None },
+            SupportMode::Important,
+        );
+        let joined = build_schem(&grid, &c);
+        for mode in [BuildMode::OnePiece, BuildMode::Panels, BuildMode::Continued] {
+            let parts = build_panels(&grid, &c, mode);
+            assert_eq!(parts.len(), 1);
+            let mut a = parts[0].blocks.clone();
+            let mut e = joined.blocks.clone();
+            a.sort_unstable();
+            e.sort_unstable();
+            assert_eq!(a, e, "{mode:?}");
+            assert_eq!(parts[0].materials, joined.materials);
+            assert_eq!(parts[0].support_count, joined.support_count);
         }
     }
 
@@ -552,277 +1009,5 @@ mod tests {
             parsed.get("DataVersion"),
             Some(&Tag::Int(d.meta.data_version))
         );
-    }
-
-    #[test]
-    fn splits_partition_the_joined_build() {
-        let json = std::fs::read_to_string(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/../data/blocks-26.2.json"
-        ))
-        .unwrap();
-        let d = BlockData::from_json(&json).unwrap();
-        let (mw, mh) = (2usize, 2usize);
-        let (w, h) = (mw * 128, mh * 128);
-        let cells: Vec<Option<(u8, Tone)>> = (0..w * h)
-            .map(|i| {
-                let tone = match (i / 7) % 3 {
-                    0 => Tone::Dark,
-                    1 => Tone::Normal,
-                    _ => Tone::Light,
-                };
-                Some((if (i / 13) % 2 == 0 { 8u8 } else { 29u8 }, tone))
-            })
-            .collect();
-        let grid = Grid {
-            width: w,
-            height: h,
-            cells,
-        };
-        let c = cfg(
-            &d,
-            HeightMode::Stepped { cliff_cap: None },
-            SupportMode::Important,
-        );
-        let joined = build_schem(&grid, &c);
-        let parts = split_schem(&joined, mw, mh, SplitEdge::Neighbor);
-        assert_eq!(parts.len(), mw * mh);
-
-        for part in &parts {
-            assert_eq!(part.size[2], 129);
-        }
-
-        let mut rebuilt: Vec<(i32, i32, i32, u32)> = Vec::new();
-        for (i, part) in parts.iter().enumerate() {
-            let (tx, tz) = (i % mw, i / mw);
-            for b in &part.blocks {
-                rebuilt.push((b.0 + tx as i32 * 128, b.1, b.2 + tz as i32 * 128, b.3));
-            }
-        }
-        let mut union = rebuilt.clone();
-        union.sort_unstable();
-        let repeats = union.len() - {
-            let mut u = union.clone();
-            u.dedup();
-            u.len()
-        };
-        union.dedup();
-        let mut joined_blocks = joined.blocks.clone();
-        joined_blocks.sort_unstable();
-        assert_eq!(
-            union, joined_blocks,
-            "panels must cover the joined build exactly"
-        );
-        assert!(
-            repeats > 0,
-            "southern panels should repeat the reference row"
-        );
-
-        let mut summed: BTreeMap<u8, u32> = BTreeMap::new();
-        let mut supports = 0u32;
-        for part in &parts {
-            for (cid, n) in &part.materials {
-                *summed.entry(*cid).or_insert(0) += n;
-            }
-            supports += part.support_count;
-        }
-        assert_eq!(summed, joined.materials);
-        assert_eq!(supports, joined.support_count);
-    }
-
-    #[test]
-    fn filler_edge_gives_every_panel_its_own_noobline() {
-        let json = std::fs::read_to_string(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/../data/blocks-26.2.json"
-        ))
-        .unwrap();
-        let d = BlockData::from_json(&json).unwrap();
-        let (mw, mh) = (1usize, 2usize);
-        let (w, h) = (mw * 128, mh * 128);
-        let cells: Vec<Option<(u8, Tone)>> = (0..w * h)
-            .map(|i| {
-                let tone = match (i / 5) % 3 {
-                    0 => Tone::Dark,
-                    1 => Tone::Normal,
-                    _ => Tone::Light,
-                };
-                Some((8u8, tone))
-            })
-            .collect();
-        let grid = Grid {
-            width: w,
-            height: h,
-            cells,
-        };
-        let mut c = cfg(
-            &d,
-            HeightMode::Stepped { cliff_cap: None },
-            SupportMode::Important,
-        );
-        let carpet = d
-            .candidates_for(8)
-            .find(|b| b.support_mandatory)
-            .expect("color 8 has a support-mandatory candidate");
-        c.selection.insert(8, carpet);
-        let joined = build_schem(&grid, &c);
-        let parts = split_schem(&joined, mw, mh, SplitEdge::Filler);
-        let support_index = joined.palette_colors.len() as u32;
-        assert!(
-            joined.blocks.iter().filter(|b| b.2 == 128).count() > 128,
-            "seam row should hold picture blocks and their supports"
-        );
-
-        let south = &parts[1];
-        let edge: Vec<_> = south.blocks.iter().filter(|b| b.2 == 0).collect();
-        assert_eq!(edge.len(), 128, "one reference block per column");
-        assert!(
-            edge.iter().all(|b| b.3 == support_index),
-            "the reference row is filler, not picture blocks"
-        );
-
-        for b in &edge {
-            let world_z = 128;
-            let joined_here = joined
-                .blocks
-                .iter()
-                .filter(|j| j.0 == b.0 && j.2 == world_z)
-                .map(|j| j.1)
-                .max()
-                .expect("joined build has that row");
-            assert_eq!(b.1, joined_here);
-        }
-
-        let picture: u32 = south.materials.values().sum();
-        assert_eq!(picture, 128 * 128);
-        let filler_blocks = south
-            .blocks
-            .iter()
-            .filter(|b| b.3 == support_index)
-            .count() as u32;
-        assert_eq!(
-            south.support_count, filler_blocks,
-            "the count is every filler the panel builder places"
-        );
-    }
-
-    #[test]
-    fn splits_hold_with_transparency() {
-        let json = std::fs::read_to_string(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/../data/blocks-26.2.json"
-        ))
-        .unwrap();
-        let d = BlockData::from_json(&json).unwrap();
-        let (mw, mh) = (2usize, 2usize);
-        let (w, h) = (mw * 128, mh * 128);
-        let cells: Vec<Option<(u8, Tone)>> = (0..w * h)
-            .map(|i| {
-                let (x, z) = (i % w, i / w);
-                if ((120..136).contains(&z) && x % 5 == 0) || (x % 17 == 3 && z % 11 == 4) {
-                    return None;
-                }
-                let tone = match (i / 3) % 3 {
-                    0 => Tone::Dark,
-                    1 => Tone::Normal,
-                    _ => Tone::Light,
-                };
-                Some((8u8, tone))
-            })
-            .collect();
-        let grid = Grid {
-            width: w,
-            height: h,
-            cells,
-        };
-        let c = cfg(
-            &d,
-            HeightMode::Stepped { cliff_cap: None },
-            SupportMode::Important,
-        );
-        let joined = build_schem(&grid, &c);
-
-        for edge in [SplitEdge::Filler, SplitEdge::Neighbor] {
-            let parts = split_schem(&joined, mw, mh, edge);
-            let mut union: Vec<(i32, i32, i32, u32)> = Vec::new();
-            for (i, part) in parts.iter().enumerate() {
-                let (tx, tz) = (i % mw, i / mw);
-                for b in &part.blocks {
-                    union.push((b.0 + tx as i32 * 128, b.1, b.2 + tz as i32 * 128, b.3));
-                }
-            }
-            let seam = |z: i32| z % 128 == 0 && z > 0;
-            let mut a: Vec<_> = union.iter().filter(|b| !seam(b.2)).copied().collect();
-            let mut e: Vec<_> = joined
-                .blocks
-                .iter()
-                .filter(|b| !seam(b.2))
-                .copied()
-                .collect();
-            a.sort_unstable();
-            a.dedup();
-            e.sort_unstable();
-            assert_eq!(
-                a, e,
-                "{edge:?}: panels must cover the joined build off-seam"
-            );
-
-            let owned: usize = parts
-                .iter()
-                .enumerate()
-                .map(|(i, p)| {
-                    let tz = i / mw;
-                    p.blocks
-                        .iter()
-                        .filter(|b| !(tz > 0 && b.2 == 0))
-                        .filter(|b| b.3 != joined.palette_colors.len() as u32)
-                        .count()
-                })
-                .sum();
-            let total = joined
-                .blocks
-                .iter()
-                .filter(|b| b.3 != joined.palette_colors.len() as u32)
-                .count();
-            assert_eq!(
-                owned, total,
-                "{edge:?}: every picture block belongs to one panel"
-            );
-        }
-    }
-
-    #[test]
-    fn one_panel_split_is_the_joined_build() {
-        let json = std::fs::read_to_string(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/../data/blocks-26.2.json"
-        ))
-        .unwrap();
-        let d = BlockData::from_json(&json).unwrap();
-        let cells: Vec<Option<(u8, Tone)>> = (0..128 * 128)
-            .map(|i| Some((8u8, if i % 2 == 0 { Tone::Dark } else { Tone::Light })))
-            .collect();
-        let grid = Grid {
-            width: 128,
-            height: 128,
-            cells,
-        };
-        let c = cfg(
-            &d,
-            HeightMode::Stepped { cliff_cap: None },
-            SupportMode::Important,
-        );
-        let joined = build_schem(&grid, &c);
-        for edge in [SplitEdge::Filler, SplitEdge::Neighbor] {
-            let parts = split_schem(&joined, 1, 1, edge);
-            assert_eq!(parts.len(), 1);
-            let mut a = parts[0].blocks.clone();
-            let mut e = joined.blocks.clone();
-            a.sort_unstable();
-            e.sort_unstable();
-            assert_eq!(a, e, "{edge:?}");
-            assert_eq!(parts[0].materials, joined.materials);
-            assert_eq!(parts[0].support_count, joined.support_count);
-        }
     }
 }

@@ -4,7 +4,9 @@ use arachne_core::color::srgb_to_linear;
 use arachne_core::cost::Loadout;
 use arachne_core::data::BlockData;
 use arachne_core::dbs::{DbsConfig, refine_with_progress};
-use arachne_core::heightcap::{apply_height_cap, natural_peak};
+use arachne_core::heightcap::{
+    apply_height_cap, apply_height_cap_panels, natural_peak, natural_peak_panels,
+};
 use arachne_core::hints::marginal_errors;
 use arachne_core::image::LinImage;
 use arachne_core::mapdat::mapdat_to_nbt;
@@ -18,7 +20,7 @@ use arachne_core::quantize::{
     quantize_with_progress,
 };
 use arachne_core::schem::{
-    SchemConfig, SplitEdge, build_schem, missing_selection, schem_to_nbt, split_schem,
+    BuildMode, SchemConfig, build_panels, build_schem, missing_selection, schem_to_nbt,
 };
 use arachne_core::share::{SharedPalette, decode as share_decode, encode as share_encode};
 use arachne_core::solver::{RankedCandidate, SolverConfig, rank_color};
@@ -67,7 +69,7 @@ struct ExportOpts {
     support_block_id: String,
     selection: BTreeMap<String, usize>,
     #[serde(default)]
-    borrow_north_edge: bool,
+    build_mode: Option<String>,
     #[serde(default)]
     version: Option<String>,
 }
@@ -207,11 +209,23 @@ struct HeightCapOpts {
     cliff_cap: Option<u32>,
     enabled_color_ids: Vec<u8>,
     tones: Vec<Tone>,
+    #[serde(default)]
+    build_mode: Option<String>,
+}
+
+fn build_mode_of(name: Option<&str>) -> Result<BuildMode, String> {
+    Ok(match name.unwrap_or("panels") {
+        "one_piece" => BuildMode::OnePiece,
+        "panels" => BuildMode::Panels,
+        "continued" => BuildMode::Continued,
+        m => return Err(format!("unknown build_mode: {m}")),
+    })
 }
 
 #[derive(Serialize)]
 struct HeightCapResult {
     natural_peak: u32,
+    per_panel: bool,
     edited_cells: u32,
     edited_columns: u32,
     infeasible_columns: u32,
@@ -393,9 +407,16 @@ impl Session {
             .as_ref()
             .ok_or_else(|| "generate first".to_string())?;
         let img = self.img.as_ref().ok_or_else(|| "generate first".to_string())?;
-        let peak = natural_peak(base, opts.cliff_cap);
+        let per_panel = build_mode_of(opts.build_mode.as_deref())? == BuildMode::Panels
+            && (base.width > 128 || base.height > 128);
+        let peak = if per_panel {
+            natural_peak_panels(base, opts.cliff_cap)
+        } else {
+            natural_peak(base, opts.cliff_cap)
+        };
         let mut result = HeightCapResult {
             natural_peak: peak,
+            per_panel,
             edited_cells: 0,
             edited_columns: 0,
             infeasible_columns: 0,
@@ -408,8 +429,11 @@ impl Session {
                 if palette.entries.is_empty() {
                     return Err("no enabled colors".to_string());
                 }
-                let (capped, report) =
-                    apply_height_cap(base, &self.data, &opts.tones, opts.cliff_cap, h);
+                let (capped, report) = if per_panel {
+                    apply_height_cap_panels(base, &self.data, &opts.tones, opts.cliff_cap, h)
+                } else {
+                    apply_height_cap(base, &self.data, &opts.tones, opts.cliff_cap, h)
+                };
                 result.edited_cells = report.edited_cells;
                 result.edited_columns = report.edited_columns;
                 result.infeasible_columns = report.infeasible_columns;
@@ -479,6 +503,7 @@ impl Session {
         Ok(gzip(&write_root("", &tag)))
     }
 
+    // The one-piece schematic; build_mode in opts is not consulted here.
     pub fn export_schem(&self, opts_json: &str) -> Result<Vec<u8>, String> {
         let grid = self
             .grid
@@ -501,21 +526,24 @@ impl Session {
             .as_ref()
             .ok_or_else(|| "generate first".to_string())?;
         let opts: ExportOpts = serde_json::from_str(opts_json).map_err(|e| e.to_string())?;
-        let edge = if opts.borrow_north_edge {
-            SplitEdge::Neighbor
-        } else {
-            SplitEdge::Filler
-        };
+        let mode = build_mode_of(opts.build_mode.as_deref())?;
         let cfg = self.schem_config(opts)?;
         let missing = missing_selection(grid, &cfg);
         if !missing.is_empty() {
             return Err(self.missing_message(&missing));
         }
-        let joined = build_schem(grid, &cfg);
-        let parts = split_schem(&joined, grid.width / 128, grid.height / 128, edge);
+        let parts = build_panels(grid, &cfg, mode);
+        // A panel with nothing in it frames as zero bytes so indices stay
+        // aligned with map ids; the caller skips it.
         let payloads: Vec<Vec<u8>> = parts
             .iter()
-            .map(|p| gzip(&write_root("", &schem_to_nbt(p, &cfg))))
+            .map(|p| {
+                if p.blocks.is_empty() {
+                    Vec::new()
+                } else {
+                    gzip(&write_root("", &schem_to_nbt(p, &cfg)))
+                }
+            })
             .collect();
         let total: usize = payloads.iter().map(Vec::len).sum();
         let mut out = Vec::with_capacity(4 + 4 * payloads.len() + total);
@@ -545,21 +573,16 @@ impl Session {
             .as_ref()
             .ok_or_else(|| "generate first".to_string())?;
         let opts: ExportOpts = serde_json::from_str(opts_json).map_err(|e| e.to_string())?;
-        let edge = if opts.borrow_north_edge {
-            SplitEdge::Neighbor
-        } else {
-            SplitEdge::Filler
-        };
+        let mode = build_mode_of(opts.build_mode.as_deref())?;
         let cfg = self.schem_config(opts)?;
         let missing = missing_selection(grid, &cfg);
         if !missing.is_empty() {
             return Err(self.missing_message(&missing));
         }
-        let joined = build_schem(grid, &cfg);
         let schem = if panel < 0 {
-            joined
+            build_schem(grid, &cfg)
         } else {
-            let parts = split_schem(&joined, grid.width / 128, grid.height / 128, edge);
+            let parts = build_panels(grid, &cfg, mode);
             let i = panel as usize;
             if i >= parts.len() {
                 return Err(format!("no panel {i}"));
@@ -600,18 +623,20 @@ impl Session {
             .as_ref()
             .ok_or_else(|| "generate first".to_string())?;
         let opts: ExportOpts = serde_json::from_str(opts_json).map_err(|e| e.to_string())?;
-        let edge = if opts.borrow_north_edge {
-            SplitEdge::Neighbor
-        } else {
-            SplitEdge::Filler
-        };
+        let mode = build_mode_of(opts.build_mode.as_deref())?;
         let cfg = self.schem_config(opts)?;
         let missing = missing_selection(grid, &cfg);
         if !missing.is_empty() {
             return Err(self.missing_message(&missing));
         }
-        let joined = build_schem(grid, &cfg);
-        let panels: Vec<u32> = split_schem(&joined, grid.width / 128, grid.height / 128, edge)
+        // One piece has no panels of its own; report the regions of the one
+        // build, which is what Continued slices.
+        let per_panel = if mode == BuildMode::OnePiece {
+            BuildMode::Continued
+        } else {
+            mode
+        };
+        let panels: Vec<u32> = build_panels(grid, &cfg, per_panel)
             .iter()
             .map(|s| s.support_count)
             .collect();
@@ -621,7 +646,7 @@ impl Session {
             panels: Vec<u32>,
         }
         json(&SupportTotals {
-            whole: joined.support_count,
+            whole: panels.iter().sum(),
             panels,
         })
     }
@@ -893,6 +918,46 @@ mod tests {
         )
         .unwrap();
         assert_eq!(m["per_color"].as_array().unwrap().len(), 5);
+    }
+
+    #[test]
+    fn an_empty_panel_frames_as_zero_bytes() {
+        let mut s = session();
+        let (w, h) = (512usize, 256usize);
+        let rgba: Vec<u8> = (0..w * h)
+            .flat_map(|i| {
+                let x = i % w;
+                let v = ((i / w) % 256) as u8;
+                [v, v, v, if x < w / 2 { 0 } else { 255 }]
+            })
+            .collect();
+        let opts = r#"{"maps_w":2,"maps_h":1,
+            "enabled_color_ids":[8,29,28,25,18],
+            "tones":["dark","normal","light"],
+            "dither":"floyd_steinberg","transparency_threshold":0.5}"#;
+        s.generate(&rgba, w, h, opts, None).unwrap();
+        let cfg = r#"{}"#;
+        let mut selection = serde_json::Map::new();
+        for cid in [8u8, 29, 28, 25, 18] {
+            let ranked: serde_json::Value =
+                serde_json::from_str(&s.rank(cid, silk_kit_json(), cfg).unwrap()).unwrap();
+            selection.insert(
+                cid.to_string(),
+                ranked[0]["block_index"].as_u64().unwrap().into(),
+            );
+        }
+        let export = serde_json::json!({
+            "height_mode": "stepped", "support_mode": "important",
+            "support_block_id": "netherrack", "selection": selection,
+            "build_mode": "panels",
+        });
+        let framed = s.export_schem_split(&export.to_string()).unwrap();
+        let count = u32::from_le_bytes(framed[0..4].try_into().unwrap());
+        assert_eq!(count, 2);
+        let len0 = u32::from_le_bytes(framed[4..8].try_into().unwrap());
+        let len1 = u32::from_le_bytes(framed[8..12].try_into().unwrap());
+        assert_eq!(len0, 0, "the transparent panel is empty");
+        assert!(len1 > 0, "the painted panel is real");
     }
 
     #[test]

@@ -219,6 +219,15 @@
               max height <input type="number" id="max-height" value="" min="0" placeholder="any" /></label>
           </div>
           <div class="row">
+            <label class="field-inline" title="how the build is put together, which decides what max height measures and how the download is cut"><span class="field-name">build as</span>
+              <select id="build-mode">
+              <option value="panels" selected title="one file per map. Every panel starts on the ground with its own reference row along its north edge, so you can build it anywhere. Max height is the tallest panel">separate panels, each on its own reference row</option>
+              <option value="continued" title="one file per map. Panels keep the heights of the whole picture and southern panels stand on the row above, so paste every panel at the same Y. Litematica shows the shared row in red on a finished panel">panels that continue each other</option>
+              <option value="one_piece" title="a single schematic with one reference row along the north edge">one piece</option>
+            </select>
+            </label>
+          </div>
+          <div class="row">
             <span class="note" id="max-height-note"></span>
           </div>
         </div>
@@ -496,12 +505,6 @@
             <input type="number" id="first-map-id" value="0" min="0" step="1" /></label>
         </div>
         <div class="row">
-          <label title="each 128×128 map gets its own file, named for where it sits in the grid and which map id it carries. name_x0_z0_map_7.nbt is the north-west panel"><input
-            type="checkbox" id="split-export" checked /> one file per map (zip)</label>
-          <label title="Off: every panel carries its own filler noobline, and litematica flags the overlap with a finished panel in red.&#10;On: southern panels use the panel above's real last row instead, so nothing overlaps"><input
-            type="checkbox" id="borrow-edge" /> panels reuse the row above</label>
-        </div>
-        <div class="row">
           <label class="checkbox" title="a plain text file listing every block and how many you need, with a link that reopens this exact palette in Arachne. Keep it with the schematic and the build can be remade or continued later"><input
             type="checkbox" id="sheet-on" checked /> build sheet (materials, and a link back to this palette)</label>
         </div>
@@ -519,11 +522,16 @@
           <button id="view-build-export" disabled title="the whole schematic block by block: real textures, heights, and the exact blocks these settings pick. Nothing downloads and nothing leaves the page">view the build</button>
           <button id="export-share" hidden disabled title="the same file, handed to another app on this device such as Discord, mail or a drive">share</button>
         </div>
-        <p class="note">Every schematic includes a reference row along its
+        <p class="note" id="export-skipped" hidden></p>
+        <p class="note" id="export-mode-note">Every schematic includes a reference row along its
           north edge. Without it the map's top row renders a shade too bright, a
-          visible line across the top of each panel. Each split panel gets its
-          own; tick "panels reuse the row above" if you would rather they not
-          overlap a panel you have already built.</p>
+          visible line across the top of each panel. Separate panels each get
+          their own and start on the ground, so build them anywhere; built
+          side by side, a southern panel's reference row overlaps the
+          panel above, which litematica shows in red. Panels that continue
+          each other share heights and stand on the row above instead, so
+          paste every one at the same Y. Pick the mode under height, next to max height, because it
+          changes what max height measures.</p>
       </section>
     </main>
 

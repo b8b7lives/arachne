@@ -333,7 +333,7 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     fit.value = "cover"; fit.dispatchEvent(new Event("change", { bubbles: true }));
     set("maps-w", "2"); set("maps-h", "2");
     set("first-map-id", "7");
-    set("split-export", true, "checked");
+    set("build-mode", "panels");
   })()`);
   await s.evaluate(`new Promise((r) => setTimeout(r, 4000))`);
   const size = await s.evaluate(`document.getElementById("preview").width`);
@@ -368,8 +368,8 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     zipped.dosYear === new Date().getFullYear(), `stamped ${zipped.dosYear}`);
 
   await s.evaluate(`(() => {
-    const el = document.getElementById("split-export");
-    el.checked = false;
+    const el = document.getElementById("build-mode");
+    el.value = "one_piece";
     el.dispatchEvent(new Event("change", { bubbles: true }));
     const sheet = document.getElementById("sheet-on");
     sheet.checked = false;
@@ -459,8 +459,8 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   };
 
   await s.evaluate(`(() => {
-    const el = document.getElementById("split-export");
-    el.checked = true;
+    const el = document.getElementById("build-mode");
+    el.value = "panels";
     el.dispatchEvent(new Event("change", { bubbles: true }));
     document.getElementById("view-build").click();
   })()`, { userGesture: true });
@@ -523,8 +523,8 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     (await s.evaluate(`document.querySelector(".view2d") === null`)) === true);
 
   await s.evaluate(`(() => {
-    const el = document.getElementById("split-export");
-    el.checked = false;
+    const el = document.getElementById("build-mode");
+    el.value = "one_piece";
     el.dispatchEvent(new Event("change", { bubbles: true }));
     document.getElementById("view-build").click();
   })()`, { userGesture: true });
@@ -544,6 +544,20 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   check("close button dismisses the viewer",
     (await s.evaluate(`document.querySelector(".view2d") === null`)) === true);
 
+  const onePieceFiller = await s.evaluate(`(() => {
+    const sel = document.getElementById("materials-basis");
+    sel.value = "build";
+    sel.dispatchEvent(new Event("change", { bubbles: true }));
+    return [...document.querySelectorAll(".materials tbody tr")]
+      .filter((tr) => tr.children[0].textContent.endsWith(" (filler)"))
+      .reduce((a, tr) => a + Number(tr.children[2].textContent.replace(/,/g, "")), 0);
+  })()`);
+  await s.evaluate(`(() => {
+    const el = document.getElementById("build-mode");
+    el.value = "panels";
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  })()`);
+  await s.evaluate(`new Promise((r) => setTimeout(r, 3000))`);
   const basis = await s.evaluate(`(() => {
     const rows = () => [...document.querySelectorAll(".materials tbody tr")]
       .map((tr) => [tr.children[0].textContent,
@@ -586,9 +600,12 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   check("both north panels carry noobline filler",
     basis.panelFiller[0] >= 128 && basis.panelFiller[1] >= 128,
     JSON.stringify(basis.panelFiller));
-  check("panel filler is the whole schematic's plus each southern panel's own reference row",
-    basis.panelFiller.reduce((a, b) => a + b, 0) === basis.buildFiller + 2 * 128,
-    `${JSON.stringify(basis.panelFiller)} vs ${basis.buildFiller} + 256`);
+  check("the whole schematic's filler is every panel's own, reference rows included",
+    basis.panelFiller.reduce((a, b) => a + b, 0) === basis.buildFiller,
+    `${JSON.stringify(basis.panelFiller)} vs ${basis.buildFiller}`);
+  check("separate panels add one reference row per southern panel over the one-piece build",
+    basis.buildFiller === onePieceFiller + 2 * 128,
+    `${basis.buildFiller} vs ${onePieceFiller} + 256`);
   check("southern panels count the reference row they stand on",
     basis.panelFiller[2] >= 128 && basis.panelFiller[3] >= 128,
     JSON.stringify(basis.panelFiller));
@@ -993,7 +1010,7 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   check("a blank cap reports the natural peak",
     /staircases up to \d+ tall on its own/.test(heightCap.blank), heightCap.blank);
   check("a tight cap reports what it recolored and what it costs",
-    /recolored \d+ blocks to fit under 1; (no visible cost|picture error up about)/
+    /recolored \d+ blocks to fit (every panel )?under 1; (no visible cost|picture error up about)/
       .test(heightCap.capped),
     heightCap.capped);
   check("clearing the cap restores the natural staircase note",
@@ -1371,6 +1388,52 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   check("the communities card shows and links out",
     communities.shown === true && /blossomcraft\.org/.test(communities.href)
     && /map art on BlossomCraft/.test(communities.line), communities.href);
+  await s.evaluate(`(async () => {
+    const alpha = document.getElementById("honor-alpha");
+    if (!alpha.checked) { alpha.checked = true;
+      alpha.dispatchEvent(new Event("change", { bubbles: true })); }
+    const c = document.createElement("canvas");
+    c.width = 256; c.height = 128;
+    const g = c.getContext("2d");
+    g.fillStyle = "#c08030"; g.fillRect(128, 0, 128, 128);
+    const blob = await new Promise((r) => c.toBlob(r));
+    const dt = new DataTransfer();
+    dt.items.add(new File([blob], "half.png", { type: "image/png" }));
+    document.dispatchEvent(new DragEvent("drop", { dataTransfer: dt, bubbles: true, cancelable: true }));
+    await new Promise((r) => setTimeout(r, 3000));
+    const set = (id, v) => { const el = document.getElementById(id); el.value = v;
+      el.dispatchEvent(new Event("change", { bubbles: true })); };
+    set("maps-w", "2"); set("maps-h", "1"); set("build-mode", "panels");
+    set("first-map-id", "0");
+    await new Promise((r) => setTimeout(r, 5000));
+    window.__dl = [];
+    const origCreate = URL.createObjectURL.bind(URL);
+    URL.createObjectURL = (blob) => { window.__blob = blob; return origCreate(blob); };
+    const origClick = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function () {
+      if (this.download) { window.__dl.push({ name: this.download, blob: window.__blob }); return; }
+      return origClick.apply(this, arguments);
+    };
+    document.getElementById("export-download").click();
+  })()`);
+  await s.evaluate(`new Promise((r) => setTimeout(r, 4000))`);
+  const halfEmpty = await s.evaluate(`(async () => {
+    const d = window.__dl[0];
+    if (!d) return { name: null };
+    const b = new Uint8Array(await d.blob.arrayBuffer());
+    const text = new TextDecoder("latin1").decode(b);
+    const note = document.getElementById("export-skipped");
+    return { name: d.name,
+      names: [...new Set([...text.matchAll(/arachne_x\\d+_z\\d+_map_\\d+\\.nbt/g)].map((m) => m[0]))],
+      shown: !note.hidden, note: note.textContent };
+  })()`);
+  check("a panel with nothing in it gets no schematic file",
+    JSON.stringify(halfEmpty.names) === JSON.stringify(["arachne_x1_z0_map_1.nbt"]),
+    JSON.stringify(halfEmpty.names));
+  check("and the download section says which panel was left out",
+    halfEmpty.shown === true && /Panel x0_z0_map_0 has no blocks to place/.test(halfEmpty.note ?? ""),
+    halfEmpty.note);
+
   await s.send("Page.navigate", { url });
   await s.evaluate(WAIT_READY);
   await s.evaluate(`new Promise((r) => setTimeout(r, 600))`);

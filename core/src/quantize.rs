@@ -15,6 +15,31 @@ impl Grid {
     pub fn cell(&self, x: usize, z: usize) -> Option<(u8, Tone)> {
         self.cells[z * self.width + x]
     }
+
+    pub fn window(&self, x0: usize, z0: usize, w: usize, h: usize) -> Grid {
+        let w = w.min(self.width.saturating_sub(x0));
+        let h = h.min(self.height.saturating_sub(z0));
+        let mut cells = Vec::with_capacity(w * h);
+        for z in z0..z0 + h {
+            cells.extend_from_slice(&self.cells[z * self.width + x0..z * self.width + x0 + w]);
+        }
+        Grid {
+            width: w,
+            height: h,
+            cells,
+        }
+    }
+
+    pub fn panel_windows(&self) -> Vec<(usize, usize)> {
+        let (mw, mh) = (self.width.div_ceil(128), self.height.div_ceil(128));
+        let mut out = Vec::with_capacity(mw * mh);
+        for tz in 0..mh {
+            for tx in 0..mw {
+                out.push((tx * 128, tz * 128));
+            }
+        }
+        out
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

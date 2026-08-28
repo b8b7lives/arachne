@@ -147,9 +147,11 @@ export interface ExportOpts {
   support_mode: "none" | "important" | "full_layer";
   support_block_id: string;
   selection: Record<string, number>;
-  borrow_north_edge?: boolean;
+  build_mode: BuildMode;
   version?: string;
 }
+
+export type BuildMode = "one_piece" | "panels" | "continued";
 
 export interface SupportTotals {
   whole: number;
@@ -169,10 +171,12 @@ export interface HeightCapOpts {
   cliff_cap: number | null;
   enabled_color_ids: number[];
   tones: string[];
+  build_mode: BuildMode;
 }
 
 export interface HeightCapResult {
   natural_peak: number;
+  per_panel: boolean;
   edited_cells: number;
   edited_columns: number;
   infeasible_columns: number;

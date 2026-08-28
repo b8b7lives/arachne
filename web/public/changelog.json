@@ -1,6 +1,16 @@
 {
   "builds": [
     {
+      "id": "2026-08-28-build-modes",
+      "date": "2026-08-28",
+      "line": "separate panels start on the ground, and you pick how the build is cut next to max height",
+      "notes": [
+        "Separate panels used to inherit the heights of the whole picture, so a panel from the bottom half of a tall picture could float far above the ground with nothing under it. Every panel now starts on the ground with its own reference row, and max height measures the tallest panel. Colors are unchanged: the shade of every block comes from its height against the block north of it, and that never moves.",
+        "The two download checkboxes are now one setting under height called build as: separate panels, panels that continue each other, or one piece. It sits next to max height because it changes what max height measures. Panels that continue each other share heights, so the build sheet reminds you to paste every panel at the same Y.",
+        "A panel with nothing to place, such as a fully see-through corner of the picture, gets no schematic file. The download section says which panels were left out."
+      ]
+    },
+    {
       "id": "2026-08-28-mending-note",
       "date": "2026-08-28",
       "line": "a shorter tools checklist",
