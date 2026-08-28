@@ -2186,7 +2186,7 @@ function syncMaterialsScope() {
 function wearText(t: OwnedTool, breaks: number): string {
   if (t.unbreakable) return " (unbreakable, one is enough)";
   if (!breaks) return "";
-  if (t.mending) return " (Mending, bring one and repair as you go)";
+  if (t.mending) return "";
   const tiered = toolMeta[t.kind]?.tiered ?? true;
   const durability = tiered ? (tierMeta[t.tier]?.durability ?? 0) : 0;
   if (!durability) return " (wear unknown)";

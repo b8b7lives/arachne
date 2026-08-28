@@ -813,8 +813,8 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   check("unbreaking does not change breaking time",
     wear.unbreaking.teardown === wear.plain.teardown,
     `${wear.plain.teardown} -> ${wear.unbreaking.teardown}`);
-  check("mending collapses the tool count to one",
-    /Mending, bring one and repair as you go/.test(wear.mending.tools),
+  check("mending drops the wear note",
+    !/bring \d+/.test(wear.mending.tools) && !/Mending/.test(wear.mending.tools),
     wear.mending.tools.slice(0, 90));
   check("mending does not change breaking time",
     wear.mending.teardown === wear.plain.teardown,

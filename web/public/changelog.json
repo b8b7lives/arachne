@@ -1,6 +1,14 @@
 {
   "builds": [
     {
+      "id": "2026-08-28-mending-note",
+      "date": "2026-08-28",
+      "line": "a shorter tools checklist",
+      "notes": [
+        "Tools with Mending no longer carry a repair note in the Summary checklist. The same line was repeating under every mending tool and you already know what Mending does. Nothing else changed."
+      ]
+    },
+    {
       "id": "2026-08-27-phones-and-filler",
       "date": "2026-08-27",
       "line": "works on phones and tablets, installs as an app, shares straight to Discord, and filler is only ever what a block needs",
