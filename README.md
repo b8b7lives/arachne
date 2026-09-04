@@ -1,6 +1,6 @@
 # Arachne
 
-Minecraft map art generator: image in, palette-optimized schematic out.
+Minecraft map art maker and generator: image in, palette-optimized schematic out.
 It runs entirely in your browser, and it is live at
 **<https://b8b7.live/arachne/>**.
 
@@ -32,12 +32,15 @@ in game. The remaining rough edges are mostly cosmetic.
 - Targets any release from 1.13 to the current one. The palette, the
   blocks on offer, and the DataVersion your files carry all follow the
   release you pick.
-- Exports vanilla structure files that litematica reads, split per map
-  panel with correct reference rows, plus optional map data files and
-  a plain-text build sheet.
+- Exports a .litematic for Litematica, named so it shows under its own
+  name in the schematic list, or a vanilla structure .nbt that
+  Litematica and WorldEdit both read. Split per map panel with correct
+  reference rows, plus optional map data files and a plain-text build
+  sheet.
 - Keeps your data yours. The image never leaves your browser, the site
-  has no backend and collects nothing, and presets save inside your
-  own browser.
+  has no backend, no analytics and no tracking, and presets save inside
+  your own browser. The web server keeps an ordinary request log for
+  security, the same as any website.
 
 ## How the numbers are grounded
 
@@ -67,8 +70,12 @@ inputs. `media/` holds README assets.
 
 ## Building it
 
-You need Node 20 or newer, Rust 1.85 or newer, and
-[wasm-pack](https://rustwasm.github.io/wasm-pack/).
+You need Node 22 (`web/.nvmrc`) and rustup. `rust-toolchain.toml`
+pins the Rust version, target and components, and rustup installs
+them on first use; `npm ci` installs the pinned
+[wasm-pack](https://rustwasm.github.io/wasm-pack/) alongside the
+other dev tools. The crates build on Rust 1.85 or newer if you use
+your own toolchain.
 
     cd web
     npm ci
@@ -80,13 +87,15 @@ it.
 
 ## Testing
 
-    ./verify.sh          # the whole gate: cargo, tsc, e2e
+    ./verify.sh          # the whole gate: cargo, tsc, pages, e2e, mobile
 
 The Rust suites (`cargo test --workspace`) carry the logic tests and
-golden fixtures. The e2e leg drives a real browser against the dev
-server, so it needs system chromium and `npm run dev` already running
-in another terminal; without it, cargo and tsc still verify everything
-except browser behavior.
+golden fixtures. The pages leg regenerates the two content pages and
+checks its own output. The e2e and mobile legs drive a real browser
+against the dev server, so they need system chromium (`apt install
+chromium` on Debian and Ubuntu) and `npm run dev` already running in
+another terminal; without those, cargo, tsc and pages still verify
+everything except browser behavior.
 
 ## Where this source lives
 
@@ -95,6 +104,11 @@ archive of the exact build you are using, and the GitHub mirror
 carries one commit per published build, tagged with the build id the
 footer shows. Either one is the corresponding source for the build,
 offered under the license below.
+
+Release notes for every published build are on the site at
+<https://b8b7.live/arachne/changelog/> and in the Atom feed at
+<https://b8b7.live/arachne/feed.xml>. This mirror does not use GitHub
+Releases.
 
 ## Community, bugs and contributions
 
@@ -107,11 +121,14 @@ tracker](https://github.com/b8b7lives/arachne/issues) or by mail to
 <arachne@b8b7.live>. Development happens outside this mirror, so a
 pull request has no branch to merge into; if you send one anyway, or
 attach a patch to an issue, it will be read, and carried into the next
-build with credit if it fits.
+build with credit if it fits. [CONTRIBUTING.md](CONTRIBUTING.md) has
+the details, and [SECURITY.md](SECURITY.md) says how to report a
+vulnerability.
 
 ## License and lineage
 
-GPL-3.0. Arachne began as a study of
+Copyright (C) 2026 b8b7. Licensed under GPL-3.0-only; see LICENSE.
+Arachne began as a study of
 [rebane2001/mapartcraft](https://github.com/rebane2001/mapartcraft)
 (GPL-3.0) and inherits its license with gratitude. The two tools have
 since diverged in most of what they do, but the kinship is still live:

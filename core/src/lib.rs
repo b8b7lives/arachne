@@ -7,6 +7,7 @@ pub mod dbs;
 pub mod heightcap;
 pub mod hints;
 pub mod image;
+pub mod litematic;
 pub mod mapdat;
 pub mod metric;
 pub mod nbt;

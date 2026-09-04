@@ -13,7 +13,21 @@ function buildId(): string {
 
 export default defineConfig(({ command }) => ({
   base: command === "build" ? "/arachne/" : "/",
-  build: { target: "es2022" },
+  appType: "mpa",
+  build: {
+    target: "es2022",
+    rollupOptions: {
+      input: {
+        main: "index.html",
+        colors: "colors/index.html",
+        changelog: "changelog/index.html",
+        sw: "src/sw.ts",
+      },
+      output: {
+        entryFileNames: (chunk) => (chunk.name === "sw" ? "sw.js" : "assets/[name]-[hash].js"),
+      },
+    },
+  },
   worker: { format: "es" },
   define: {
     __BUILD_ID__: JSON.stringify(buildId()),

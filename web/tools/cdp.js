@@ -10,11 +10,20 @@ export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function launch(profile, width, height) {
   for (const bin of BROWSERS) {
-    const p = spawn(bin, [
-      "--headless", "--disable-gpu", "--no-sandbox", "--hide-scrollbars",
-      "--remote-debugging-port=0", `--user-data-dir=${profile}`,
-      `--window-size=${width},${height}`, "about:blank",
-    ], { stdio: "ignore" });
+    const p = spawn(
+      bin,
+      [
+        "--headless",
+        "--disable-gpu",
+        "--no-sandbox",
+        "--hide-scrollbars",
+        "--remote-debugging-port=0",
+        `--user-data-dir=${profile}`,
+        `--window-size=${width},${height}`,
+        "about:blank",
+      ],
+      { stdio: "ignore" },
+    );
     if (p.pid) return p;
   }
   throw new Error(`no browser found (tried ${BROWSERS.join(", ")})`);
@@ -26,7 +35,7 @@ async function devtoolsPort(profile) {
     try {
       const line = fs.readFileSync(f, "utf8").split("\n")[0].trim();
       if (line) return Number(line);
-    } catch {  }
+    } catch {}
     await sleep(250);
   }
   throw new Error("chrome never published a devtools port");
@@ -36,15 +45,17 @@ async function firstPage(port) {
   for (let i = 0; i < 80; i++) {
     try {
       const list = await new Promise((res, rej) => {
-        http.get({ host: "127.0.0.1", port, path: "/json/list" }, (r) => {
-          let b = "";
-          r.on("data", (d) => (b += d));
-          r.on("end", () => res(JSON.parse(b)));
-        }).on("error", rej);
+        http
+          .get({ host: "127.0.0.1", port, path: "/json/list" }, (r) => {
+            let b = "";
+            r.on("data", (d) => (b += d));
+            r.on("end", () => res(JSON.parse(b)));
+          })
+          .on("error", rej);
       });
       const page = list.find((t) => t.type === "page");
       if (page) return page;
-    } catch {  }
+    } catch {}
     await sleep(250);
   }
   throw new Error("devtools endpoint never came up");
@@ -77,29 +88,41 @@ export async function withBrowser({ width = 1500, height = 1400 } = {}, fn) {
       }
       if (m.method === "Runtime.exceptionThrown") {
         const d = m.params.exceptionDetails;
-        logs.push("EXCEPTION " + (d.exception?.description ?? d.text));
+        logs.push(`EXCEPTION ${d.exception?.description ?? d.text}`);
       }
     });
-    const send = (method, params = {}) => new Promise((res, rej) => {
-      const i = ++id;
-      pending.set(i, (m) => {
-        if (m.error) rej(new Error(`${method} failed: ${m.error.message ?? JSON.stringify(m.error)}`));
-        else res(m.result);
+    const send = (method, params = {}) =>
+      new Promise((res, rej) => {
+        const i = ++id;
+        pending.set(i, (m) => {
+          if (m.error)
+            rej(new Error(`${method} failed: ${m.error.message ?? JSON.stringify(m.error)}`));
+          else res(m.result);
+        });
+        ws.send(JSON.stringify({ id: i, method, params }));
       });
-      ws.send(JSON.stringify({ id: i, method, params }));
-    });
 
     const failPending = (why) => {
       for (const [, settle] of pending) settle({ error: { message: why } });
       pending.clear();
     };
-    ws.addEventListener("close", () => failPending("devtools websocket closed, the browser or tab died"));
-    ws.addEventListener("error", (e) => failPending(`devtools websocket error: ${e.message ?? "socket error"}`));
+    ws.addEventListener("close", () =>
+      failPending("devtools websocket closed, the browser or tab died"),
+    );
+    ws.addEventListener("error", (e) =>
+      failPending(`devtools websocket error: ${e.message ?? "socket error"}`),
+    );
 
     await new Promise((resolve, reject) => {
       const t = setTimeout(() => reject(new Error("devtools websocket never opened")), 15000);
-      ws.addEventListener("open", () => { clearTimeout(t); resolve(); });
-      ws.addEventListener("error", (e) => { clearTimeout(t); reject(new Error(e.message ?? "websocket error")); });
+      ws.addEventListener("open", () => {
+        clearTimeout(t);
+        resolve();
+      });
+      ws.addEventListener("error", (e) => {
+        clearTimeout(t);
+        reject(new Error(e.message ?? "websocket error"));
+      });
     });
     await send("Runtime.enable");
     await send("Log.enable");
@@ -107,7 +130,10 @@ export async function withBrowser({ width = 1500, height = 1400 } = {}, fn) {
 
     const evaluate = async (expression, { userGesture = false } = {}) => {
       const r = await send("Runtime.evaluate", {
-        expression, returnByValue: true, awaitPromise: true, userGesture,
+        expression,
+        returnByValue: true,
+        awaitPromise: true,
+        userGesture,
       });
       if (!r) throw new Error("Runtime.evaluate returned no result");
       if (r.exceptionDetails) {
@@ -133,6 +159,6 @@ export async function withBrowser({ width = 1500, height = 1400 } = {}, fn) {
     }
     try {
       fs.rmSync(profile, { recursive: true, force: true });
-    } catch {  }
+    } catch {}
   }
 }

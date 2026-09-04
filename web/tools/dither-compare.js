@@ -1,5 +1,5 @@
-import { withBrowser, sleep } from "./cdp.js";
-import { writeFileSync, mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { sleep, withBrowser } from "./cdp.js";
 
 const [url = "http://127.0.0.1:5173/", outDir = ".shots"] = process.argv.slice(2);
 
@@ -47,7 +47,8 @@ await withBrowser({ width: 1500, height: 1200 }, async ({ evaluate, send }) => {
     })()`);
     await sleep(7000);
     const data = await evaluate(
-      `document.getElementById("preview").toDataURL().slice("data:image/png;base64,".length)`);
+      `document.getElementById("preview").toDataURL().slice("data:image/png;base64,".length)`,
+    );
     if (!data || data.length < 1000) {
       console.error(`${spec}: no preview`);
       continue;

@@ -136,7 +136,9 @@ mod tests {
         let p = Palette::build(&d, &[8, 29], &[Tone::Normal]);
         let edge = Palette::build(&d, &[8, 29], &[Tone::Light]);
         let dark = d.color(29).unwrap().tones.normal;
-        let data_px = [dark[0], dark[1], dark[2], 0u8, dark[0], dark[1], dark[2], 255];
+        let data_px = [
+            dark[0], dark[1], dark[2], 0u8, dark[0], dark[1], dark[2], 255,
+        ];
         let img = LinImage::from_srgb_rgba(1, 2, &data_px);
         let m = marginal_errors(
             &img,

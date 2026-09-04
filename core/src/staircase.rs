@@ -348,7 +348,13 @@ mod tests {
                     let cost: f32 = combo
                         .iter()
                         .zip(tones.iter())
-                        .map(|(a, b)| if class_of(*a) == class_of(*b) { 0.0 } else { 1.0 })
+                        .map(|(a, b)| {
+                            if class_of(*a) == class_of(*b) {
+                                0.0
+                            } else {
+                                1.0
+                            }
+                        })
                         .sum();
                     best = best.min(cost);
                 }

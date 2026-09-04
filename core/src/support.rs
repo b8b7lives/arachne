@@ -63,7 +63,11 @@ mod tests {
     #[test]
     fn none_mode_places_nothing() {
         for col in every_column() {
-            assert!(support_counts(&col, SupportMode::None).iter().all(|&c| c == 0));
+            assert!(
+                support_counts(&col, SupportMode::None)
+                    .iter()
+                    .all(|&c| c == 0)
+            );
         }
     }
 

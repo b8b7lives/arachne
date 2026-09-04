@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2024"
 rust-version = "1.85"
 license = "GPL-3.0-only"
+authors = ["b8b7"]
+publish = false
 description = "Arachne WASM boundary (thin wrapper over arachne-core)"
 
 [lib]

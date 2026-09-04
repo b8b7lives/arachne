@@ -34,13 +34,14 @@ function writeJson(key: string, value: unknown): void {
   if (!store) return;
   try {
     store.setItem(key, JSON.stringify(value));
-  } catch {
-  }
+  } catch {}
 }
 
 export function blockKey(b: CandidateBlock): string {
-  const props = Object.keys(b.properties).sort()
-    .map((k) => `${k}=${b.properties[k]}`).join(",");
+  const props = Object.keys(b.properties)
+    .sort()
+    .map((k) => `${k}=${b.properties[k]}`)
+    .join(",");
   return props ? `${b.block_id}[${props}]` : b.block_id;
 }
 
@@ -52,7 +53,9 @@ export interface BlockIndex {
 export function buildBlockIndex(blocks: CandidateBlock[]): BlockIndex {
   const keys = blocks.map(blockKey);
   const byKey = new Map<string, number>();
-  keys.forEach((k, i) => { if (!byKey.has(k)) byKey.set(k, i); });
+  keys.forEach((k, i) => {
+    if (!byKey.has(k)) byKey.set(k, i);
+  });
   return {
     keyOf: (i) => keys[i],
     indexOf: (k) => byKey.get(k),
@@ -126,6 +129,5 @@ export function clearWorkspace(): void {
   if (!store) return;
   try {
     store.removeItem(KEY_WORKSPACE);
-  } catch {
-  }
+  } catch {}
 }

@@ -7,7 +7,7 @@ const out = process.argv[4] || "../media/screenshot.png";
 
 const b64 = readFileSync(img).toString("base64");
 
-await withBrowser({ width: 1440, height: 900 }, async (s) => {
+await withBrowser({ width: 1440, height: 1100 }, async (s) => {
   await s.send("Page.navigate", { url });
   await s.evaluate(`new Promise((res) => {
     const t0 = Date.now();

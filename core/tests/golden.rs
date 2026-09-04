@@ -1,16 +1,23 @@
 use arachne_core::data::{BlockData, CandidateBlock};
+use arachne_core::litematic::{LitematicMeta, bits_for, schem_to_litematic, unpack};
 use arachne_core::nbt::{Tag, read_root, write_root};
 use arachne_core::palette::Tone;
 use arachne_core::quantize::Grid;
 use arachne_core::schem::{SchemConfig, build_schem, schem_to_nbt};
 use arachne_core::staircase::HeightMode;
 use arachne_core::support::SupportMode;
-use flate2::read::GzDecoder;
+use flate2::{Compression, read::GzDecoder, write::GzEncoder};
 use serde::Deserialize;
 use std::collections::{BTreeMap, HashMap};
-use std::io::Read;
+use std::io::{Read, Write};
 
 const AUTHOR: &str = "arachne";
+
+fn gz(bytes: &[u8]) -> Vec<u8> {
+    let mut e = GzEncoder::new(Vec::new(), Compression::default());
+    e.write_all(bytes).unwrap();
+    e.finish().unwrap()
+}
 
 fn fixture_path(name: &str) -> String {
     format!("{}/../golden/fixtures/{name}", env!("CARGO_MANIFEST_DIR"))
@@ -111,11 +118,8 @@ fn config<'a>(
 
 type BlockMap = HashMap<(i32, i32, i32), (String, Vec<(String, String)>)>;
 
-fn semantic_blocks(tag: &Tag) -> (BlockMap, [i32; 3], i32) {
-    let Some(Tag::List(_, palette)) = tag.get("palette") else {
-        panic!("palette")
-    };
-    let resolved: Vec<(String, Vec<(String, String)>)> = palette
+fn resolve_palette(palette: &[Tag]) -> Vec<(String, Vec<(String, String)>)> {
+    palette
         .iter()
         .map(|p| {
             let Some(Tag::String(name)) = p.get("Name") else {
@@ -131,7 +135,14 @@ fn semantic_blocks(tag: &Tag) -> (BlockMap, [i32; 3], i32) {
             }
             (name.clone(), props)
         })
-        .collect();
+        .collect()
+}
+
+fn semantic_blocks(tag: &Tag) -> (BlockMap, [i32; 3], i32) {
+    let Some(Tag::List(_, palette)) = tag.get("palette") else {
+        panic!("palette")
+    };
+    let resolved = resolve_palette(palette);
     let Some(Tag::List(_, blocks)) = tag.get("blocks") else {
         panic!("blocks")
     };
@@ -268,8 +279,6 @@ fn bless_fixtures() {
     use arachne_core::image::LinImage;
     use arachne_core::palette::Palette;
     use arachne_core::quantize::{Dither, FLOYD_STEINBERG, quantize};
-    use flate2::{Compression, write::GzEncoder};
-    use std::io::Write;
 
     let data = load_data();
     let all_ids: Vec<u8> = data.colors.iter().map(|c| c.id).collect();
@@ -279,8 +288,7 @@ fn bless_fixtures() {
         for x in 0..w {
             rgba.push(((x * 2 + (z * 7) % 61) % 256) as u8);
             rgba.push(
-                ((z as f32 * 2.0 + 127.0 * (x as f32 / 9.0).sin() + 128.0).rem_euclid(256.0))
-                    as u8,
+                ((z as f32 * 2.0 + 127.0 * (x as f32 / 9.0).sin() + 128.0).rem_euclid(256.0)) as u8,
             );
             rgba.push(((x + z + (x * z) % 37) % 256) as u8);
             rgba.push(255);
@@ -303,7 +311,12 @@ fn bless_fixtures() {
         ),
         (
             "grid-flat.json",
-            quantize(&img, &Palette::build(&data, &all_ids, &[Tone::Normal]), &fs, None),
+            quantize(
+                &img,
+                &Palette::build(&data, &all_ids, &[Tone::Normal]),
+                &fs,
+                None,
+            ),
         ),
         (
             "grid-mapdat.json",
@@ -320,11 +333,6 @@ fn bless_fixtures() {
         ),
     ];
     let write = |name: &str, bytes: &[u8]| std::fs::write(fixture_path(name), bytes).unwrap();
-    let gz = |bytes: &[u8]| {
-        let mut e = GzEncoder::new(Vec::new(), Compression::default());
-        e.write_all(bytes).unwrap();
-        e.finish().unwrap()
-    };
     for (name, grid) in &grids {
         let mut colors = Vec::with_capacity(grid.cells.len());
         let mut tones = Vec::with_capacity(grid.cells.len());
@@ -372,14 +380,30 @@ fn bless_fixtures() {
     );
 
     let cases: [(&str, &str, HeightMode, SupportMode); 4] = [
-        ("nbt-classic-none.nbt.gz", "materials-classic-none.json",
-            HeightMode::Stepped { cliff_cap: Some(1) }, SupportMode::None),
-        ("nbt-classic-important.nbt.gz", "materials-classic-important.json",
-            HeightMode::Stepped { cliff_cap: Some(1) }, SupportMode::Important),
-        ("nbt-classic-alldouble.nbt.gz", "materials-classic-alldouble.json",
-            HeightMode::Stepped { cliff_cap: Some(1) }, SupportMode::FullLayer),
-        ("nbt-flat-important.nbt.gz", "materials-flat-important.json",
-            HeightMode::Flat, SupportMode::Important),
+        (
+            "nbt-classic-none.nbt.gz",
+            "materials-classic-none.json",
+            HeightMode::Stepped { cliff_cap: Some(1) },
+            SupportMode::None,
+        ),
+        (
+            "nbt-classic-important.nbt.gz",
+            "materials-classic-important.json",
+            HeightMode::Stepped { cliff_cap: Some(1) },
+            SupportMode::Important,
+        ),
+        (
+            "nbt-classic-alldouble.nbt.gz",
+            "materials-classic-alldouble.json",
+            HeightMode::Stepped { cliff_cap: Some(1) },
+            SupportMode::FullLayer,
+        ),
+        (
+            "nbt-flat-important.nbt.gz",
+            "materials-flat-important.json",
+            HeightMode::Flat,
+            SupportMode::Important,
+        ),
     ];
     for (nbt_name, mats_name, height_mode, support_mode) in cases {
         let grid = load_grid(if matches!(height_mode, HeightMode::Flat) {
@@ -405,4 +429,171 @@ fn bless_fixtures() {
     let grid = load_grid("grid-mapdat.json");
     let tag = arachne_core::mapdat::mapdat_to_nbt(&grid, data.meta.data_version);
     write("mapdat.dat.gz", &gz(&write_root("", &tag)));
+}
+
+fn litematic_blocks(tag: &Tag) -> (BlockMap, [i32; 3], i32) {
+    let Some(Tag::Int(dv)) = tag.get("MinecraftDataVersion") else {
+        panic!("MinecraftDataVersion")
+    };
+    let Some(Tag::Compound(regions)) = tag.get("Regions") else {
+        panic!("Regions")
+    };
+    assert_eq!(regions.len(), 1, "one region per file");
+    let region = &regions[0].1;
+    let Some(Tag::List(_, palette)) = region.get("BlockStatePalette") else {
+        panic!("BlockStatePalette")
+    };
+    assert_eq!(
+        palette[0].get("Name"),
+        Some(&Tag::String("minecraft:air".into()))
+    );
+    let resolved = resolve_palette(palette);
+    let size = region.get("Size").expect("Size");
+    let dim = |k: &str| match size.get(k) {
+        Some(Tag::Int(v)) => *v,
+        other => panic!("Size.{k}: {other:?}"),
+    };
+    let (w, h, l) = (dim("x"), dim("y"), dim("z"));
+    let Some(Tag::LongArray(longs)) = region.get("BlockStates") else {
+        panic!("BlockStates")
+    };
+    let entries = unpack(bits_for(palette.len()), (w * h * l) as usize, longs);
+    let mut map = HashMap::new();
+    for (i, &e) in entries.iter().enumerate() {
+        if e == 0 {
+            continue;
+        }
+        let i = i as i32;
+        let (x, z, y) = (i % w, (i / w) % l, i / (w * l));
+        map.insert((x, y, z), resolved[e as usize].clone());
+    }
+    (map, [w, h, l], *dv)
+}
+
+#[test]
+fn litematic_matches_the_structure_on_a_real_grid() {
+    let data = load_data();
+    let cases = [
+        (
+            HeightMode::Stepped { cliff_cap: Some(1) },
+            SupportMode::Important,
+        ),
+        (HeightMode::Flat, SupportMode::Important),
+        (
+            HeightMode::Stepped { cliff_cap: Some(1) },
+            SupportMode::FullLayer,
+        ),
+    ];
+    for (height_mode, support_mode) in cases {
+        let grid = load_grid(if matches!(height_mode, HeightMode::Flat) {
+            "grid-flat.json"
+        } else {
+            "grid-classic.json"
+        });
+        let cfg = config(&data, height_mode, support_mode);
+        let schem = build_schem(&grid, &cfg);
+        let nbt = schem_to_nbt(&schem, &cfg);
+        let meta = LitematicMeta {
+            name: "fixture",
+            description: "",
+            time_ms: 0,
+        };
+        let (_, lit) =
+            read_root(&write_root("", &schem_to_litematic(&schem, &cfg, &meta))).unwrap();
+        let (a, sa, dva) = semantic_blocks(&nbt);
+        let (b, sb, dvb) = litematic_blocks(&lit);
+        assert_eq!(sa, sb, "size");
+        assert_eq!(dva, dvb, "data version");
+        assert_eq!(a.len(), b.len(), "block count");
+        for (pos, block) in &a {
+            assert_eq!(b.get(pos), Some(block), "at {pos:?}");
+        }
+    }
+}
+
+#[test]
+#[ignore = "size report, not an assertion: cargo test -p arachne-core --test golden size_report -- --ignored --nocapture"]
+fn size_report() {
+    let data = load_data();
+    let cases: [(&str, HeightMode, SupportMode); 4] = [
+        (
+            "classic none",
+            HeightMode::Stepped { cliff_cap: Some(1) },
+            SupportMode::None,
+        ),
+        (
+            "classic important",
+            HeightMode::Stepped { cliff_cap: Some(1) },
+            SupportMode::Important,
+        ),
+        (
+            "classic full layer",
+            HeightMode::Stepped { cliff_cap: Some(1) },
+            SupportMode::FullLayer,
+        ),
+        ("flat important", HeightMode::Flat, SupportMode::Important),
+    ];
+    eprintln!(
+        "{:<20} {:>7} {:>9} {:>7} {:>11} {:>7}",
+        "128x128 fixture", "blocks", "nbt raw", "nbt gz", "litematic", "lit gz"
+    );
+    for (label, height_mode, support_mode) in cases {
+        let grid = load_grid(if matches!(height_mode, HeightMode::Flat) {
+            "grid-flat.json"
+        } else {
+            "grid-classic.json"
+        });
+        let cfg = config(&data, height_mode, support_mode);
+        let schem = build_schem(&grid, &cfg);
+        let nbt = write_root("", &schem_to_nbt(&schem, &cfg));
+        let meta = LitematicMeta {
+            name: "fixture",
+            description: "",
+            time_ms: 0,
+        };
+        let lit = write_root("", &schem_to_litematic(&schem, &cfg, &meta));
+        eprintln!(
+            "{:<20} {:>7} {:>9} {:>7} {:>11} {:>7}",
+            label,
+            schem.blocks.len(),
+            nbt.len(),
+            gz(&nbt).len(),
+            lit.len(),
+            gz(&lit).len()
+        );
+    }
+}
+
+#[test]
+#[ignore = "writes the fixture as both formats for an in-game check: ARACHNE_SAMPLE_DIR=<dir> cargo test -p arachne-core --test golden write_samples -- --ignored"]
+fn write_samples() {
+    let Ok(dir) = std::env::var("ARACHNE_SAMPLE_DIR") else {
+        eprintln!("ARACHNE_SAMPLE_DIR is not set; nothing written");
+        return;
+    };
+    let data = load_data();
+    let grid = load_grid("grid-classic.json");
+    let cfg = config(
+        &data,
+        HeightMode::Stepped { cliff_cap: Some(1) },
+        SupportMode::Important,
+    );
+    let schem = build_schem(&grid, &cfg);
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0);
+    let meta = LitematicMeta {
+        name: "arachne-fixture",
+        description: "golden fixture, classic staircase, filler where needed",
+        time_ms: now,
+    };
+    let lit = gz(&write_root("", &schem_to_litematic(&schem, &cfg, &meta)));
+    let nbt = gz(&write_root("", &schem_to_nbt(&schem, &cfg)));
+    std::fs::write(format!("{dir}/arachne-fixture.litematic"), lit).unwrap();
+    std::fs::write(format!("{dir}/arachne-fixture.nbt"), nbt).unwrap();
+    eprintln!(
+        "wrote {dir}/arachne-fixture.litematic and arachne-fixture.nbt ({} blocks)",
+        schem.blocks.len()
+    );
 }

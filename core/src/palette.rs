@@ -92,15 +92,14 @@ impl Palette {
 
     pub fn nearest(&self, lin: LinRgb) -> &PaletteEntry {
         let lab = linear_to_oklab(lin);
-        self.entries
-            .iter()
-            .min_by(|a, b| {
-                self.matcher
-                    .dist(a.oklab, lab)
-                    .partial_cmp(&self.matcher.dist(b.oklab, lab))
-                    .expect("finite distances")
-            })
-            .expect("non-empty palette")
+        let mut best: Option<(usize, f32)> = None;
+        for (i, e) in self.entries.iter().enumerate() {
+            let d = self.matcher.dist(e.oklab, lab);
+            if best.is_none_or(|(_, bd)| d < bd) {
+                best = Some((i, d));
+            }
+        }
+        &self.entries[best.expect("non-empty palette").0]
     }
 
     pub fn nearest2(&self, lin: LinRgb) -> ((&PaletteEntry, f32), (&PaletteEntry, f32)) {

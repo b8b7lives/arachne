@@ -1,7 +1,7 @@
 {
   "name": "Arachne",
   "short_name": "Arachne",
-  "description": "Turn a picture into Minecraft map art in your browser. Free, no account, no tracking.",
+  "description": "Free Minecraft map art maker. Turn a picture into map art in your browser, with no account and no tracking.",
   "start_url": "/arachne/",
   "scope": "/arachne/",
   "display": "standalone",
@@ -9,6 +9,12 @@
   "theme_color": "#16181d",
   "icons": [
     { "src": "/arachne/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/arachne/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/arachne/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    {
+      "src": "/arachne/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

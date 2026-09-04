@@ -1,6 +1,6 @@
+import type { WorkerRequest, WorkerResponse } from "./types";
 import init, { Session } from "./wasm-pkg/arachne_wasm.js";
 import wasmUrl from "./wasm-pkg/arachne_wasm_bg.wasm?url";
-import type { WorkerRequest, WorkerResponse } from "./types";
 
 let session: Session | null = null;
 
@@ -121,6 +121,10 @@ self.onmessage = async (ev: MessageEvent<WorkerRequest>) => {
         const out = must().marginal(JSON.stringify(req.enabled), JSON.stringify(req.tones));
         reply({ id: req.id, ok: true, result: JSON.parse(out) });
         break;
+      }
+      default: {
+        const unhandled: never = req;
+        throw new Error(`unhandled worker command: ${(unhandled as { cmd: string }).cmd}`);
       }
     }
   } catch (e) {

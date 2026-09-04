@@ -167,17 +167,7 @@ export async function openView2D(deps: View2DDeps): Promise<void> {
         const sy = panY + z * zoom;
         const src = tileSource(paletteId);
         if (src) {
-          ctx!.drawImage(
-            atlas,
-            src.sx,
-            src.sy,
-            deps.atlasTile,
-            deps.atlasTile,
-            sx,
-            sy,
-            zoom,
-            zoom,
-          );
+          ctx!.drawImage(atlas, src.sx, src.sy, deps.atlasTile, deps.atlasTile, sx, sy, zoom, zoom);
         } else {
           ctx!.fillStyle = paletteId === vm.support ? "#3a3a42" : "#6a2a2a";
           ctx!.fillRect(sx, sy, zoom, zoom);
@@ -269,11 +259,7 @@ export async function openView2D(deps: View2DDeps): Promise<void> {
     waila.textContent = "";
     if (!vm || !selected) return;
     const entry = vm.palette[selected.paletteId];
-    const coords = el(
-      "span",
-      "view2d-coords",
-      `x ${selected.x}  y ${selected.y}  z ${selected.z}`,
-    );
+    const coords = el("span", "view2d-coords", `x ${selected.x}  y ${selected.y}  z ${selected.z}`);
     waila.append(coords);
     if (entry?.block !== null && entry !== undefined) {
       const tile = el("span", "tile small");

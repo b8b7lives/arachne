@@ -236,7 +236,10 @@ mod tests {
                     assert!(
                         a.since_index <= b.since_index,
                         "{} ({}) ranked above {} ({})",
-                        a.block.block_id, a.block.since, b.block.block_id, b.block.since
+                        a.block.block_id,
+                        a.block.since,
+                        b.block.block_id,
+                        b.block.since
                     );
                 }
             }

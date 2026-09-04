@@ -1,0 +1,47 @@
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  src: url("/fonts/AtkinsonHyperlegible-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  src: url("/fonts/AtkinsonHyperlegible-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --bg: #16181d;
+  --panel: #1e2128;
+  --ink: #d6d8de;
+  --dim: #9aa3b2;
+  --dimmer: #848c9d;
+  --edge: #30343e;
+  --edge-control: #656d82;
+  --accent: #7aa2f7;
+  --warn: #e0af68;
+  --good: #7dc383;
+  --bad: #f7768e;
+  --font-ui: "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --t-title: 1.35rem;
+  --t-head: 1.05rem;
+  --t-body: 0.95rem;
+  --t-small: 0.82rem;
+  --tile-size: var(--tile-pref, 32px);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}

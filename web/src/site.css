@@ -1,0 +1,241 @@
+@import "./tokens.css";
+
+body.page {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: var(--t-body) / 1.55 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+}
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.site-head,
+.site-foot {
+  padding: 0.7rem 1.2rem;
+}
+.site-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 1rem;
+  border-bottom: 1px solid var(--edge);
+}
+.site-name {
+  font-size: var(--t-title);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-decoration: none;
+}
+.site-tag {
+  color: var(--dim);
+}
+.site-nav {
+  margin-left: auto;
+  display: flex;
+  gap: 1rem;
+}
+.site-nav a {
+  color: var(--dim);
+  text-decoration: none;
+}
+.site-nav a:hover {
+  color: var(--accent);
+}
+
+.page-main {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 1rem 1.2rem 2rem;
+}
+h1 {
+  font-size: 1.6rem;
+  margin: 0.6rem 0 0.4rem;
+  letter-spacing: -0.01em;
+}
+h2 {
+  font-size: 1.1rem;
+  margin: 0 0 0.4rem;
+}
+.lede {
+  color: var(--dim);
+  font-size: 1.02rem;
+}
+.dim {
+  color: var(--dim);
+}
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 1.2rem 0 0.4rem;
+}
+.chip {
+  display: block;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 4px;
+  border: 1px solid var(--edge);
+}
+.chip:hover {
+  outline: 2px solid var(--accent);
+}
+
+.color {
+  border-top: 1px solid var(--edge);
+  padding: 1.2rem 0 0.6rem;
+}
+.color h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+.color h2 .num {
+  color: var(--dimmer);
+  font-size: var(--t-small);
+}
+.const {
+  font-family: var(--font-mono);
+  color: var(--dimmer);
+  font-size: var(--t-small);
+}
+.since {
+  color: var(--dimmer);
+  font-size: var(--t-small);
+  margin-left: auto;
+}
+
+.tones {
+  display: flex;
+  gap: 0.6rem;
+  margin: 0.5rem 0 0.8rem;
+}
+.tone {
+  width: 7.5rem;
+}
+.sw {
+  height: 2rem;
+  border-radius: 4px;
+  border: 1px solid var(--edge);
+}
+.lab {
+  display: block;
+  margin-top: 0.2rem;
+  font-family: var(--font-mono);
+  font-size: var(--t-small);
+  color: var(--dim);
+}
+
+table.blocks {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-small);
+}
+table.blocks th,
+table.blocks td {
+  text-align: left;
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--edge);
+  vertical-align: middle;
+}
+table.blocks th {
+  color: var(--dimmer);
+  font-weight: 400;
+}
+table.blocks th.num,
+table.blocks td.num {
+  text-align: right;
+}
+table.blocks td:first-child {
+  width: 32px;
+  padding-right: 0;
+}
+.tile {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-radius: 3px;
+  image-rendering: pixelated;
+  background-repeat: no-repeat;
+}
+.id {
+  font-family: var(--font-mono);
+  color: var(--dimmer);
+  font-size: 0.76rem;
+}
+.flags span {
+  display: inline-block;
+  padding: 0 0.45em;
+  margin: 0 0.3em 0.15em 0;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  font-size: 0.76rem;
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+.release {
+  border-top: 1px solid var(--edge);
+  padding: 1rem 0 0.4rem;
+}
+.release h2 a {
+  color: var(--ink);
+  text-decoration: none;
+}
+.release h2 a:hover {
+  color: var(--accent);
+}
+.date {
+  margin: 0 0 0.4rem;
+  color: var(--dimmer);
+  font-family: var(--font-mono);
+  font-size: var(--t-small);
+}
+.release ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+.release li {
+  margin: 0.3rem 0;
+}
+
+.site-foot {
+  color: var(--dim);
+  border-top: 1px solid var(--edge);
+  font-size: 0.85rem;
+}
+.site-foot p {
+  margin: 0.3rem 0;
+}
+.legal {
+  color: var(--dimmer);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 40rem) {
+  .site-nav {
+    margin-left: 0;
+  }
+  .tone {
+    width: 5.6rem;
+  }
+  table.blocks th:nth-child(5),
+  table.blocks td:nth-child(5) {
+    display: none;
+  }
+  .since {
+    margin-left: 0;
+  }
+}

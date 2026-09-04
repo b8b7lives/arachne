@@ -25,7 +25,8 @@ try {
       await sleep(300);
     }
     const shot = await send("Page.captureScreenshot", {
-      format: "png", captureBeyondViewport: !process.env.ARACHNE_VIEWPORT,
+      format: "png",
+      captureBeyondViewport: !process.env.ARACHNE_VIEWPORT,
     });
     fs.mkdirSync(path.dirname(out), { recursive: true });
     fs.writeFileSync(out, Buffer.from(shot.data, "base64"));
@@ -39,7 +40,7 @@ try {
 
     console.log(`${out} (${(fs.statSync(out).size / 1024).toFixed(0)} kB)`);
     console.log("state:", state);
-    if (logs.length) console.log("console:\n  " + logs.slice(0, 20).join("\n  "));
+    if (logs.length) console.log(`console:\n  ${logs.slice(0, 20).join("\n  ")}`);
   });
 } catch (e) {
   console.error(String(e));

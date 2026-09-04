@@ -1,10 +1,10 @@
 use arachne_core::adjust::to_gamut;
-use arachne_core::dbs::{DbsConfig, refine};
 use arachne_core::color::linear_to_srgb;
 use arachne_core::data::BlockData;
+use arachne_core::dbs::{DbsConfig, refine};
+use arachne_core::heightcap::{apply_height_cap, natural_peak};
 use arachne_core::image::LinImage;
 use arachne_core::metric::{Report, Viewing, compare, grid_to_linear};
-use arachne_core::heightcap::{apply_height_cap, natural_peak};
 use arachne_core::palette::{Matcher, Palette, Tone};
 use arachne_core::quantize::{
     ATKINSON, BURKES, Dither, FLOYD_STEINBERG, MIN_AVG_ERR, SIERRA_LITE, STUCKI,
@@ -91,7 +91,7 @@ fn skin_band(x: usize, z: usize) -> [u8; 3] {
 }
 
 fn two_tone_edge(x: usize, z: usize) -> [u8; 3] {
-    if (x / 16 + z / 16).is_multiple_of(2) {
+    if (x / 16 + z / 16) % 2 == 0 {
         [178, 34, 52]
     } else {
         [28, 62, 138]
@@ -303,7 +303,10 @@ fn table(label: &str, view: Viewing, all: &[(&str, LinImage)], palette: &Palette
     }
     let n = all.len() as f32;
     totals.sort_by(|a, b| a.1[0].partial_cmp(&b.1[0]).unwrap());
-    println!("\n  corpus mean over {} probes, ranked by dE_mean", all.len());
+    println!(
+        "\n  corpus mean over {} probes, ranked by dE_mean",
+        all.len()
+    );
     println!(
         "  {:<16} {:>8} {:>8} {:>9} {:>9} {:>8}",
         "dither", "dE_mean", "dE_p95", "cast", "speckle", "grain"
@@ -327,9 +330,27 @@ fn quality_table() {
     let (_d, palette) = full_palette();
     let mut all = probes();
     all.push(("exact_swatches", exact_swatches(&palette)));
-    table("framed on a wall, 5 blocks back", Viewing::framed(5.0), &all, &palette, true);
-    table("stood at the wall, 2 blocks", Viewing::framed(2.0), &all, &palette, false);
-    table("nose on the frame, 1 block", Viewing::framed(1.0), &all, &palette, false);
+    table(
+        "framed on a wall, 5 blocks back",
+        Viewing::framed(5.0),
+        &all,
+        &palette,
+        true,
+    );
+    table(
+        "stood at the wall, 2 blocks",
+        Viewing::framed(2.0),
+        &all,
+        &palette,
+        false,
+    );
+    table(
+        "nose on the frame, 1 block",
+        Viewing::framed(1.0),
+        &all,
+        &palette,
+        false,
+    );
     println!();
 }
 
@@ -348,10 +369,8 @@ fn achievable_error(target: [f32; 3], palette: &Palette) -> f32 {
         let mut best_d = f32::INFINITY;
         for (idx, e) in palette.entries.iter().enumerate() {
             let avg = [0, 1, 2].map(|c| (acc[c] + e.linear[c]) / count);
-            let d = arachne_core::color::oklab_dist2(
-                arachne_core::color::linear_to_oklab(avg),
-                target,
-            );
+            let d =
+                arachne_core::color::oklab_dist2(arachne_core::color::linear_to_oklab(avg), target);
             if d < best_d {
                 best_d = d;
                 best = idx;
@@ -547,7 +566,13 @@ fn prefit_table() {
             let r = compare(img, render, view);
             println!(
                 "  {:<22} {:<16} {:>8.3} {:>8.3} {:>9.5} {:>9.5} {:>8.4}",
-                pname, mname, r.scielab_mean, r.scielab_p95, r.chroma_cast, r.chroma_speckle, r.grain
+                pname,
+                mname,
+                r.scielab_mean,
+                r.scielab_p95,
+                r.chroma_cast,
+                r.chroma_speckle,
+                r.grain
             );
         }
     }
@@ -714,10 +739,16 @@ fn height_cap_sweep_holds_every_level_between_staircased_and_flat() {
             None,
         );
         let peak = natural_peak(&grid, None);
-        assert!(peak > 3, "{pname}: probe too flat to stress the cap ({peak})");
+        assert!(
+            peak > 3,
+            "{pname}: probe too flat to stress the cap ({peak})"
+        );
 
         let (same, r0) = apply_height_cap(&grid, &d, &all, None, peak);
-        assert_eq!(same.cells, grid.cells, "{pname}: cap at the peak is a no-op");
+        assert_eq!(
+            same.cells, grid.cells,
+            "{pname}: cap at the peak is a no-op"
+        );
         assert_eq!(r0.edited_cells, 0);
 
         let base_err = compare(&img, &grid_to_linear(&grid, &palette), view).scielab_mean;
@@ -792,7 +823,10 @@ fn height_cap_table() {
         let peak = natural_peak(&grid, None);
         let base = compare(&img, &grid_to_linear(&grid, &palette), view).scielab_mean;
         println!("\n{pname}: natural peak {peak}, base dE {base:.3}");
-        println!("  {:>4} {:>8} {:>8} {:>7} {:>7}", "H", "dE", "vs base", "edits", "cols");
+        println!(
+            "  {:>4} {:>8} {:>8} {:>7} {:>7}",
+            "H", "dE", "vs base", "edits", "cols"
+        );
         for h in (0..=peak).rev() {
             let (capped, r) = apply_height_cap(&grid, &d, &all, None, h);
             let err = compare(&img, &grid_to_linear(&capped, &palette), view).scielab_mean;
@@ -903,7 +937,10 @@ fn dbs_improves_the_distance_it_optimizes_for_and_costs_the_others() {
             lost += 1;
         }
     }
-    assert!(won >= 6, "DBS should win most probes at its target: {won}/8");
+    assert!(
+        won >= 6,
+        "DBS should win most probes at its target: {won}/8"
+    );
     assert!(
         lost >= 1,
         "DBS tuned for one distance is expected to cost others; none regressed, \

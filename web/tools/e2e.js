@@ -61,8 +61,11 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   const ws1 = await s.evaluate(WORKSPACE);
   check("workspace written", ws1 !== null);
   check("enabled colors persisted", ws1.enabled.length === 59, `${ws1.enabled.length} of 61`);
-  check("block pick persisted by identity", Object.values(ws1.picks).length === 1
-    && /^[a-z_]+(\[.+\])?$/.test(Object.values(ws1.picks)[0]), JSON.stringify(ws1.picks));
+  check(
+    "block pick persisted by identity",
+    Object.values(ws1.picks).length === 1 && /^[a-z_]+(\[.+\])?$/.test(Object.values(ws1.picks)[0]),
+    JSON.stringify(ws1.picks),
+  );
   check("deliberate pick recorded", ws1.deliberate.length === 1, JSON.stringify(ws1.deliberate));
   check("tool nickname persisted", ws1.tools[0].nick === "the grinder");
   check("form fields persisted", ws1.fields.haste === "3" && ws1.fields.dither === "atkinson");
@@ -70,17 +73,64 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   const nagged = await s.evaluate(`!!document.querySelector(".drift-banner")`);
   check("no nag for a deliberate pick", nagged === false);
 
+  const SKIP_SEEN = `(() => {
+    const a = document.querySelector(".skip-link");
+    if (!a) return null;
+    const r = a.getBoundingClientRect();
+    return r.bottom > 0 && r.right > 0 && Number(getComputedStyle(a).opacity) > 0;
+  })()`;
+  const skipBefore = await s.evaluate(SKIP_SEEN);
+  await s.evaluate(`document.querySelector(".skip-link")?.focus()`);
+  const tab = async (shift) => {
+    for (const type of ["keyDown", "keyUp"]) {
+      await s.send("Input.dispatchKeyEvent", {
+        type,
+        key: "Tab",
+        code: "Tab",
+        windowsVirtualKeyCode: 9,
+        modifiers: shift ? 8 : 0,
+      });
+    }
+  };
+  await tab(false);
+  await tab(true);
+  const skip = await s.evaluate(`(() => {
+    const a = document.querySelector(".skip-link");
+    const target = a ? document.getElementById(a.getAttribute("href").slice(1)) : null;
+    const focused = document.activeElement === a;
+    const seen = ${SKIP_SEEN};
+    a?.blur();
+    return { present: !!a, focused, after: seen, targets: !!target, focusable: target ? target.tabIndex === -1 : false };
+  })()`);
+  check(
+    "skip link is hidden at rest, appears under keyboard focus, and points at a focusable target",
+    skip.present &&
+      skipBefore === false &&
+      skip.focused &&
+      skip.after === true &&
+      skip.targets &&
+      skip.focusable,
+    JSON.stringify({ before: skipBefore, ...skip }),
+  );
+
   promptText = "test palette";
   await s.evaluate(`document.getElementById("palette-preset-save").click()`);
   await s.evaluate(SETTLE);
   const presets = await s.evaluate(
-    `JSON.parse(localStorage.getItem("arachne.presets.palette") || "[]")`);
-  check("palette preset saved", presets.length === 1 && presets[0].name === "test palette",
-    JSON.stringify(presets.map((p) => p.name)));
-  check("preset carries the palette", presets[0]?.enabled?.length === 59
-    && Object.keys(presets[0]?.picks ?? {}).length === 1);
+    `JSON.parse(localStorage.getItem("arachne.presets.palette") || "[]")`,
+  );
+  check(
+    "palette preset saved",
+    presets.length === 1 && presets[0].name === "test palette",
+    JSON.stringify(presets.map((p) => p.name)),
+  );
+  check(
+    "preset carries the palette",
+    presets[0]?.enabled?.length === 59 && Object.keys(presets[0]?.picks ?? {}).length === 1,
+  );
   const selName = await s.evaluate(
-    `document.getElementById("palette-preset").selectedOptions[0].textContent`);
+    `document.getElementById("palette-preset").selectedOptions[0].textContent`,
+  );
   check("select shows the saved preset", selName === "test palette", selName);
 
   const status = await goto();
@@ -99,13 +149,21 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
       banner: !!document.querySelector(".drift-banner"),
     };
   })()`);
-  check("dropped color still dropped", after.offRows === 2 && after.meta === "59 of 61 colors, 2 turned off",
-    after.meta);
-  check("block pick restored", after.picked === (await s.evaluate(`window.__pickedTitle ?? null`))
-    || after.picked !== null, after.picked);
-  check("loadout + filters restored",
+  check(
+    "dropped color still dropped",
+    after.offRows === 2 && after.meta === "59 of 61 colors, 2 turned off",
+    after.meta,
+  );
+  check(
+    "block pick restored",
+    after.picked === (await s.evaluate(`window.__pickedTitle ?? null`)) || after.picked !== null,
+    after.picked,
+  );
+  check(
+    "loadout + filters restored",
     after.haste === "3" && after.dither === "atkinson" && after.nick === "the grinder",
-    `haste=${after.haste} dither=${after.dither} nick=${after.nick}`);
+    `haste=${after.haste} dither=${after.dither} nick=${after.nick}`,
+  );
   check("preset still recognized as saved", after.preset === "test palette", after.preset);
   check("still no nag after reload", after.banner === false);
 
@@ -140,11 +198,17 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     const text = b.querySelector("span").textContent.trim();
     return { text, count: Number(text.match(/^(\\d+)/)?.[1] ?? 0) };
   })()`);
-  check("stale picks are offered, not applied", drift !== null && /aren't the cheapest with this loadout/.test(drift.text),
-    drift ? drift.text : "no banner");
+  check(
+    "stale picks are offered, not applied",
+    drift !== null && /aren't the cheapest with this loadout/.test(drift.text),
+    drift ? drift.text : "no banner",
+  );
   const keptPicks = await s.evaluate(`Object.keys((${WORKSPACE}).picks).length`);
-  check("picks survived the loadout change", keptPicks === beforePicks,
-    `${keptPicks} of ${beforePicks}`);
+  check(
+    "picks survived the loadout change",
+    keptPicks === beforePicks,
+    `${keptPicks} of ${beforePicks}`,
+  );
 
   const compare = await s.evaluate(`(() => {
     const btns = [...document.querySelectorAll(".drift-banner button")];
@@ -161,15 +225,26 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
       marked: document.querySelectorAll(".chip-drift").length,
     };
   })()`);
-  check("the offer opens a comparison, one row per drifted pick",
-    compare.rows === drift.count, `${compare.rows} rows vs ${drift.count} named`);
-  check("comparison names both blocks with their costs",
+  check(
+    "the offer opens a comparison, one row per drifted pick",
+    compare.rows === drift.count,
+    `${compare.rows} rows vs ${drift.count} named`,
+  );
+  check(
+    "comparison names both blocks with their costs",
     /·/.test(compare.yours) && /·/.test(compare.cheapest),
-    `${compare.yours} | ${compare.cheapest}`);
-  check("comparison quantifies the saving",
-    /[0-9]/.test(compare.saves) || compare.saves === "makes it recoverable", compare.saves);
-  check("the palette marks the same picks in place", compare.marked >= compare.rows,
-    `${compare.marked} markers`);
+    `${compare.yours} | ${compare.cheapest}`,
+  );
+  check(
+    "comparison quantifies the saving",
+    /[0-9]/.test(compare.saves) || compare.saves === "makes it recoverable",
+    compare.saves,
+  );
+  check(
+    "the palette marks the same picks in place",
+    compare.marked >= compare.rows,
+    `${compare.marked} markers`,
+  );
 
   await s.evaluate(`(() => {
     const b = [...document.querySelectorAll(".drift-banner button")];
@@ -181,8 +256,11 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     picks: Object.keys((${WORKSPACE}).picks).length,
   })`);
   check("one-click adopt clears the offer", adopted.banner === false);
-  check("adopt drops only the stale picks", adopted.picks < beforePicks && adopted.picks > 0,
-    `${adopted.picks} left of ${beforePicks}`);
+  check(
+    "adopt drops only the stale picks",
+    adopted.picks < beforePicks && adopted.picks > 0,
+    `${adopted.picks} left of ${beforePicks}`,
+  );
 
   promptText = "";
   await s.evaluate(`document.getElementById("reset-default").click()`);
@@ -193,14 +271,20 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     nick: document.querySelector("input.nick").value,
     presets: JSON.parse(localStorage.getItem("arachne.presets.palette") || "[]").length,
   }))()`);
-  check("reset restores defaults", reset.meta === "all 61 colors in play"
-    && reset.haste === "0" && reset.nick === "", JSON.stringify(reset));
+  check(
+    "reset restores defaults",
+    reset.meta === "all 61 colors in play" && reset.haste === "0" && reset.nick === "",
+    JSON.stringify(reset),
+  );
   check("reset keeps saved presets", reset.presets === 1);
 
   const mode = await s.evaluate(
-    `window.documentPictureInPicture ? "document-pip" : "popup-window"`);
-  console.log(`      pop-out path under test: ${mode}`
-    + (mode === "popup-window" ? " (this origin is not a secure context)" : ""));
+    `window.documentPictureInPicture ? "document-pip" : "popup-window"`,
+  );
+  console.log(
+    `      pop-out path under test: ${mode}` +
+      (mode === "popup-window" ? " (this origin is not a secure context)" : ""),
+  );
 
   await s.evaluate(`(async () => {
     const c = document.createElement("canvas");
@@ -215,8 +299,7 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     document.dispatchEvent(new DragEvent("drop", { dataTransfer: dt, bubbles: true, cancelable: true }));
   })()`);
   await s.evaluate(`new Promise((r) => setTimeout(r, 3000))`);
-  const painted = await s.evaluate(
-    `document.getElementById("preview").toDataURL().length > 1000`);
+  const painted = await s.evaluate(`document.getElementById("preview").toDataURL().length > 1000`);
   check("preview rendered before the move", painted === true);
   const before = await s.evaluate(`document.getElementById("preview").toDataURL()`);
 
@@ -239,8 +322,11 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   check("preview left the page", out.movedOut === true);
   check("preview is in the pop-out window", out.inWindow === true);
   check("page shows it is away", out.away === true);
-  check("canvas survived the document move", out.pixels === before,
-    out.pixels === null ? "no canvas" : `${out.pixels?.length} vs ${before.length} bytes`);
+  check(
+    "canvas survived the document move",
+    out.pixels === before,
+    out.pixels === null ? "no canvas" : `${out.pixels?.length} vs ${before.length} bytes`,
+  );
   check("stylesheets were copied across", out.pixelated === "pixelated", String(out.pixelated));
 
   const popZoom = await s.evaluate(`(() => {
@@ -253,8 +339,11 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
       body: w.document.body.clientWidth,
     };
   })()`);
-  check("the pop-out fits its own window", popZoom.shown <= popZoom.body,
-    `${popZoom.shown} in ${popZoom.body}`);
+  check(
+    "the pop-out fits its own window",
+    popZoom.shown <= popZoom.body,
+    `${popZoom.shown} in ${popZoom.body}`,
+  );
   check("zoom is disabled while popped out, not dead", popZoom.disabled === true);
 
   await s.evaluate(`document.getElementById("preview-return").click()`);
@@ -297,8 +386,7 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   check("manual crop reports the framing", /framing 32×32/.test(topLeft.meta), topLeft.meta);
   check("number field mirrors the slider", topLeft.zoomField === "2", topLeft.zoomField);
   const bottomRight = await setCrop(2, 100, 100);
-  check("moving the crop window changes the output",
-    bottomRight.pixels !== topLeft.pixels);
+  check("moving the crop window changes the output", bottomRight.pixels !== topLeft.pixels);
 
   const typedCrop = await s.evaluate(`(() => {
     const f = document.getElementById("crop-x-num");
@@ -307,11 +395,17 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     f.dispatchEvent(new Event("change", { bubbles: true }));
     return { field: f.value, slider: document.getElementById("crop-x").value };
   })()`);
-  check("typing into the field drives the slider and clamps on commit",
-    typedCrop.field === "100" && typedCrop.slider === "100", JSON.stringify(typedCrop));
+  check(
+    "typing into the field drives the slider and clamps on commit",
+    typedCrop.field === "100" && typedCrop.slider === "100",
+    JSON.stringify(typedCrop),
+  );
   const wide = await setCrop(1, 50, 50);
-  check("zooming out changes the output again", wide.pixels !== topLeft.pixels
-    && /framing 64×64/.test(wide.meta), wide.meta);
+  check(
+    "zooming out changes the output again",
+    wide.pixels !== topLeft.pixels && /framing 64×64/.test(wide.meta),
+    wide.meta,
+  );
 
   await s.evaluate(`(() => {
     window.__dl = [];
@@ -339,7 +433,9 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   const size = await s.evaluate(`document.getElementById("preview").width`);
   check("2x2 build generated", size === 256, `${size}px wide`);
 
-  await s.evaluate(`(() => { window.__dl = []; document.getElementById("export-download").click(); })()`);
+  await s.evaluate(
+    `(() => { window.__dl = []; document.getElementById("export-download").click(); })()`,
+  );
   await s.evaluate(`new Promise((r) => setTimeout(r, 4000))`);
   const zipped = await s.evaluate(`(async () => {
     const d = window.__dl[0];
@@ -349,23 +445,38 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     return {
       name: d.name,
       magic: b[0] === 0x50 && b[1] === 0x4b && b[2] === 3 && b[3] === 4,
-      names: [...text.matchAll(/arachne_x\\d+_z\\d+_map_\\d+\\.nbt/g)].map((m) => m[0]),
+      names: [...text.matchAll(/arachne_x\\d+_z\\d+_map_\\d+\\.litematic/g)].map((m) => m[0]),
       bytes: b.length,
       dosYear: 1980 + ((b[13] << 8 | b[12]) >> 9),
       status: document.getElementById("status").textContent,
     };
   })()`);
-  check("split export downloads a zip", zipped.name === "arachne.zip" && zipped.magic === true,
-    `${zipped.name} (${zipped.bytes} bytes)`);
-  check("one entry per map, named by grid position and map id",
-    JSON.stringify([...new Set(zipped.names)])
-      === JSON.stringify(["arachne_x0_z0_map_7.nbt", "arachne_x1_z0_map_8.nbt",
-        "arachne_x0_z1_map_9.nbt", "arachne_x1_z1_map_10.nbt"]),
-    JSON.stringify([...new Set(zipped.names)]));
-  check("split export reports what it made", /5 files in arachne\.zip/.test(zipped.status),
-    zipped.status);
-  check("zip entries carry today's date, not the 1980 DOS epoch",
-    zipped.dosYear === new Date().getFullYear(), `stamped ${zipped.dosYear}`);
+  check(
+    "split export downloads a zip",
+    zipped.name === "arachne.zip" && zipped.magic === true,
+    `${zipped.name} (${zipped.bytes} bytes)`,
+  );
+  check(
+    "one entry per map, named by grid position and map id",
+    JSON.stringify([...new Set(zipped.names)]) ===
+      JSON.stringify([
+        "arachne_x0_z0_map_7.litematic",
+        "arachne_x1_z0_map_8.litematic",
+        "arachne_x0_z1_map_9.litematic",
+        "arachne_x1_z1_map_10.litematic",
+      ]),
+    JSON.stringify([...new Set(zipped.names)]),
+  );
+  check(
+    "split export reports what it made",
+    /5 files in arachne\.zip/.test(zipped.status),
+    zipped.status,
+  );
+  check(
+    "zip entries carry today's date, not the 1980 DOS epoch",
+    zipped.dosYear === new Date().getFullYear(),
+    `stamped ${zipped.dosYear}`,
+  );
 
   await s.evaluate(`(() => {
     const el = document.getElementById("build-mode");
@@ -378,20 +489,68 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     document.getElementById("export-download").click();
   })()`);
   await s.evaluate(`new Promise((r) => setTimeout(r, 4000))`);
+  const INFLATE_TEXT = `const inflated = b ? await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer() : new ArrayBuffer(0);
+    const text = new TextDecoder("latin1").decode(inflated);`;
   const joined = await s.evaluate(`(async () => {
     const d = window.__dl[0];
     const b = d ? new Uint8Array(await d.blob.arrayBuffer()) : null;
-    return { name: d?.name ?? null, gzip: b ? b[0] === 0x1f && b[1] === 0x8b : false };
+    ${INFLATE_TEXT}
+    return {
+      name: d?.name ?? null,
+      gzip: b ? b[0] === 0x1f && b[1] === 0x8b : false,
+      litematic: ["Regions", "BlockStatePalette", "BlockStates", "Metadata", "MinecraftDataVersion"].every((k) => text.includes(k)),
+      named: text.includes("arachne") && text.includes("minecraft:air"),
+    };
   })()`);
-  check("a lone artifact downloads bare, not zipped",
-    joined.name === "arachne.nbt" && joined.gzip === true, JSON.stringify(joined));
+  check(
+    "a lone artifact downloads bare, not zipped",
+    joined.name === "arachne.litematic" && joined.gzip === true,
+    JSON.stringify(joined),
+  );
+  check(
+    "the litematic carries a named region, a palette starting with air, packed states and metadata",
+    joined.litematic === true && joined.named === true,
+    JSON.stringify(joined),
+  );
+
+  await s.evaluate(`(() => {
+    const el = document.getElementById("schem-format");
+    el.value = "nbt";
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+    window.__dl = [];
+    document.getElementById("export-download").click();
+  })()`);
+  await s.evaluate(`new Promise((r) => setTimeout(r, 4000))`);
+  const asNbt = await s.evaluate(`(async () => {
+    const d = window.__dl[0];
+    const b = d ? new Uint8Array(await d.blob.arrayBuffer()) : null;
+    ${INFLATE_TEXT}
+    return {
+      name: d?.name ?? null,
+      gzip: b ? b[0] === 0x1f && b[1] === 0x8b : false,
+      structure: text.includes("DataVersion") && text.includes("palette") && !text.includes("Regions"),
+    };
+  })()`);
+  check(
+    "the vanilla structure is one select away",
+    asNbt.name === "arachne.nbt" && asNbt.gzip === true && asNbt.structure === true,
+    JSON.stringify(asNbt),
+  );
+  await s.evaluate(`(() => {
+    const el = document.getElementById("schem-format");
+    el.value = "litematic";
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  })()`);
 
   const mapdatOff = await s.evaluate(`(() => ({
     note: document.getElementById("mapdat-note").hidden,
     checked: document.getElementById("mapdat-on").checked,
   }))()`);
-  check("map data is off by default", mapdatOff.checked === false && mapdatOff.note === true,
-    JSON.stringify(mapdatOff));
+  check(
+    "map data is off by default",
+    mapdatOff.checked === false && mapdatOff.note === true,
+    JSON.stringify(mapdatOff),
+  );
 
   await s.evaluate(`(() => {
     const el = document.getElementById("mapdat-on");
@@ -415,20 +574,32 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
       note: document.getElementById("mapdat-note").hidden,
       example: document.getElementById("mapdat-example").textContent,
       dats: [...new Set([...text.matchAll(/map_\\d+\\.dat/g)].map((m) => m[0]))],
-      nbts: [...new Set([...text.matchAll(/arachne\\.nbt/g)].map((m) => m[0]))],
+      nbts: [...new Set([...text.matchAll(/arachne\\.litematic/g)].map((m) => m[0]))],
       status: document.getElementById("status").textContent,
     };
   })()`);
-  check("turning map data on explains where the file goes",
-    dats.note === false && dats.example === "7", JSON.stringify({ note: dats.note, example: dats.example }));
-  check("one click gives one file, named what the visitor named it",
-    dats.count === 1 && dats.name === "arachne.zip", JSON.stringify({ count: dats.count, name: dats.name }));
-  check("that one file carries the schematic and every map data file",
-    JSON.stringify(dats.nbts) === JSON.stringify(["arachne.nbt"])
-      && JSON.stringify(dats.dats)
-        === JSON.stringify(["map_7.dat", "map_8.dat", "map_9.dat", "map_10.dat"]),
-    JSON.stringify({ nbts: dats.nbts, dats: dats.dats }));
-  check("it says how many files it bundled", /6 files in arachne\.zip/.test(dats.status), dats.status);
+  check(
+    "turning map data on explains where the file goes",
+    dats.note === false && dats.example === "7",
+    JSON.stringify({ note: dats.note, example: dats.example }),
+  );
+  check(
+    "one click gives one file, named what the visitor named it",
+    dats.count === 1 && dats.name === "arachne.zip",
+    JSON.stringify({ count: dats.count, name: dats.name }),
+  );
+  check(
+    "that one file carries the schematic and every map data file",
+    JSON.stringify(dats.nbts) === JSON.stringify(["arachne.litematic"]) &&
+      JSON.stringify(dats.dats) ===
+        JSON.stringify(["map_7.dat", "map_8.dat", "map_9.dat", "map_10.dat"]),
+    JSON.stringify({ nbts: dats.nbts, dats: dats.dats }),
+  );
+  check(
+    "it says how many files it bundled",
+    /6 files in arachne\.zip/.test(dats.status),
+    dats.status,
+  );
 
   const sheet = await s.evaluate(`(async () => {
     const d = window.__dl[0];
@@ -441,10 +612,14 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     };
   })()`);
   check("the zip carries a build sheet named after the map", sheet.named === true);
-  check("the sheet reopens the palette and lists materials",
-    sheet.body !== null && /#p=[A-Za-z0-9_-]{7,}/.test(sheet.body)
-      && /Materials/.test(sheet.body) && /shulkers/.test(sheet.body),
-    (sheet.body || "").slice(0, 220).replace(/\\n/g, " | "));
+  check(
+    "the sheet reopens the palette and lists materials",
+    sheet.body !== null &&
+      /#p=[A-Za-z0-9_-]{7,}/.test(sheet.body) &&
+      /Materials/.test(sheet.body) &&
+      /shulkers/.test(sheet.body),
+    (sheet.body || "").slice(0, 220).replace(/\\n/g, " | "),
+  );
 
   await s.evaluate(`(() => {
     const el = document.getElementById("mapdat-on");
@@ -454,16 +629,24 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
 
   const mouse = async (type, x, y) => {
     await s.send("Input.dispatchMouseEvent", {
-      type, x, y, button: "left", clickCount: 1, buttons: type === "mouseMoved" ? 0 : 1,
+      type,
+      x,
+      y,
+      button: "left",
+      clickCount: 1,
+      buttons: type === "mouseMoved" ? 0 : 1,
     });
   };
 
-  await s.evaluate(`(() => {
+  await s.evaluate(
+    `(() => {
     const el = document.getElementById("build-mode");
     el.value = "panels";
     el.dispatchEvent(new Event("change", { bubbles: true }));
     document.getElementById("view-build").click();
-  })()`, { userGesture: true });
+  })()`,
+    { userGesture: true },
+  );
   await s.evaluate(`new Promise((r) => setTimeout(r, 3000))`);
   const opened = await s.evaluate(`(() => {
     const root = document.querySelector(".view2d");
@@ -479,12 +662,17 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   })()`);
   check("the viewer opens on the split build", opened.open === true);
   check("it draws the schematic", opened.painted === true);
-  check("panels are labelled by grid position and map id",
-    JSON.stringify(opened.panels) === JSON.stringify(["x0_z0_map_7", "x1_z0_map_8",
-      "x0_z1_map_9", "x1_z1_map_10"]),
-    JSON.stringify(opened.panels));
-  check("a split panel is 128 wide and carries its reference row",
-    /^size: 128 x \d+ x 129$/.test(opened.size), opened.size);
+  check(
+    "panels are labelled by grid position and map id",
+    JSON.stringify(opened.panels) ===
+      JSON.stringify(["x0_z0_map_7", "x1_z0_map_8", "x0_z1_map_9", "x1_z1_map_10"]),
+    JSON.stringify(opened.panels),
+  );
+  check(
+    "a split panel is 128 wide and carries its reference row",
+    /^size: 128 x \d+ x 129$/.test(opened.size),
+    opened.size,
+  );
 
   const box = await s.evaluate(`(() => {
     const r = document.querySelector(".view2d canvas").getBoundingClientRect();
@@ -498,9 +686,11 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     return { coords: w.querySelector(".view2d-coords")?.textContent ?? "",
              name: w.querySelector(".view2d-name")?.textContent ?? "" };
   })()`);
-  check("clicking a block names it and gives its coordinates",
+  check(
+    "clicking a block names it and gives its coordinates",
     /^x \d+\s+y \d+\s+z \d+$/.test(picked.coords) && picked.name.length > 0,
-    `${picked.coords} :: ${picked.name}`);
+    `${picked.coords} :: ${picked.name}`,
+  );
 
   await s.evaluate(`(() => {
     const sel = document.querySelector(".view2d select");
@@ -513,21 +703,28 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     return { painted: root.querySelector("canvas").toDataURL().length > 2000,
              cleared: root.querySelector(".view2d-coords") === null };
   })()`);
-  check("switching panels redraws and drops the old selection",
-    switched.painted === true && switched.cleared === true);
+  check(
+    "switching panels redraws and drops the old selection",
+    switched.painted === true && switched.cleared === true,
+  );
 
   await s.evaluate(`document.dispatchEvent(
     new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))`);
   await s.evaluate(`new Promise((r) => setTimeout(r, 300))`);
-  check("escape closes the viewer",
-    (await s.evaluate(`document.querySelector(".view2d") === null`)) === true);
+  check(
+    "escape closes the viewer",
+    (await s.evaluate(`document.querySelector(".view2d") === null`)) === true,
+  );
 
-  await s.evaluate(`(() => {
+  await s.evaluate(
+    `(() => {
     const el = document.getElementById("build-mode");
     el.value = "one_piece";
     el.dispatchEvent(new Event("change", { bubbles: true }));
     document.getElementById("view-build").click();
-  })()`, { userGesture: true });
+  })()`,
+    { userGesture: true },
+  );
   await s.evaluate(`new Promise((r) => setTimeout(r, 3500))`);
   const wholeBuild = await s.evaluate(`(() => {
     const root = document.querySelector(".view2d");
@@ -535,14 +732,22 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     return { open: true, sel: root.querySelector("select") !== null,
              size: root.querySelector(".view2d-size").textContent };
   })()`);
-  check("the joined build views whole, with no panel picker",
-    wholeBuild.open === true && wholeBuild.sel === false, JSON.stringify(wholeBuild));
-  check("the joined view spans every map plus one reference row",
-    /^size: 256 x \d+ x 257$/.test(wholeBuild.size ?? ""), wholeBuild.size);
+  check(
+    "the joined build views whole, with no panel picker",
+    wholeBuild.open === true && wholeBuild.sel === false,
+    JSON.stringify(wholeBuild),
+  );
+  check(
+    "the joined view spans every map plus one reference row",
+    /^size: 256 x \d+ x 257$/.test(wholeBuild.size ?? ""),
+    wholeBuild.size,
+  );
   await s.evaluate(`document.querySelector(".view2d .mini").click()`, { userGesture: true });
   await s.evaluate(`new Promise((r) => setTimeout(r, 300))`);
-  check("close button dismisses the viewer",
-    (await s.evaluate(`document.querySelector(".view2d") === null`)) === true);
+  check(
+    "close button dismisses the viewer",
+    (await s.evaluate(`document.querySelector(".view2d") === null`)) === true,
+  );
 
   const onePieceFiller = await s.evaluate(`(() => {
     const sel = document.getElementById("materials-basis");
@@ -583,34 +788,62 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     return { shown, options, build, buildFiller, panels, panelFiller, note };
   })()`);
   check("the panel selector appears once there is more than one map", basis.shown === true);
-  check("panels are listed by position and map id",
-    JSON.stringify(basis.options)
-      === JSON.stringify(["the whole schematic", "panel 1: x0_z0_map_7", "panel 2: x1_z0_map_8",
-        "panel 3: x0_z1_map_9", "panel 4: x1_z1_map_10"]),
-    JSON.stringify(basis.options));
-  check("whole schematic counts 4 maps of blocks", basis.build === 4 * 128 * 128,
-    `${basis.build} blocks`);
-  check("each panel counts one map of blocks",
+  check(
+    "panels are listed by position and map id",
+    JSON.stringify(basis.options) ===
+      JSON.stringify([
+        "the whole schematic",
+        "panel 1: x0_z0_map_7",
+        "panel 2: x1_z0_map_8",
+        "panel 3: x0_z1_map_9",
+        "panel 4: x1_z1_map_10",
+      ]),
+    JSON.stringify(basis.options),
+  );
+  check(
+    "whole schematic counts 4 maps of blocks",
+    basis.build === 4 * 128 * 128,
+    `${basis.build} blocks`,
+  );
+  check(
+    "each panel counts one map of blocks",
     basis.panels.length === 4 && basis.panels.every((n) => n === 128 * 128),
-    JSON.stringify(basis.panels));
-  check("panels add up to the whole schematic",
-    basis.panels.reduce((a, b) => a + b, 0) === basis.build);
-  check("filler is its own materials row", basis.buildFiller > 0,
-    `${basis.buildFiller} filler blocks`);
-  check("both north panels carry noobline filler",
+    JSON.stringify(basis.panels),
+  );
+  check(
+    "panels add up to the whole schematic",
+    basis.panels.reduce((a, b) => a + b, 0) === basis.build,
+  );
+  check(
+    "filler is its own materials row",
+    basis.buildFiller > 0,
+    `${basis.buildFiller} filler blocks`,
+  );
+  check(
+    "both north panels carry noobline filler",
     basis.panelFiller[0] >= 128 && basis.panelFiller[1] >= 128,
-    JSON.stringify(basis.panelFiller));
-  check("the whole schematic's filler is every panel's own, reference rows included",
+    JSON.stringify(basis.panelFiller),
+  );
+  check(
+    "the whole schematic's filler is every panel's own, reference rows included",
     basis.panelFiller.reduce((a, b) => a + b, 0) === basis.buildFiller,
-    `${JSON.stringify(basis.panelFiller)} vs ${basis.buildFiller}`);
-  check("separate panels add one reference row per southern panel over the one-piece build",
+    `${JSON.stringify(basis.panelFiller)} vs ${basis.buildFiller}`,
+  );
+  check(
+    "separate panels add one reference row per southern panel over the one-piece build",
     basis.buildFiller === onePieceFiller + 2 * 128,
-    `${basis.buildFiller} vs ${onePieceFiller} + 256`);
-  check("southern panels count the reference row they stand on",
+    `${basis.buildFiller} vs ${onePieceFiller} + 256`,
+  );
+  check(
+    "southern panels count the reference row they stand on",
     basis.panelFiller[2] >= 128 && basis.panelFiller[3] >= 128,
-    JSON.stringify(basis.panelFiller));
-  check("a panel summary says which panel it is for", /panel 4 of 4, x1_z1_map_10/.test(basis.note),
-    basis.note.slice(0, 60));
+    JSON.stringify(basis.panelFiller),
+  );
+  check(
+    "a panel summary says which panel it is for",
+    /panel 4 of 4, x1_z1_map_10/.test(basis.note),
+    basis.note.slice(0, 60),
+  );
 
   const pickerOpen = await s.evaluate(`(() => {
     const fs = document.getElementById("filler-search");
@@ -622,16 +855,27 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     return { hidden: drop.hidden, groups, count: ids.length, sand: ids.includes("sand"),
       tiles: drop.querySelectorAll(".picker-row .tile").length, meta };
   })()`);
-  check("the filler picker opens with palette blocks first",
-    pickerOpen.hidden === false
-      && JSON.stringify(pickerOpen.groups) === JSON.stringify(["in your palette", "all blocks"]),
-    JSON.stringify(pickerOpen.groups));
-  check("every offered block shows its sprite", pickerOpen.tiles === pickerOpen.count,
-    `${pickerOpen.tiles} tiles for ${pickerOpen.count} rows`);
-  check("blocks that cannot float are not offered as filler", pickerOpen.sand === false,
-    `sand offered among ${pickerOpen.count}`);
-  check("the heading carries mode and block", /where needed · Netherrack/.test(pickerOpen.meta),
-    pickerOpen.meta);
+  check(
+    "the filler picker opens with palette blocks first",
+    pickerOpen.hidden === false &&
+      JSON.stringify(pickerOpen.groups) === JSON.stringify(["in your palette", "all blocks"]),
+    JSON.stringify(pickerOpen.groups),
+  );
+  check(
+    "every offered block shows its sprite",
+    pickerOpen.tiles === pickerOpen.count,
+    `${pickerOpen.tiles} tiles for ${pickerOpen.count} rows`,
+  );
+  check(
+    "blocks that cannot float are not offered as filler",
+    pickerOpen.sand === false,
+    `sand offered among ${pickerOpen.count}`,
+  );
+  check(
+    "the heading carries mode and block",
+    /where needed · Netherrack/.test(pickerOpen.meta),
+    pickerOpen.meta,
+  );
 
   const fillerPick = await s.evaluate(`(async () => {
     const fs = document.getElementById("filler-search");
@@ -646,12 +890,21 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
       shown: fs.value, row,
       meta: document.getElementById("filler-meta").textContent };
   })()`);
-  check("picking a block commits its id", fillerPick.committed === "netherite_block",
-    fillerPick.committed);
-  check("the search box shows the display name", fillerPick.shown === "Block of Netherite",
-    fillerPick.shown);
-  check("the summary filler row follows the pick",
-    fillerPick.row === "Block of Netherite (filler)", String(fillerPick.row));
+  check(
+    "picking a block commits its id",
+    fillerPick.committed === "netherite_block",
+    fillerPick.committed,
+  );
+  check(
+    "the search box shows the display name",
+    fillerPick.shown === "Block of Netherite",
+    fillerPick.shown,
+  );
+  check(
+    "the summary filler row follows the pick",
+    fillerPick.row === "Block of Netherite (filler)",
+    String(fillerPick.row),
+  );
 
   const garbage = await s.evaluate(`(() => {
     const fs = document.getElementById("filler-search");
@@ -663,10 +916,13 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     return { empty, committed: document.getElementById("support-block").value,
       shown: fs.value };
   })()`);
-  check("garbage matches nothing and commits nothing",
-    garbage.empty === true && garbage.committed === "netherite_block"
-      && garbage.shown === "Block of Netherite",
-    JSON.stringify(garbage));
+  check(
+    "garbage matches nothing and commits nothing",
+    garbage.empty === true &&
+      garbage.committed === "netherite_block" &&
+      garbage.shown === "Block of Netherite",
+    JSON.stringify(garbage),
+  );
 
   const versioned = await s.evaluate(`(async () => {
     const vsel = document.getElementById("game-version");
@@ -689,12 +945,21 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     await new Promise((r) => setTimeout(r, 800));
     return { offered, meta, refusal };
   })()`);
-  check("a 1.13 export does not offer post-1.13 filler", versioned.offered === 0,
-    `${versioned.offered} offered`);
-  check("a pick from a later version is flagged in the heading",
-    /needs 1\.16/.test(versioned.meta), versioned.meta);
-  check("the export refuses a filler the version does not have",
-    /needs 1\.16/.test(versioned.refusal), versioned.refusal);
+  check(
+    "a 1.13 export does not offer post-1.13 filler",
+    versioned.offered === 0,
+    `${versioned.offered} offered`,
+  );
+  check(
+    "a pick from a later version is flagged in the heading",
+    /needs 1\.16/.test(versioned.meta),
+    versioned.meta,
+  );
+  check(
+    "the export refuses a filler the version does not have",
+    /needs 1\.16/.test(versioned.refusal),
+    versioned.refusal,
+  );
 
   await s.evaluate(`(async () => {
     const fs = document.getElementById("filler-search");
@@ -731,8 +996,9 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   check("in-range entry is left alone", clamped.inRange === "12", clamped.inRange);
   check("rebuilt loadout fields clamp too", clamped.eff === "255", clamped.eff);
 
-  const PRESET = "0R1R2R3Q4R5Q6Q7Q8T9RbRcSdWeAfTgThXiTjXlTmTnXoTpAqWrTsEtQuRvQwQxVyQzR10Q"
-    + "11Q12Q13Q14Q15Q16Q17Q18R19Q1aQ1bQ1cQ1dQ1eQ1fQ1gS1hQ1iQ1jS1kQ1lQ1mQ1nQ1oR";
+  const PRESET =
+    "0R1R2R3Q4R5Q6Q7Q8T9RbRcSdWeAfTgThXiTjXlTmTnXoTpAqWrTsEtQuRvQwQxVyQzR10Q" +
+    "11Q12Q13Q14Q15Q16Q17Q18R19Q1aQ1bQ1cQ1dQ1eQ1fQ1gS1hQ1iQ1jS1kQ1lQ1mQ1nQ1oR";
   const imported = await s.evaluate(`(async () => {
     const box = document.getElementById("import-paste");
     box.value = ${JSON.stringify(`https://rebane2001.com/mapartcraft/?preset=${"PRESET_PLACEHOLDER"}`)}
@@ -751,15 +1017,27 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     };
   })()`);
   check("a mapartcraft link imports", /Imported 59 colors/.test(imported.status), imported.status);
-  check("colors the palette leaves out are switched off",
-    imported.meta === "59 of 61 colors, 2 turned off" && imported.enabled === 59, imported.meta);
+  check(
+    "colors the palette leaves out are switched off",
+    imported.meta === "59 of 61 colors, 2 turned off" && imported.enabled === 59,
+    imported.meta,
+  );
   check("every color keeps the block they chose", imported.picks === 59, `${imported.picks} picks`);
-  check("blocks resolve through the generated table, not by guess",
-    imported.slime === "slime_block", String(imported.slime));
-  check("an imported palette counts as chosen on purpose",
-    imported.deliberate === imported.picks, `${imported.deliberate} of ${imported.picks}`);
-  check("so importing does not immediately nag about the blocks you asked for",
-    imported.banner === null, String(imported.banner));
+  check(
+    "blocks resolve through the generated table, not by guess",
+    imported.slime === "slime_block",
+    String(imported.slime),
+  );
+  check(
+    "an imported palette counts as chosen on purpose",
+    imported.deliberate === imported.picks,
+    `${imported.deliberate} of ${imported.picks}`,
+  );
+  check(
+    "so importing does not immediately nag about the blocks you asked for",
+    imported.banner === null,
+    String(imported.banner),
+  );
 
   const roundTrip = await s.evaluate(`(async () => {
     window.__dl = [];
@@ -783,10 +1061,13 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     };
   })()`);
   check("settings export is a named file", /-settings\.json$/.test(roundTrip.name), roundTrip.name);
-  check("settings round-trip restores the palette",
-    roundTrip.emptied === "0 of 61 colors, 61 turned off"
-      && roundTrip.restored === "59 of 61 colors, 2 turned off" && roundTrip.picks === 59,
-    `${roundTrip.emptied} -> ${roundTrip.restored}, ${roundTrip.picks} picks`);
+  check(
+    "settings round-trip restores the palette",
+    roundTrip.emptied === "0 of 61 colors, 61 turned off" &&
+      roundTrip.restored === "59 of 61 colors, 2 turned off" &&
+      roundTrip.picks === 59,
+    `${roundTrip.emptied} -> ${roundTrip.restored}, ${roundTrip.picks} picks`,
+  );
 
   const wear = await s.evaluate(`(async () => {
     const read = () => {
@@ -822,23 +1103,36 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     const unbreakable = read();
     return { plain, unbreaking, mending, unbreakable };
   })()`);
-  check("summary says how many tools to bring", /bring \d+/.test(wear.plain.tools),
-    wear.plain.tools.slice(0, 90));
-  check("unbreaking makes tools last longer",
+  check(
+    "summary says how many tools to bring",
+    /bring \d+/.test(wear.plain.tools),
+    wear.plain.tools.slice(0, 90),
+  );
+  check(
+    "unbreaking makes tools last longer",
     wear.unbreaking.tools !== wear.plain.tools && /bring \d+/.test(wear.unbreaking.tools),
-    wear.unbreaking.tools.slice(0, 90));
-  check("unbreaking does not change breaking time",
+    wear.unbreaking.tools.slice(0, 90),
+  );
+  check(
+    "unbreaking does not change breaking time",
     wear.unbreaking.teardown === wear.plain.teardown,
-    `${wear.plain.teardown} -> ${wear.unbreaking.teardown}`);
-  check("mending drops the wear note",
+    `${wear.plain.teardown} -> ${wear.unbreaking.teardown}`,
+  );
+  check(
+    "mending drops the wear note",
     !/bring \d+/.test(wear.mending.tools) && !/Mending/.test(wear.mending.tools),
-    wear.mending.tools.slice(0, 90));
-  check("mending does not change breaking time",
+    wear.mending.tools.slice(0, 90),
+  );
+  check(
+    "mending does not change breaking time",
     wear.mending.teardown === wear.plain.teardown,
-    `${wear.plain.teardown} -> ${wear.mending.teardown}`);
-  check("unbreakable tools never wear out",
+    `${wear.plain.teardown} -> ${wear.mending.teardown}`,
+  );
+  check(
+    "unbreakable tools never wear out",
     /unbreakable, one is enough/.test(wear.unbreakable.tools),
-    wear.unbreakable.tools.slice(0, 90));
+    wear.unbreakable.tools.slice(0, 90),
+  );
 
   const xss = await s.evaluate(`(async () => {
     const nick = document.querySelectorAll(".tool-item")[0].querySelector("input.nick");
@@ -851,8 +1145,11 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
       shown: document.querySelector("#summary dl").textContent.includes("<img src=x"),
     };
   })()`);
-  check("a tool nickname cannot inject markup into the summary",
-    xss.injected === false && xss.executed === false, JSON.stringify(xss));
+  check(
+    "a tool nickname cannot inject markup into the summary",
+    xss.injected === false && xss.executed === false,
+    JSON.stringify(xss),
+  );
   check("the nickname still displays, escaped", xss.shown === true, JSON.stringify(xss));
 
   const vocab = await s.evaluate(`(() => {
@@ -870,9 +1167,11 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     };
   })()`);
   check("the block filters live in the palette panel", vocab.inPalette === true);
-  check("every flag on a block is a filter you can find by the same word",
+  check(
+    "every flag on a block is a filter you can find by the same word",
     vocab.chips.length > 0 && vocab.orphans.length === 0,
-    `chips ${JSON.stringify(vocab.chips)} orphans ${JSON.stringify(vocab.orphans)}`);
+    `chips ${JSON.stringify(vocab.chips)} orphans ${JSON.stringify(vocab.orphans)}`,
+  );
 
   const filler = await s.evaluate(`(async () => {
     const set = (id, v) => {
@@ -906,16 +1205,28 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     const withFiller = document.getElementById("filler-notice").hidden;
     return { stepped, flat, withFiller };
   })()`);
-  check("no filler under a staircase is priced, not just warned",
-    /pop off/.test(filler.stepped.text) && /\d/.test(filler.stepped.text)
-      && filler.stepped.warn === true, filler.stepped.text.slice(0, 90));
-  check("no filler on a flat canvas is stated, not warned",
+  check(
+    "no filler under a staircase is priced, not just warned",
+    /pop off/.test(filler.stepped.text) &&
+      /\d/.test(filler.stepped.text) &&
+      filler.stepped.warn === true,
+    filler.stepped.text.slice(0, 90),
+  );
+  check(
+    "no filler on a flat canvas is stated, not warned",
     /rest directly on your canvas/.test(filler.flat.text) && filler.flat.warn === false,
-    filler.flat.text.slice(0, 90));
-  check("the staircase case offers the fix that matches the intent",
-    /add filler where needed/.test(filler.stepped.text), filler.stepped.text.slice(-60));
-  check("the palette is never edited behind the artist",
-    filler.stepped.palette === "59 of 61 colors, 2 turned off", filler.stepped.palette);
+    filler.flat.text.slice(0, 90),
+  );
+  check(
+    "the staircase case offers the fix that matches the intent",
+    /add filler where needed/.test(filler.stepped.text),
+    filler.stepped.text.slice(-60),
+  );
+  check(
+    "the palette is never edited behind the artist",
+    filler.stepped.palette === "59 of 61 colors, 2 turned off",
+    filler.stepped.palette,
+  );
   check("the notice clears once filler is on", filler.withFiller === true);
 
   const heightCap = await s.evaluate(`(async () => {
@@ -989,32 +1300,55 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     info.restoredLabel = document.getElementById("dither-btn-name").textContent;
     return info;
   })()`);
-  check("the dither picker opens with every mode as a row",
-    ditherPicker.open === true && ditherPicker.rows === ditherPicker.options
-      && ditherPicker.matched === true,
-    `${ditherPicker.rows} rows for ${ditherPicker.options} options`);
+  check(
+    "the dither picker opens with every mode as a row",
+    ditherPicker.open === true &&
+      ditherPicker.rows === ditherPicker.options &&
+      ditherPicker.matched === true,
+    `${ditherPicker.rows} rows for ${ditherPicker.options} options`,
+  );
   check("every dither row explains itself in place", ditherPicker.described === true);
-  check("the advanced group separates the rarely picked modes",
+  check(
+    "the advanced group separates the rarely picked modes",
     JSON.stringify(ditherPicker.groups) === JSON.stringify(["advanced"]),
-    JSON.stringify(ditherPicker.groups));
-  check("sample chips render with the current palette",
-    ditherPicker.sampleColors > 4, `${ditherPicker.sampleColors} distinct colors`);
-  check("picking a row commits the mode and closes the picker",
-    ditherPicker.picked === "yliluoma_blue16" && ditherPicker.closed === true
-      && ditherPicker.label === "Yliluoma blue noise",
-    `${ditherPicker.picked} / ${ditherPicker.label}`);
-  check("the hidden select still drives the button label",
-    ditherPicker.restoredLabel === "Floyd-Steinberg", ditherPicker.restoredLabel);
+    JSON.stringify(ditherPicker.groups),
+  );
+  check(
+    "sample chips render with the current palette",
+    ditherPicker.sampleColors > 4,
+    `${ditherPicker.sampleColors} distinct colors`,
+  );
+  check(
+    "picking a row commits the mode and closes the picker",
+    ditherPicker.picked === "yliluoma_blue16" &&
+      ditherPicker.closed === true &&
+      ditherPicker.label === "Yliluoma blue noise",
+    `${ditherPicker.picked} / ${ditherPicker.label}`,
+  );
+  check(
+    "the hidden select still drives the button label",
+    ditherPicker.restoredLabel === "Floyd-Steinberg",
+    ditherPicker.restoredLabel,
+  );
 
   check("the max height field appears beside max step", heightCap.shown === true);
-  check("a blank cap reports the natural peak",
-    /staircases up to \d+ tall on its own/.test(heightCap.blank), heightCap.blank);
-  check("a tight cap reports what it recolored and what it costs",
-    /recolored \d+ blocks to fit (every panel )?under 1; (no visible cost|picture error up about)/
-      .test(heightCap.capped),
-    heightCap.capped);
-  check("clearing the cap restores the natural staircase note",
-    /staircases up to \d+ tall on its own/.test(heightCap.restored), heightCap.restored);
+  check(
+    "a blank cap reports the natural peak",
+    /staircases up to \d+ tall on its own/.test(heightCap.blank),
+    heightCap.blank,
+  );
+  check(
+    "a tight cap reports what it recolored and what it costs",
+    /recolored \d+ blocks to fit (every panel )?under 1; (no visible cost|picture error up about)/.test(
+      heightCap.capped,
+    ),
+    heightCap.capped,
+  );
+  check(
+    "clearing the cap restores the natural staircase note",
+    /staircases up to \d+ tall on its own/.test(heightCap.restored),
+    heightCap.restored,
+  );
   check("flat height hides the cap", heightCap.flatHidden === true);
 
   const hostile = await s.evaluate(`(async () => {
@@ -1050,21 +1384,32 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
       undo: [...document.querySelectorAll("#io-result button")].map((b) => b.textContent),
     };
   })()`);
-  check("unknown tool kind and tier fall back rather than break the solver",
+  check(
+    "unknown tool kind and tier fall back rather than break the solver",
     hostile.tool.kind === "pickaxe" && hostile.tool.tier === "netherite",
-    JSON.stringify(hostile.tool));
-  check("out-of-range enchant levels are clamped before they are stored",
+    JSON.stringify(hostile.tool),
+  );
+  check(
+    "out-of-range enchant levels are clamped before they are stored",
     hostile.tool.efficiency === 255 && hostile.tool.unbreaking === 0,
-    `eff=${hostile.tool.efficiency} unb=${hostile.tool.unbreaking}`);
-  check("a nickname cannot grow without bound", hostile.tool.nick.length === 40,
-    `${hostile.tool.nick.length} chars`);
-  check("restored fields are clamped to what the build will use",
+    `eff=${hostile.tool.efficiency} unb=${hostile.tool.unbreaking}`,
+  );
+  check(
+    "a nickname cannot grow without bound",
+    hostile.tool.nick.length === 40,
+    `${hostile.tool.nick.length} chars`,
+  );
+  check(
+    "restored fields are clamped to what the build will use",
     hostile.mapsW === "16" && hostile.haste === "0",
-    `maps-w=${hostile.mapsW} haste=${hostile.haste}`);
-  check("the app still renders after a hostile import", hostile.rows === 61,
-    `${hostile.rows} rows`);
-  check("an import can be undone", hostile.undo.includes("undo"),
-    JSON.stringify(hostile.undo));
+    `maps-w=${hostile.mapsW} haste=${hostile.haste}`,
+  );
+  check(
+    "the app still renders after a hostile import",
+    hostile.rows === 61,
+    `${hostile.rows} rows`,
+  );
+  check("an import can be undone", hostile.undo.includes("undo"), JSON.stringify(hostile.undo));
 
   const preview = await s.evaluate(`(async () => {
     const set = (id, v) => {
@@ -1135,32 +1480,50 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     document.getElementById("preview-toggle").click();
     return steps;
   })()`);
-  check("a 4x4 build fits the rail whole at 1:1",
+  check(
+    "a 4x4 build fits the rail whole at 1:1",
     preview.fit.canvas === 512 && preview.fit.fits && !preview.fit.zoomed,
-    `${preview.fit.canvas}px canvas shown at ${preview.fit.shown} in ${preview.fit.slot}`);
-  check("zooming grows the preview without leaving the rail",
-    preview.zoom1.zoomed && preview.zoom1.shown > preview.fit.shown
-      && preview.zoom1.fits && preview.zoom1.sticky,
-    `${preview.fit.shown} -> ${preview.zoom1.shown} in ${preview.zoom1.slot}`);
-  check("zoom is capped at what is on screen", preview.capped.fits,
-    `${preview.capped.shown} in ${preview.capped.slot}`);
-  check("the preview never scrolls inside its own box",
-    [preview.fit, preview.zoom1, preview.capped, preview.back,
-      preview.inline].every((p) => !p.scrolls));
-  check("fit returns it to the rail",
-    preview.back.shown === preview.fit.shown && !preview.back.zoomed);
-  check("the preview can sit in the page instead",
+    `${preview.fit.canvas}px canvas shown at ${preview.fit.shown} in ${preview.fit.slot}`,
+  );
+  check(
+    "zooming grows the preview without leaving the rail",
+    preview.zoom1.zoomed &&
+      preview.zoom1.shown > preview.fit.shown &&
+      preview.zoom1.fits &&
+      preview.zoom1.sticky,
+    `${preview.fit.shown} -> ${preview.zoom1.shown} in ${preview.zoom1.slot}`,
+  );
+  check(
+    "zoom is capped at what is on screen",
+    preview.capped.fits,
+    `${preview.capped.shown} in ${preview.capped.slot}`,
+  );
+  check(
+    "the preview never scrolls inside its own box",
+    [preview.fit, preview.zoom1, preview.capped, preview.back, preview.inline].every(
+      (p) => !p.scrolls,
+    ),
+  );
+  check(
+    "fit returns it to the rail",
+    preview.back.shown === preview.fit.shown && !preview.back.zoomed,
+  );
+  check(
+    "the preview can sit in the page instead",
     preview.inline.inline && preview.inline.fits && !preview.inline.sticky,
-    `${preview.inline.shown} in ${preview.inline.slot}`);
-  check("and come back to the scrolling rail",
-    !preview.railback.inline && preview.railback.sticky);
-  check("the grid names panels the way the download does",
-    preview.names.count === 16
-      && preview.names.first === `x0 z0 · map ${preview.names.base}`,
-    `${preview.names.count} labels, first "${preview.names.first}"`);
-  check("the preview can be collapsed and brought back",
+    `${preview.inline.shown} in ${preview.inline.slot}`,
+  );
+  check("and come back to the scrolling rail", !preview.railback.inline && preview.railback.sticky);
+  check(
+    "the grid names panels the way the download does",
+    preview.names.count === 16 && preview.names.first === `x0 z0 · map ${preview.names.base}`,
+    `${preview.names.count} labels, first "${preview.names.first}"`,
+  );
+  check(
+    "the preview can be collapsed and brought back",
     preview.hidden.visible === false && /show preview/.test(preview.hidden.label),
-    preview.hidden.label);
+    preview.hidden.label,
+  );
 
   const adj = await s.evaluate(`(async () => {
     const px = () => JSON.stringify([...document.getElementById("preview")
@@ -1194,8 +1557,11 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     await new Promise((r) => setTimeout(r, 2000));
     return out;
   })()`);
-  check("adjustments stay out of the way until switched on",
-    adj.startHidden === "none" && adj.shown === true, adj.startHidden);
+  check(
+    "adjustments stay out of the way until switched on",
+    adj.startHidden === "none" && adj.shown === true,
+    adj.startHidden,
+  );
   check("switching them on with everything neutral changes nothing", adj.neutralSame === true);
   check("and says nothing is adjusted yet", adj.chipWhenNeutral === false);
   check("cooling the picture changes the render", adj.cooledDiffers === true, adj.meta);
@@ -1244,18 +1610,32 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   })()`);
   check("nothing to fill, nothing offered", bg.opaqueHidden === "none", bg.opaqueHidden);
   check("a see-through source offers to fill it", bg.shownWithAlpha === true);
-  check("left alone, see-through stays a hole", bg.holePixel[3] === 0,
-    JSON.stringify(bg.holePixel));
-  check("filled, it places a block", bg.filledPixel[3] === 255,
-    JSON.stringify(bg.filledPixel));
-  check("flat fill snaps to a color a map can make",
-    /closest color a map can make/.test(bg.note || ""), bg.note);
-  check("honoring transparency again stands the fill down",
-    bg.modeAfterHonor === "off", bg.modeAfterHonor);
-  check("and the see-through part is a hole again", bg.holeAgain[3] === 0,
-    JSON.stringify(bg.holeAgain));
-  check("the note says the holes are back",
-    /place no blocks/.test(bg.noteAfterHonor || ""), bg.noteAfterHonor);
+  check(
+    "left alone, see-through stays a hole",
+    bg.holePixel[3] === 0,
+    JSON.stringify(bg.holePixel),
+  );
+  check("filled, it places a block", bg.filledPixel[3] === 255, JSON.stringify(bg.filledPixel));
+  check(
+    "flat fill snaps to a color a map can make",
+    /closest color a map can make/.test(bg.note || ""),
+    bg.note,
+  );
+  check(
+    "honoring transparency again stands the fill down",
+    bg.modeAfterHonor === "off",
+    bg.modeAfterHonor,
+  );
+  check(
+    "and the see-through part is a hole again",
+    bg.holeAgain[3] === 0,
+    JSON.stringify(bg.holeAgain),
+  );
+  check(
+    "the note says the holes are back",
+    /place no blocks/.test(bg.noteAfterHonor || ""),
+    bg.noteAfterHonor,
+  );
 
   const starved = await s.evaluate(`(async () => {
     const out = {};
@@ -1285,15 +1665,26 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
       .filter((r) => r.classList.contains("unusable")).length;
     return out;
   })()`);
-  check("filters that starve a color mark it, rather than leaving a dead pick",
-    starved.unusable > 0, `${starved.unusable} starved`);
-  check("and the notice names them", /no block your filters allow/.test(starved.notice || ""),
-    (starved.notice || "").slice(0, 90));
-  check("a starved palette still shares, minus the colors that place nothing",
+  check(
+    "filters that starve a color mark it, rather than leaving a dead pick",
+    starved.unusable > 0,
+    `${starved.unusable} starved`,
+  );
+  check(
+    "and the notice names them",
+    /no block your filters allow/.test(starved.notice || ""),
+    (starved.notice || "").slice(0, 90),
+  );
+  check(
+    "a starved palette still shares, minus the colors that place nothing",
     starved.shared === starved.onRows - starved.unusable,
-    `${starved.shared} shared vs ${starved.onRows} on - ${starved.unusable} starved`);
-  check("re-enabling the filters brings every color back",
-    starved.unusableAfter === 0, `${starved.unusableAfter} still starved`);
+    `${starved.shared} shared vs ${starved.onRows} on - ${starved.unusable} starved`,
+  );
+  check(
+    "re-enabling the filters brings every color back",
+    starved.unusableAfter === 0,
+    `${starved.unusableAfter} still starved`,
+  );
 
   const setPreset = async (id) => {
     await s.evaluate(`(() => {
@@ -1303,7 +1694,8 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     })()`);
     await s.evaluate(`new Promise((r) => setTimeout(r, 2500))`);
   };
-  const paletteState = () => s.evaluate(`(() => {
+  const paletteState = () =>
+    s.evaluate(`(() => {
     const rows = [...document.querySelectorAll(".palette-row")];
     const on = rows.filter((r) => !r.classList.contains("off"));
     return {
@@ -1323,28 +1715,48 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     shown: document.getElementById("share-row").hidden === false,
     result: document.getElementById("io-result").textContent,
   }))()`);
-  check("a palette link is produced and shown", shared.shown === true && /#p=/.test(shared.url),
-    shared.url);
-  check("the whole palette fits in a short link", shared.url.length < 120,
-    `${shared.url.length} chars`);
-  check("it says how much it carried", /\d+ colors in \d+ characters/.test(shared.result),
-    shared.result);
+  check(
+    "a palette link is produced and shown",
+    shared.shown === true && /#p=/.test(shared.url),
+    shared.url,
+  );
+  check(
+    "the whole palette fits in a short link",
+    shared.url.length < 120,
+    `${shared.url.length} chars`,
+  );
+  check(
+    "it says how much it carried",
+    /\d+ colors in \d+ characters/.test(shared.result),
+    shared.result,
+  );
   const frag = shared.url.split("#")[1];
 
   await setPreset("builtin:full");
   const clobbered = await paletteState();
-  check("the palette really changed before we replay the link",
-    clobbered.on !== shareBefore.on, `${clobbered.on} vs ${shareBefore.on}`);
+  check(
+    "the palette really changed before we replay the link",
+    clobbered.on !== shareBefore.on,
+    `${clobbered.on} vs ${shareBefore.on}`,
+  );
   await s.evaluate(`location.hash = ${JSON.stringify(frag)}`);
   await s.evaluate(`new Promise((r) => setTimeout(r, 3000))`);
   const pasted = await paletteState();
-  check("a link pasted into an open tab restores the palette",
+  check(
+    "a link pasted into an open tab restores the palette",
     pasted.on === shareBefore.on && pasted.picked === shareBefore.picked,
-    `${pasted.on} vs ${shareBefore.on}`);
-  check("the code is taken out of the address bar once used", pasted.hash === "",
-    JSON.stringify(pasted.hash));
-  check("it says what it loaded",
-    /Loaded \d+ colors from a shared palette/.test(pasted.result), pasted.result);
+    `${pasted.on} vs ${shareBefore.on}`,
+  );
+  check(
+    "the code is taken out of the address bar once used",
+    pasted.hash === "",
+    JSON.stringify(pasted.hash),
+  );
+  check(
+    "it says what it loaded",
+    /Loaded \d+ colors from a shared palette/.test(pasted.result),
+    pasted.result,
+  );
 
   await setPreset("builtin:full");
   await s.send("Page.navigate", { url: "about:blank" });
@@ -1354,15 +1766,20 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   if (String(st).startsWith("TIMEOUT")) throw new Error(`app never became ready: ${st}`);
   await s.evaluate(`new Promise((r) => setTimeout(r, 3500))`);
   const cold = await paletteState();
-  check("the same link opened cold restores the same palette",
+  check(
+    "the same link opened cold restores the same palette",
     cold.on === shareBefore.on && cold.picked === shareBefore.picked,
-    `${cold.on} vs ${shareBefore.on}`);
+    `${cold.on} vs ${shareBefore.on}`,
+  );
 
   await s.evaluate(`location.hash = ${JSON.stringify(frag.slice(0, -2))}`);
   await s.evaluate(`new Promise((r) => setTimeout(r, 2000))`);
   const refused = await s.evaluate(`document.getElementById("io-result").textContent`);
-  check("a damaged link is refused rather than half-applied",
-    /damaged|different block list|truncated|not in it/.test(refused), refused);
+  check(
+    "a damaged link is refused rather than half-applied",
+    /damaged|different block list|truncated|not in it/.test(refused),
+    refused,
+  );
 
   const whatsnew = await s.evaluate(`(() => {
     const panel = document.getElementById("whatsnew-panel");
@@ -1374,8 +1791,11 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     link.click();
     return { entries, tip, openAfterLink, closedAgain: panel.hidden };
   })()`);
-  check("the what's new link opens the panel with entries",
-    whatsnew.openAfterLink === true && whatsnew.entries >= 2, `${whatsnew.entries} entries`);
+  check(
+    "the what's new link opens the panel with entries",
+    whatsnew.openAfterLink === true && whatsnew.entries >= 2,
+    `${whatsnew.entries} entries`,
+  );
   check("the panel carries the hard-refresh tip", whatsnew.tip === true);
   check("the link toggles the panel closed again", whatsnew.closedAgain === true);
   const communities = await s.evaluate(`(() => {
@@ -1385,9 +1805,13 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
       href: card ? card.href : "",
       line: card ? card.textContent : "" };
   })()`);
-  check("the communities card shows and links out",
-    communities.shown === true && /blossomcraft\.org/.test(communities.href)
-    && /map art on BlossomCraft/.test(communities.line), communities.href);
+  check(
+    "the communities card shows and links out",
+    communities.shown === true &&
+      /blossomcraft\.org/.test(communities.href) &&
+      /map art on BlossomCraft/.test(communities.line),
+    communities.href,
+  );
   await s.evaluate(`(async () => {
     const alpha = document.getElementById("honor-alpha");
     if (!alpha.checked) { alpha.checked = true;
@@ -1424,15 +1848,20 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     const text = new TextDecoder("latin1").decode(b);
     const note = document.getElementById("export-skipped");
     return { name: d.name,
-      names: [...new Set([...text.matchAll(/arachne_x\\d+_z\\d+_map_\\d+\\.nbt/g)].map((m) => m[0]))],
+      names: [...new Set([...text.matchAll(/arachne_x\\d+_z\\d+_map_\\d+\\.litematic/g)].map((m) => m[0]))],
       shown: !note.hidden, note: note.textContent };
   })()`);
-  check("a panel with nothing in it gets no schematic file",
-    JSON.stringify(halfEmpty.names) === JSON.stringify(["arachne_x1_z0_map_1.nbt"]),
-    JSON.stringify(halfEmpty.names));
-  check("and the download section says which panel was left out",
-    halfEmpty.shown === true && /Panel x0_z0_map_0 has no blocks to place/.test(halfEmpty.note ?? ""),
-    halfEmpty.note);
+  check(
+    "a panel with nothing in it gets no schematic file",
+    JSON.stringify(halfEmpty.names) === JSON.stringify(["arachne_x1_z0_map_1.litematic"]),
+    JSON.stringify(halfEmpty.names),
+  );
+  check(
+    "and the download section says which panel was left out",
+    halfEmpty.shown === true &&
+      /Panel x0_z0_map_0 has no blocks to place/.test(halfEmpty.note ?? ""),
+    halfEmpty.note,
+  );
 
   await s.send("Page.navigate", { url });
   await s.evaluate(WAIT_READY);
@@ -1461,9 +1890,11 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     w: document.getElementById("maps-w").value,
     h: document.getElementById("maps-h").value,
   }))()`);
-  check("reset keeps the image and refits the grid to it",
+  check(
+    "reset keeps the image and refits the grid to it",
     afterReset.w === "1" && afterReset.h === "2",
-    `${afterReset.w} x ${afterReset.h}`);
+    `${afterReset.w} x ${afterReset.h}`,
+  );
 
   const errors = s.logs.filter((l) => /EXCEPTION|error:/i.test(l));
   check("no page errors", errors.length === 0, errors.slice(0, 3).join(" | "));

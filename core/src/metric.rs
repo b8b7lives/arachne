@@ -25,7 +25,6 @@ const OPP_FROM_XYZ: [[f32; 3]; 3] = [
 ];
 const D65: [f32; 3] = [0.950_47, 1.0, 1.088_83];
 
-
 #[derive(Debug, Clone, Copy)]
 pub struct Viewing {
     pub samples_per_degree: f32,
@@ -226,7 +225,11 @@ fn local_mean(plane: &[f32], w: usize, h: usize, radius: usize) -> Vec<f32> {
 
 fn perceive(img: &LinImage, kernels: &[Vec<f32>; 3]) -> Seen {
     let (w, h) = (img.width, img.height);
-    let mut planes = [vec![0.0f32; w * h], vec![0.0f32; w * h], vec![0.0f32; w * h]];
+    let mut planes = [
+        vec![0.0f32; w * h],
+        vec![0.0f32; w * h],
+        vec![0.0f32; w * h],
+    ];
     for (i, p) in img.pixels.iter().enumerate() {
         let opp = apply3(OPP_FROM_XYZ, apply3(XYZ_FROM_LINEAR, [p[0], p[1], p[2]]));
         for (plane, v) in planes.iter_mut().zip(opp.iter()) {
@@ -316,12 +319,7 @@ pub fn compare(src: &LinImage, out: &LinImage, view: Viewing) -> Report {
     let cast = drift.iter().sum::<f32>() / drift.len() as f32;
     let speckle = percentile(drift, 0.999);
 
-    let visible_error: Vec<f32> = b
-        .bw
-        .iter()
-        .zip(a.bw.iter())
-        .map(|(q, p)| q - p)
-        .collect();
+    let visible_error: Vec<f32> = b.bw.iter().zip(a.bw.iter()).map(|(q, p)| q - p).collect();
     let smooth = local_mean(&visible_error, src.width, src.height, 2);
     let grain = (visible_error
         .iter()
@@ -428,10 +426,16 @@ mod tests {
         let a = flat(32, 32, [120, 90, 200, 255]);
         let b = flat(32, 32, [128, 96, 190, 255]);
         let spatial = compare(&a, &b, Viewing::framed(5.0));
-        let la = xyz_to_lab(apply3(XYZ_FROM_LINEAR, [a.pixel(0, 0)[0], a.pixel(0, 0)[1], a.pixel(0, 0)[2]]));
-        let lb = xyz_to_lab(apply3(XYZ_FROM_LINEAR, [b.pixel(0, 0)[0], b.pixel(0, 0)[1], b.pixel(0, 0)[2]]));
-        let plain = ((la[0] - lb[0]).powi(2) + (la[1] - lb[1]).powi(2) + (la[2] - lb[2]).powi(2))
-            .sqrt();
+        let la = xyz_to_lab(apply3(
+            XYZ_FROM_LINEAR,
+            [a.pixel(0, 0)[0], a.pixel(0, 0)[1], a.pixel(0, 0)[2]],
+        ));
+        let lb = xyz_to_lab(apply3(
+            XYZ_FROM_LINEAR,
+            [b.pixel(0, 0)[0], b.pixel(0, 0)[1], b.pixel(0, 0)[2]],
+        ));
+        let plain =
+            ((la[0] - lb[0]).powi(2) + (la[1] - lb[1]).powi(2) + (la[2] - lb[2]).powi(2)).sqrt();
         assert!(
             (spatial.scielab_mean - plain).abs() < 0.05,
             "spatial {} vs plain {plain}",

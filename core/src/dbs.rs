@@ -143,7 +143,11 @@ pub fn refine_with_progress(
         .map(|p| opponent_of([p[0], p[1], p[2]]))
         .collect();
 
-    let mut err = [vec![0.0f32; w * h], vec![0.0f32; w * h], vec![0.0f32; w * h]];
+    let mut err = [
+        vec![0.0f32; w * h],
+        vec![0.0f32; w * h],
+        vec![0.0f32; w * h],
+    ];
     for (i, a) in assign.iter().enumerate() {
         let Some(idx) = a else { continue };
         for c in 0..3 {
@@ -229,8 +233,7 @@ pub fn refine_with_progress(
                     }
                     let row = qz as usize * w;
                     for qx in lo_x..=hi_x {
-                        ce[c][row + qx as usize] +=
-                            d[c] * ky * cff[c][(cr + qx - px) as usize];
+                        ce[c][row + qx as usize] += d[c] * ky * cff[c][(cr + qx - px) as usize];
                     }
                 }
             }
@@ -390,7 +393,11 @@ mod tests {
         let (w, h) = (img.width, img.height);
         let kernels = opponent_kernels(cfg.view, cfg.filter_radius);
         let cff: Vec<Vec<f32>> = kernels.iter().map(|k| autocorr(k)).collect();
-        let mut err = [vec![0.0f32; w * h], vec![0.0f32; w * h], vec![0.0f32; w * h]];
+        let mut err = [
+            vec![0.0f32; w * h],
+            vec![0.0f32; w * h],
+            vec![0.0f32; w * h],
+        ];
         for (i, cell) in g.cells.iter().enumerate() {
             let Some((cid, tone)) = cell else { continue };
             let e = p

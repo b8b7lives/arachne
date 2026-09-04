@@ -9,18 +9,18 @@ use arachne_core::heightcap::{
 };
 use arachne_core::hints::marginal_errors;
 use arachne_core::image::LinImage;
+use arachne_core::litematic::{LitematicMeta, schem_to_litematic};
 use arachne_core::mapdat::mapdat_to_nbt;
 use arachne_core::metric::{Viewing, compare, grid_to_linear};
-use arachne_core::nbt::{read_root, write_root};
+use arachne_core::nbt::{Tag, read_root, write_root};
 use arachne_core::palette::{Palette, Tone};
 use arachne_core::quantize::{
     ATKINSON, BURKES, Dither, FLOYD_STEINBERG, Grid, Kernel, MIN_AVG_ERR, OrderedMatrix,
-    YLILUOMA_CANDIDATES, blue16,
-    SIERRA_LITE, STUCKI, Transparency, bayer2, bayer4, ordered3, quantize,
-    quantize_with_progress,
+    SIERRA_LITE, STUCKI, Transparency, YLILUOMA_CANDIDATES, bayer2, bayer4, blue16, ordered3,
+    quantize, quantize_with_progress,
 };
 use arachne_core::schem::{
-    BuildMode, SchemConfig, build_panels, build_schem, missing_selection, schem_to_nbt,
+    BuildMode, Schem, SchemConfig, build_panels, build_schem, missing_selection, schem_to_nbt,
 };
 use arachne_core::share::{SharedPalette, decode as share_decode, encode as share_encode};
 use arachne_core::solver::{RankedCandidate, SolverConfig, rank_color};
@@ -72,6 +72,55 @@ struct ExportOpts {
     build_mode: Option<String>,
     #[serde(default)]
     version: Option<String>,
+    #[serde(default)]
+    format: Option<String>,
+    #[serde(default)]
+    name: Option<String>,
+    #[serde(default)]
+    names: Option<Vec<String>>,
+}
+
+#[derive(Clone, Copy)]
+enum SchemFormat {
+    Nbt,
+    Litematic,
+}
+
+impl SchemFormat {
+    fn parse(s: Option<&str>) -> Result<Self, String> {
+        match s {
+            None | Some("litematic") => Ok(Self::Litematic),
+            Some("nbt") => Ok(Self::Nbt),
+            Some(f) => Err(format!("unknown schematic format: {f}")),
+        }
+    }
+}
+
+const LITEMATIC_DESCRIPTION: &str = "map art planned with Arachne, https://b8b7.live/arachne/";
+
+#[cfg(target_arch = "wasm32")]
+fn now_ms() -> i64 {
+    js_sys::Date::now() as i64
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn now_ms() -> i64 {
+    0
+}
+
+fn schem_tag(schem: &Schem, cfg: &SchemConfig, format: SchemFormat, name: &str) -> Tag {
+    match format {
+        SchemFormat::Nbt => schem_to_nbt(schem, cfg),
+        SchemFormat::Litematic => schem_to_litematic(
+            schem,
+            cfg,
+            &LitematicMeta {
+                name,
+                description: LITEMATIC_DESCRIPTION,
+                time_ms: now_ms(),
+            },
+        ),
+    }
 }
 
 #[derive(Serialize)]
@@ -152,11 +201,7 @@ fn dither_of(name: &str, serpentine: bool) -> Result<Dither, String> {
 
 const COMPARE_MAX_SIDE: usize = 512;
 
-fn shrink_for_compare(
-    a: &LinImage,
-    b: &LinImage,
-    c: &LinImage,
-) -> (LinImage, LinImage, LinImage) {
+fn shrink_for_compare(a: &LinImage, b: &LinImage, c: &LinImage) -> (LinImage, LinImage, LinImage) {
     let side = a.width.max(a.height);
     if side <= COMPARE_MAX_SIDE {
         return (a.clone(), b.clone(), c.clone());
@@ -164,7 +209,11 @@ fn shrink_for_compare(
     let f = COMPARE_MAX_SIDE as f64 / side as f64;
     let w = ((a.width as f64 * f).round() as usize).max(1);
     let h = ((a.height as f64 * f).round() as usize).max(1);
-    (a.resize_area(w, h), b.resize_area(w, h), c.resize_area(w, h))
+    (
+        a.resize_area(w, h),
+        b.resize_area(w, h),
+        c.resize_area(w, h),
+    )
 }
 
 fn gzip(bytes: &[u8]) -> Vec<u8> {
@@ -406,7 +455,10 @@ impl Session {
             .base_grid
             .as_ref()
             .ok_or_else(|| "generate first".to_string())?;
-        let img = self.img.as_ref().ok_or_else(|| "generate first".to_string())?;
+        let img = self
+            .img
+            .as_ref()
+            .ok_or_else(|| "generate first".to_string())?;
         let per_panel = build_mode_of(opts.build_mode.as_deref())? == BuildMode::Panels
             && (base.width > 128 || base.height > 128);
         let peak = if per_panel {
@@ -480,7 +532,12 @@ impl Session {
         Ok(out)
     }
 
-    pub fn export_mapdat(&self, tx: usize, tz: usize, version: Option<String>) -> Result<Vec<u8>, String> {
+    pub fn export_mapdat(
+        &self,
+        tx: usize,
+        tz: usize,
+        version: Option<String>,
+    ) -> Result<Vec<u8>, String> {
         let grid = self
             .grid
             .as_ref()
@@ -503,21 +560,24 @@ impl Session {
         Ok(gzip(&write_root("", &tag)))
     }
 
-    // The one-piece schematic; build_mode in opts is not consulted here.
     pub fn export_schem(&self, opts_json: &str) -> Result<Vec<u8>, String> {
         let grid = self
             .grid
             .as_ref()
             .ok_or_else(|| "generate first".to_string())?;
         let opts: ExportOpts = serde_json::from_str(opts_json).map_err(|e| e.to_string())?;
+        let format = SchemFormat::parse(opts.format.as_deref())?;
+        let name = opts.name.clone().unwrap_or_else(|| "arachne".into());
         let cfg = self.schem_config(opts)?;
         let missing = missing_selection(grid, &cfg);
         if !missing.is_empty() {
             return Err(self.missing_message(&missing));
         }
         let schem = build_schem(grid, &cfg);
-        let tag = schem_to_nbt(&schem, &cfg);
-        Ok(gzip(&write_root("", &tag)))
+        Ok(gzip(&write_root(
+            "",
+            &schem_tag(&schem, &cfg, format, &name),
+        )))
     }
 
     pub fn export_schem_split(&self, opts_json: &str) -> Result<Vec<u8>, String> {
@@ -527,21 +587,26 @@ impl Session {
             .ok_or_else(|| "generate first".to_string())?;
         let opts: ExportOpts = serde_json::from_str(opts_json).map_err(|e| e.to_string())?;
         let mode = build_mode_of(opts.build_mode.as_deref())?;
+        let format = SchemFormat::parse(opts.format.as_deref())?;
+        let names = opts.names.clone().unwrap_or_default();
         let cfg = self.schem_config(opts)?;
         let missing = missing_selection(grid, &cfg);
         if !missing.is_empty() {
             return Err(self.missing_message(&missing));
         }
         let parts = build_panels(grid, &cfg, mode);
-        // A panel with nothing in it frames as zero bytes so indices stay
-        // aligned with map ids; the caller skips it.
         let payloads: Vec<Vec<u8>> = parts
             .iter()
-            .map(|p| {
+            .enumerate()
+            .map(|(i, p)| {
                 if p.blocks.is_empty() {
                     Vec::new()
                 } else {
-                    gzip(&write_root("", &schem_to_nbt(p, &cfg)))
+                    let name = names
+                        .get(i)
+                        .cloned()
+                        .unwrap_or_else(|| format!("arachne_{i}"));
+                    gzip(&write_root("", &schem_tag(p, &cfg, format, &name)))
                 }
             })
             .collect();
@@ -629,8 +694,6 @@ impl Session {
         if !missing.is_empty() {
             return Err(self.missing_message(&missing));
         }
-        // One piece has no panels of its own; report the regions of the one
-        // build, which is what Continued slices.
         let per_panel = if mode == BuildMode::OnePiece {
             BuildMode::Continued
         } else {
@@ -792,10 +855,7 @@ impl Session {
             .iter()
             .any(|b| b.block_id == opts.support_block_id)
         {
-            return Err(format!(
-                "unknown filler block: {}",
-                opts.support_block_id
-            ));
+            return Err(format!("unknown filler block: {}", opts.support_block_id));
         }
         Ok(SchemConfig {
             height_mode,
@@ -895,12 +955,41 @@ mod tests {
         let data_version_of = |bytes: &[u8]| {
             let raw = gunzip(bytes).unwrap();
             let (_, tag) = read_root(&raw).unwrap();
-            match tag.get("DataVersion") {
+            match tag
+                .get("DataVersion")
+                .or_else(|| tag.get("MinecraftDataVersion"))
+            {
                 Some(arachne_core::nbt::Tag::Int(v)) => *v,
                 other => panic!("DataVersion missing: {other:?}"),
             }
         };
         assert_eq!(data_version_of(&schem), 4903, "no version means the newest");
+        {
+            let raw = gunzip(&schem).unwrap();
+            let (_, tag) = read_root(&raw).unwrap();
+            assert!(
+                tag.get("Regions").is_some(),
+                "litematic is the default format"
+            );
+            let mut as_nbt =
+                serde_json::from_str::<serde_json::Value>(&export.to_string()).unwrap();
+            as_nbt["format"] = serde_json::json!("nbt");
+            let raw = gunzip(&s.export_schem(&as_nbt.to_string()).unwrap()).unwrap();
+            let (_, tag) = read_root(&raw).unwrap();
+            assert!(
+                tag.get("palette").is_some() && tag.get("Regions").is_none(),
+                "nbt on request"
+            );
+            assert!(
+                s.export_schem(&{
+                    let mut bad = as_nbt.clone();
+                    bad["format"] = serde_json::json!("schem");
+                    bad.to_string()
+                })
+                .is_err(),
+                "unknown formats are refused"
+            );
+        }
         let mut stamped = serde_json::from_str::<serde_json::Value>(&export.to_string()).unwrap();
         stamped["version"] = serde_json::json!("1.16");
         let old = s.export_schem(&stamped.to_string()).unwrap();
@@ -984,15 +1073,17 @@ mod tests {
         assert_eq!(v["edited_cells"], 0);
         assert_eq!(s.preview_rgba().unwrap(), uncapped);
 
-        let capped = format!(
-            r#"{{"max_height":1,"cliff_cap":null,
-              "enabled_color_ids":[8,29,28,25,18],"tones":["dark","normal","light"]}}"#
-        );
+        let capped = r#"{"max_height":1,"cliff_cap":null,
+              "enabled_color_ids":[8,29,28,25,18],"tones":["dark","normal","light"]}"#;
         let v: serde_json::Value =
-            serde_json::from_str(&s.set_height_cap(&capped).unwrap()).unwrap();
+            serde_json::from_str(&s.set_height_cap(capped).unwrap()).unwrap();
         assert!(v["edited_cells"].as_u64().unwrap() > 0);
         assert!(v["de_capped"].as_f64().unwrap() >= v["de_base"].as_f64().unwrap() - 0.35);
-        assert_ne!(s.preview_rgba().unwrap(), uncapped, "the preview shows the cap");
+        assert_ne!(
+            s.preview_rgba().unwrap(),
+            uncapped,
+            "the preview shows the cap"
+        );
 
         s.set_height_cap(probe).unwrap();
         assert_eq!(s.preview_rgba().unwrap(), uncapped, "blank cap restores");

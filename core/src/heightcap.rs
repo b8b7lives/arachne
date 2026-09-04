@@ -45,7 +45,9 @@ pub fn natural_peak(grid: &Grid, cliff_cap: Option<u32>) -> u32 {
                 z1 += 1;
             }
             let skip = usize::from(z0 != 0);
-            let tones: Vec<Tone> = (z0 + skip..z1).map(|z| grid.cell(x, z).unwrap().1).collect();
+            let tones: Vec<Tone> = (z0 + skip..z1)
+                .map(|z| grid.cell(x, z).unwrap().1)
+                .collect();
             if !tones.is_empty() {
                 let heights = column_heights(&tones, HeightMode::Stepped { cliff_cap });
                 peak = peak.max(*heights.iter().max().unwrap());
@@ -88,10 +90,7 @@ pub fn apply_height_cap(
                 z0 = z1;
                 continue;
             }
-            let greedy = column_heights(
-                &tones,
-                HeightMode::Stepped { cliff_cap },
-            );
+            let greedy = column_heights(&tones, HeightMode::Stepped { cliff_cap });
             if *greedy.iter().max().unwrap() as u32 <= max_height {
                 z0 = z1;
                 continue;
@@ -332,10 +331,16 @@ mod tests {
         let dark64 = [[Tone::Dark; 64].as_slice(), [Tone::Normal; 64].as_slice()].concat();
         let grid = two_panel_column(&dark64, &dark64);
         let (same, r) = apply_height_cap_panels(&grid, &d, &ALL, None, 100);
-        assert_eq!(r.edited_cells, 0, "each panel is 64 tall, nothing to recolor");
+        assert_eq!(
+            r.edited_cells, 0,
+            "each panel is 64 tall, nothing to recolor"
+        );
         assert_eq!(same.cells, grid.cells);
         let (_, global) = apply_height_cap(&grid, &d, &ALL, None, 100);
-        assert!(global.edited_cells > 0, "the one-piece cap would have recolored");
+        assert!(
+            global.edited_cells > 0,
+            "the one-piece cap would have recolored"
+        );
 
         let (capped, r) = apply_height_cap_panels(&grid, &d, &ALL, None, 10);
         assert!(r.edited_cells > 0);

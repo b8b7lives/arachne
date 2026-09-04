@@ -9,14 +9,17 @@ const flag = (name, dflt) => {
 };
 const url = flag("--url", process.env.ARACHNE_URL || "http://127.0.0.1:5173/");
 const outDir = flag("--out", ".shots/survey");
-const dropImage = flag("--drop", "public/atlas.png");
+const dropImage = flag("--drop", "public/atlas.webp");
 const only = flag("--only", null);
 const assertMode = args.includes("--assert");
 const maxPhoneHeight = Number(flag("--max-phone-height", "25000"));
 
-const UA_IOS = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1";
-const UA_IPAD = "Mozilla/5.0 (iPad; CPU OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1";
-const UA_ANDROID = "Mozilla/5.0 (Linux; Android 13; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36";
+const UA_IOS =
+  "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1";
+const UA_IPAD =
+  "Mozilla/5.0 (iPad; CPU OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1";
+const UA_ANDROID =
+  "Mozilla/5.0 (Linux; Android 13; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36";
 
 const VIEWPORTS = [
   { name: "phone-360", w: 360, h: 800, dsf: 3, ua: UA_ANDROID, touch: true, phone: true },
@@ -150,19 +153,44 @@ new Promise(function (res) {
 `;
 
 async function fullShot(send, evaluate, sleep, vp, file) {
-  const h = Math.ceil(Number(await evaluate("Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)")));
-  await send("Emulation.setDeviceMetricsOverride", { mobile: vp.touch, width: vp.w, height: h, deviceScaleFactor: vp.dsf, screenWidth: vp.w, screenHeight: h });
+  const h = Math.ceil(
+    Number(
+      await evaluate("Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)"),
+    ),
+  );
+  await send("Emulation.setDeviceMetricsOverride", {
+    mobile: vp.touch,
+    width: vp.w,
+    height: h,
+    deviceScaleFactor: vp.dsf,
+    screenWidth: vp.w,
+    screenHeight: h,
+  });
   await sleep(400);
   const shot = await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: true });
   fs.writeFileSync(file, Buffer.from(shot.data, "base64"));
-  await send("Emulation.setDeviceMetricsOverride", { mobile: vp.touch, width: vp.w, height: vp.h, deviceScaleFactor: vp.dsf, screenWidth: vp.w, screenHeight: vp.h });
+  await send("Emulation.setDeviceMetricsOverride", {
+    mobile: vp.touch,
+    width: vp.w,
+    height: vp.h,
+    deviceScaleFactor: vp.dsf,
+    screenWidth: vp.w,
+    screenHeight: vp.h,
+  });
   await sleep(150);
 }
 
 async function run(vp) {
   const result = { name: vp.name, w: vp.w, h: vp.h };
   await withBrowser({ width: vp.w, height: vp.h }, async ({ send, evaluate, sleep, logs }) => {
-    await send("Emulation.setDeviceMetricsOverride", { mobile: vp.touch, width: vp.w, height: vp.h, deviceScaleFactor: vp.dsf, screenWidth: vp.w, screenHeight: vp.h });
+    await send("Emulation.setDeviceMetricsOverride", {
+      mobile: vp.touch,
+      width: vp.w,
+      height: vp.h,
+      deviceScaleFactor: vp.dsf,
+      screenWidth: vp.w,
+      screenHeight: vp.h,
+    });
     await send("Emulation.setTouchEmulationEnabled", { enabled: vp.touch, maxTouchPoints: 5 });
     if (vp.ua) await send("Emulation.setUserAgentOverride", { userAgent: vp.ua });
     await send("Page.navigate", { url });
@@ -194,15 +222,32 @@ for (const vp of VIEWPORTS) {
     const r = await run(vp);
     results.push(r);
     const m = r.after || r.before;
-    console.log(`${vp.name}: ready="${r.ready}" overflow=${m.overflow}px height=${m.pageHeight}px small=${m.small}/${m.interactive} close=${m.closePairs} view=${m.view} explains=${m.explains}/${m.summaryExplains}`);
+    console.log(
+      `${vp.name}: ready="${r.ready}" overflow=${m.overflow}px height=${m.pageHeight}px small=${m.small}/${m.interactive} close=${m.closePairs} view=${m.view} explains=${m.explains}/${m.summaryExplains}`,
+    );
     if (assertMode && vp.phone) {
-      if (!/^ready/.test(r.ready)) { failures++; console.log(`  FAIL not ready: ${r.ready}`); }
-      if (dropImage && !r.rows) { failures++; console.log("  FAIL no palette rows after drop"); }
-      if (m.overflow > 0) { failures++; console.log(`  FAIL overflow ${m.overflow}px`); }
-      if (m.pageHeight > maxPhoneHeight) { failures++; console.log(`  FAIL height ${m.pageHeight} > ${maxPhoneHeight}`); }
-      if (m.minInputFont !== null && m.minInputFont < 16) { failures++; console.log(`  FAIL input font ${m.minInputFont}px ${m.minInputEl}`); }
+      if (!/^ready/.test(r.ready)) {
+        failures++;
+        console.log(`  FAIL not ready: ${r.ready}`);
+      }
+      if (dropImage && !r.rows) {
+        failures++;
+        console.log("  FAIL no palette rows after drop");
+      }
+      if (m.overflow > 0) {
+        failures++;
+        console.log(`  FAIL overflow ${m.overflow}px`);
+      }
+      if (m.pageHeight > maxPhoneHeight) {
+        failures++;
+        console.log(`  FAIL height ${m.pageHeight} > ${maxPhoneHeight}`);
+      }
+      if (m.minInputFont !== null && m.minInputFont < 16) {
+        failures++;
+        console.log(`  FAIL input font ${m.minInputFont}px ${m.minInputEl}`);
+      }
     }
-    if (r.console.length) console.log("  console: " + r.console.join(" | "));
+    if (r.console.length) console.log(`  console: ${r.console.join(" | ")}`);
   } catch (e) {
     failures++;
     console.log(`${vp.name}: FAILED ${String(e)}`);

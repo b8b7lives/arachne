@@ -20,16 +20,23 @@ function readExplain(): boolean {
 function writeExplain(on: boolean): void {
   try {
     localStorage.setItem(KEY_EXPLAIN, on ? "1" : "0");
-  } catch {
-  }
+  } catch {}
 }
 
 function targets(): HTMLElement[] {
   const seen = new Set<Element>();
   return [...document.querySelectorAll<HTMLElement>("main [title], #about-panel [title]")]
     .filter((el) => el.offsetParent !== null)
-    .filter((el) => !el.closest("#palette, h2, .section-tools, table") && !el.matches("a, .tile, .mini, #preview-wrap"))
-    .filter((el) => !el.closest("#loadout") || el.closest(".tool-item") === document.querySelector("#loadout .tool-item"))
+    .filter(
+      (el) =>
+        !el.closest("#palette, h2, .section-tools, table") &&
+        !el.matches("a, .tile, .mini, #preview-wrap"),
+    )
+    .filter(
+      (el) =>
+        !el.closest("#loadout") ||
+        el.closest(".tool-item") === document.querySelector("#loadout .tool-item"),
+    )
     .filter((el) => !(el.tagName !== "LABEL" && el.closest("label[title]")))
     .filter((el) => {
       const box = el.closest("label, .field, .field-inline") ?? el;
@@ -51,7 +58,8 @@ function legend(): HTMLElement | null {
     dd.textContent = text;
     dl.append(dt, dd);
   };
-  for (const th of table.querySelectorAll<HTMLElement>("thead th[title]")) add(th.textContent ?? "", th.title);
+  for (const th of table.querySelectorAll<HTMLElement>("thead th[title]"))
+    add(th.textContent ?? "", th.title);
   const seen = new Set<string>();
   for (const f of table.querySelectorAll<HTMLElement>(".flag[title]")) {
     const k = f.textContent ?? "";
@@ -102,7 +110,12 @@ function explainBar(): void {
     const watched = $(id);
     if (!watched) continue;
     new MutationObserver((muts) => {
-      if (muts.some((m) => [...m.addedNodes].some((n) => !(n instanceof Element && n.classList.contains("explain"))))) scheduleExplain();
+      if (
+        muts.some((m) =>
+          [...m.addedNodes].some((n) => !(n instanceof Element && n.classList.contains("explain"))),
+        )
+      )
+        scheduleExplain();
     }).observe(watched, { childList: true, subtree: id === "loadout" });
   }
   applyExplain();
@@ -111,7 +124,12 @@ function explainBar(): void {
 function jumpBar(): void {
   const bar = document.createElement("nav");
   bar.id = "jump-bar";
-  for (const [id, text] of [["source-panel", "Source"], ["solver-panel", "Palette"], ["summary-panel", "Summary"], ["export-panel", "Download"]]) {
+  for (const [id, text] of [
+    ["source-panel", "Source"],
+    ["solver-panel", "Palette"],
+    ["summary-panel", "Summary"],
+    ["export-panel", "Download"],
+  ]) {
     const a = document.createElement("a");
     a.href = `#${id}`;
     a.textContent = text;
@@ -135,7 +153,8 @@ function touchHints(): void {
     const skip = document.createElement("p");
     skip.className = "note";
     skip.id = "skip-hint";
-    skip.textContent = "The survival default palette and a full netherite kit are already in place. If you only want the build, use Download at the bottom.";
+    skip.textContent =
+      "The survival default palette and a full netherite kit are already in place. If you only want the build, use Download at the bottom.";
     file.closest(".row")?.after(skip);
   }
   const hint = $("preview-hint");
@@ -151,7 +170,8 @@ export function touchDefaults(): void {
 
 function shareButton(): void {
   const btn = $("export-share");
-  if (!btn || typeof navigator.share !== "function" || typeof navigator.canShare !== "function") return;
+  if (!btn || typeof navigator.share !== "function" || typeof navigator.canShare !== "function")
+    return;
   const probe = new File([new Uint8Array(1)], "probe.zip", { type: "application/zip" });
   if (!navigator.canShare({ files: [probe] })) return;
   btn.hidden = false;

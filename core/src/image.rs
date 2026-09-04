@@ -33,7 +33,9 @@ impl LinImage {
     }
 
     pub fn resize_area(&self, out_w: usize, out_h: usize) -> LinImage {
-        area_resample(self.width, self.height, out_w, out_h, |x, y| self.pixel(x, y))
+        area_resample(self.width, self.height, out_w, out_h, |x, y| {
+            self.pixel(x, y)
+        })
     }
 
     pub fn resize_area_from_srgb(
@@ -153,9 +155,15 @@ mod tests {
         let img = LinImage::from_srgb_rgba(2, 1, &data);
         let out = img.resize_area(1, 1);
         let p = out.pixels[0];
-        assert!((p[0] - 1.0).abs() < 1e-6, "red polluted by transparent black: {p:?}");
+        assert!(
+            (p[0] - 1.0).abs() < 1e-6,
+            "red polluted by transparent black: {p:?}"
+        );
         assert!(p[1].abs() < 1e-6 && p[2].abs() < 1e-6);
-        assert!((p[3] - 0.5).abs() < 1e-6, "alpha should still average: {p:?}");
+        assert!(
+            (p[3] - 0.5).abs() < 1e-6,
+            "alpha should still average: {p:?}"
+        );
     }
 
     #[test]

@@ -20,8 +20,7 @@ export interface PresetEntry {
 export function decodePreset(preset: string): PresetEntry[] {
   const out: PresetEntry[] = [];
   const re = /([0-9a-z]+)([A-Z]+)/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(preset)) !== null) {
+  for (let m = re.exec(preset); m !== null; m = re.exec(preset)) {
     const digits = m[2].replace(/[Q-Z]/g, (c) => String(DIGITS.indexOf(c))).toLowerCase();
     const index = parseInt(digits, 26);
     if (Number.isNaN(index)) continue;

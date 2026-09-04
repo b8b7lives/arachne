@@ -1,21 +1,49 @@
-import type {
-  AuditDto, BuildMode, CandidateBlock, ExportOpts, GenerateOpts, GenerateResult,
-  Adjust, HeightCapOpts, HeightCapResult, MapColor, MarginalErrors, OwnedTool, RankedDto,
-  SharedPalette, SolverConfig, TierMeta,
-  ToolMeta,
-  SupportTotals, ViewModel, WorkerResponse,
-} from "./types";
-import { openView2D } from "./view2d";
-import { unframe, zip, type ZipEntry } from "./zip";
-import { extractPreset, PresetTable, presetToPalette } from "./mapartcraft";
+import { extractPreset, type PresetTable, presetToPalette } from "./mapartcraft";
 import { initMobile, isNarrow, registerWorker, touchDefaults } from "./mobile";
 import {
-  BlockIndex, buildBlockIndex, clearWorkspace, KEY_LOADOUT_PRESETS, KEY_PALETTE_PRESETS,
-  LoadoutPreset, loadPresets, loadWorkspace, newId, PalettePreset, persistenceAvailable,
-  savePresets, saveWorkspace,
+  type BlockIndex,
+  buildBlockIndex,
+  clearWorkspace,
+  KEY_LOADOUT_PRESETS,
+  KEY_PALETTE_PRESETS,
+  type LoadoutPreset,
+  loadPresets,
+  loadWorkspace,
+  newId,
+  type PalettePreset,
+  persistenceAvailable,
+  savePresets,
+  saveWorkspace,
 } from "./store";
+import type {
+  Adjust,
+  AuditDto,
+  BuildMode,
+  CandidateBlock,
+  ExportOpts,
+  GenerateOpts,
+  GenerateResult,
+  HeightCapOpts,
+  HeightCapResult,
+  MapColor,
+  MarginalErrors,
+  OwnedTool,
+  RankedDto,
+  SharedPalette,
+  SolverConfig,
+  SupportTotals,
+  TierMeta,
+  ToolMeta,
+  ViewModel,
+  WorkerResponse,
+} from "./types";
+import { openView2D } from "./view2d";
+import vocab from "./vocab.json";
+import { unframe, type ZipEntry, zip } from "./zip";
 
-const STACK = 64, SHULKER = 1728, DC = 3456;
+const STACK = 64,
+  SHULKER = 1728,
+  DC = 3456;
 
 declare global {
   interface Window {
@@ -27,9 +55,14 @@ declare global {
 
 const worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });
 let nextId = 1;
-const pending = new Map<number, {
-  resolve: (v: unknown) => void; reject: (e: Error) => void; touch: () => void;
-}>();
+const pending = new Map<
+  number,
+  {
+    resolve: (v: unknown) => void;
+    reject: (e: Error) => void;
+    touch: () => void;
+  }
+>();
 
 worker.onmessage = (ev: MessageEvent<WorkerResponse>) => {
   if ("progress" in ev.data) {
@@ -66,13 +99,15 @@ function rpc<T>(msg: Record<string, unknown>, transfer: Transferable[] = []): Pr
       clearTimeout(timer);
       timer = setTimeout(() => {
         if (pending.delete(id)) {
-          reject(new Error(
-            `compute worker went silent on "${String(msg.cmd)}" for 60s`));
+          reject(new Error(`compute worker went silent on "${String(msg.cmd)}" for 60s`));
         }
       }, RPC_TIMEOUT_MS);
     };
     arm();
-    const settle = (fn: (v: never) => void) => (v: never) => { clearTimeout(timer); fn(v); };
+    const settle = (fn: (v: never) => void) => (v: never) => {
+      clearTimeout(timer);
+      fn(v);
+    };
     pending.set(id, {
       resolve: settle(resolve as (v: never) => void) as (v: unknown) => void,
       reject: settle(reject as (v: never) => void) as (e: Error) => void,
@@ -122,23 +157,38 @@ let versions: string[] = [];
 let dismissedStale = "";
 let driftExpanded = false;
 
-const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+const $ = <T extends HTMLElement>(id: string): T => {
+  const el = document.getElementById(id);
+  if (!el) throw new Error(`missing #${id}`);
+  return el as T;
+};
 const num = (id: string, fallback: number) => Number(($(id) as HTMLInputElement).value) || fallback;
 const maps = (id: string) => Math.min(16, Math.max(1, Math.round(num(id, 1))));
 const checked = (id: string) => ($(id) as HTMLInputElement).checked;
-const status = (t: string) => { $("status").textContent = t; };
+const status = (t: string) => {
+  $("status").textContent = t;
+};
 
 function showProgress(fraction: number | null) {
   const bar = $("progress");
   const fill = $("progress-fill");
-  if (fraction === null) { bar.classList.add("idle"); fill.style.width = "0%"; return; }
+  if (fraction === null) {
+    bar.classList.add("idle");
+    fill.style.width = "0%";
+    return;
+  }
   bar.classList.remove("idle");
   fill.style.width = `${Math.round(Math.min(1, Math.max(0, fraction)) * 100)}%`;
 }
 
-const DEFAULT_LOADOUT: OwnedTool[] = (["pickaxe", "axe", "shovel", "hoe"] as const).map(
-  (kind) => ({ kind, tier: "netherite", efficiency: 5, silk: true, unbreaking: 3, mending: true }),
-);
+const DEFAULT_LOADOUT: OwnedTool[] = (["pickaxe", "axe", "shovel", "hoe"] as const).map((kind) => ({
+  kind,
+  tier: "netherite",
+  efficiency: 5,
+  silk: true,
+  unbreaking: 3,
+  mending: true,
+}));
 let loadout: OwnedTool[] = structuredClone(DEFAULT_LOADOUT);
 
 interface Term {
@@ -148,56 +198,7 @@ interface Term {
   long: string;
 }
 
-const VOCAB: Record<string, Term> = {
-  silk_gated: {
-    word: "silk",
-    gloss: "silk-touch-only blocks",
-    short: "needs silk touch to recover the block itself",
-    long: "Without Silk Touch, stone gives cobble and glass gives nothing at all. Off: only blocks that drop themselves with any tool.",
-  },
-  gravity: {
-    word: "gravity",
-    gloss: "blocks that fall",
-    short: "falls without support",
-    long: "Sand and gravel fall when the block beneath them goes missing. Off: kept out of your palette entirely.",
-  },
-  support_mandatory: {
-    word: "support",
-    gloss: "blocks needing something beneath",
-    short: "needs a support block beneath",
-    long: "Vanilla pops carpets and pressure plates off if nothing is underneath, however you place them, so the schematic adds filler. Off: only blocks that stand on their own.",
-  },
-  unstable: {
-    word: "unstable",
-    gloss: "blocks that change over time",
-    short: "changes over time once placed (grass, ice, unwaxed copper, coral)",
-    long: "Grass spreads and unwaxed copper oxidizes, so the map drifts away from what you built. Off: only blocks that stay exactly as placed.",
-  },
-  constrained: {
-    word: "constrained",
-    gloss: "blocks needing a specific base",
-    short: "needs a specific substrate/neighbor to stay placed",
-    long: "Wheat needs farmland and kelp needs water. Plain filler will not hold either. Off: only blocks that sit on anything.",
-  },
-  flammable: {
-    word: "flammable",
-    gloss: "blocks that burn",
-    short: "can burn",
-    long: "Fire spreads through wool and wood. Matters if the build sits near lava or in the Nether. Off: nothing that burns.",
-  },
-  unrecoverable: {
-    word: "can't recover",
-    gloss: "blocks you can't get back",
-    short: "no way to get this block back with your current tools",
-    long: "Your loadout has no way to get these back when you tear the map down, so you would be spending them permanently. Off: hide them.",
-  },
-  class_match_only: {
-    word: "match my loadout",
-    gloss: "only blocks my tools are made for",
-    short: "your loadout has no tool of the class this block wants",
-    long: "For strict palettes such as silk pick only. Hides anything your loadout carries no matching tool for, even where you could still break it slowly. On: a pickaxe-only palette really is pickaxe-only.",
-  },
-};
+const VOCAB: Record<string, Term> = vocab;
 
 const TOGGLE_DEFS: [string, boolean][] = [
   ["gravity", true],
@@ -211,31 +212,58 @@ const TOGGLE_DEFS: [string, boolean][] = [
 ];
 
 function term(key: string): Term {
-  return VOCAB[key] ?? VOCAB[key.replace(/s$/, "")] ?? {
-    word: key, short: key, gloss: key, long: key,
-  };
+  return (
+    VOCAB[key] ??
+    VOCAB[key.replace(/s$/, "")] ?? {
+      word: key,
+      short: key,
+      gloss: key,
+      long: key,
+    }
+  );
 }
 
-const toggles: Record<string, boolean> = Object.fromEntries(
-  TOGGLE_DEFS.map(([k, v]) => [k, v]),
-);
+const toggles: Record<string, boolean> = Object.fromEntries(TOGGLE_DEFS.map(([k, v]) => [k, v]));
 
 const FIELDS: [string, "value" | "checked"][] = [
-  ["maps-w", "value"], ["maps-h", "value"], ["fit", "value"], ["honor-alpha", "checked"],
+  ["maps-w", "value"],
+  ["maps-h", "value"],
+  ["fit", "value"],
+  ["honor-alpha", "checked"],
   ["alpha-threshold", "value"],
-  ["crop-zoom", "value"], ["crop-x", "value"], ["crop-y", "value"],
-  ["dither", "value"], ["dbs-refine", "checked"], ["game-version", "value"],
-  ["height-mode", "value"], ["cliff-cap", "value"], ["max-height", "value"],
-  ["support-mode", "value"], ["support-block", "value"], ["grid-overlay", "checked"],
-  ["build-mode", "value"], ["first-map-id", "value"],
-  ["mapdat-on", "checked"], ["sheet-on", "checked"],
+  ["crop-zoom", "value"],
+  ["crop-x", "value"],
+  ["crop-y", "value"],
+  ["dither", "value"],
+  ["dbs-refine", "checked"],
+  ["game-version", "value"],
+  ["height-mode", "value"],
+  ["cliff-cap", "value"],
+  ["max-height", "value"],
+  ["support-mode", "value"],
+  ["support-block", "value"],
+  ["grid-overlay", "checked"],
+  ["build-mode", "value"],
+  ["first-map-id", "value"],
+  ["schem-format", "value"],
+  ["mapdat-on", "checked"],
+  ["sheet-on", "checked"],
   ["export-name", "value"],
-  ["adjust-on", "checked"], ["bg-mode", "value"], ["bg-color", "value"],
-  ["adj-brightness", "value"], ["adj-contrast", "value"], ["adj-saturation", "value"],
-  ["adj-temperature", "value"], ["adj-tint", "value"],
-  ["palette-view", "value"], ["palette-sort", "value"], ["materials-basis", "value"],
+  ["adjust-on", "checked"],
+  ["bg-mode", "value"],
+  ["bg-color", "value"],
+  ["adj-brightness", "value"],
+  ["adj-contrast", "value"],
+  ["adj-saturation", "value"],
+  ["adj-temperature", "value"],
+  ["adj-tint", "value"],
+  ["palette-view", "value"],
+  ["palette-sort", "value"],
+  ["materials-basis", "value"],
   ["tile-size", "value"],
-  ["haste", "value"], ["flying", "checked"], ["no-cooldown", "checked"],
+  ["haste", "value"],
+  ["flying", "checked"],
+  ["no-cooldown", "checked"],
 ];
 const LOADOUT_FIELDS = ["haste", "flying", "no-cooldown"];
 let factoryFields: Record<string, string | boolean> = {};
@@ -264,8 +292,11 @@ function applyFieldValues(vals: Record<string, string | boolean>) {
   if (!("build-mode" in vals) && ("split-export" in vals || "borrow-edge" in vals)) {
     const off = (v: unknown) => v === false || v === "false";
     const on = (v: unknown) => v === true || v === "true";
-    vals["build-mode"] = off(vals["split-export"]) ? "one_piece"
-      : on(vals["borrow-edge"]) ? "continued" : "panels";
+    vals["build-mode"] = off(vals["split-export"])
+      ? "one_piece"
+      : on(vals["borrow-edge"])
+        ? "continued"
+        : "panels";
   }
   for (const [id, prop] of FIELDS) {
     if (!(id in vals)) continue;
@@ -321,7 +352,8 @@ function persist() {
 const GRAY_SAT = 0.15;
 
 function saturation(c: MapColor): number {
-  const mx = Math.max(...c.rgb), mn = Math.min(...c.rgb);
+  const mx = Math.max(...c.rgb),
+    mn = Math.min(...c.rgb);
   return mx === 0 ? 0 : (mx - mn) / mx;
 }
 
@@ -356,26 +388,66 @@ function fluidOnly(cid: number): boolean {
 }
 
 const B8B7_PICKS: Record<string, string> = {
-    "1": "slime_block", "2": "sandstone", "3": "mushroom_stem",
-    "4": "tnt", "5": "packed_ice", "6": "iron_block",
-    "7": "oak_leaves[persistent=true]", "8": "snow_block", "9": "clay",
-    "10": "dirt", "11": "stone", "13": "oak_planks",
-    "14": "quartz_block", "15": "red_sandstone", "16": "magenta_concrete",
-    "17": "light_blue_concrete", "18": "sponge", "19": "lime_concrete",
-    "20": "cherry_leaves[persistent=true]", "21": "gray_concrete", "22": "light_gray_concrete",
-    "23": "cyan_concrete", "24": "amethyst_block", "25": "blue_concrete",
-    "26": "soul_sand", "27": "dried_kelp_block", "28": "red_concrete",
-    "29": "sculk", "30": "gold_block", "31": "prismarine_bricks",
-    "32": "lapis_block", "33": "emerald_block", "34": "podzol",
-    "35": "netherrack", "36": "calcite", "37": "orange_terracotta",
-    "38": "magenta_terracotta", "39": "light_blue_terracotta", "40": "yellow_terracotta",
-    "41": "lime_terracotta", "42": "pink_terracotta", "43": "gray_terracotta",
-    "44": "light_gray_terracotta", "45": "mud", "46": "purple_terracotta",
-    "47": "blue_terracotta", "48": "brown_terracotta", "49": "green_terracotta",
-    "50": "red_terracotta", "51": "black_terracotta", "52": "crimson_nylium",
-    "53": "crimson_planks", "54": "crimson_hyphae", "55": "warped_nylium",
-    "56": "warped_planks", "57": "warped_hyphae", "58": "warped_wart_block",
-    "59": "deepslate", "60": "raw_iron_block", "61": "verdant_froglight",
+  "1": "slime_block",
+  "2": "sandstone",
+  "3": "mushroom_stem",
+  "4": "tnt",
+  "5": "packed_ice",
+  "6": "iron_block",
+  "7": "oak_leaves[persistent=true]",
+  "8": "snow_block",
+  "9": "clay",
+  "10": "dirt",
+  "11": "stone",
+  "13": "oak_planks",
+  "14": "quartz_block",
+  "15": "red_sandstone",
+  "16": "magenta_concrete",
+  "17": "light_blue_concrete",
+  "18": "sponge",
+  "19": "lime_concrete",
+  "20": "cherry_leaves[persistent=true]",
+  "21": "gray_concrete",
+  "22": "light_gray_concrete",
+  "23": "cyan_concrete",
+  "24": "amethyst_block",
+  "25": "blue_concrete",
+  "26": "soul_sand",
+  "27": "dried_kelp_block",
+  "28": "red_concrete",
+  "29": "sculk",
+  "30": "gold_block",
+  "31": "prismarine_bricks",
+  "32": "lapis_block",
+  "33": "emerald_block",
+  "34": "podzol",
+  "35": "netherrack",
+  "36": "calcite",
+  "37": "orange_terracotta",
+  "38": "magenta_terracotta",
+  "39": "light_blue_terracotta",
+  "40": "yellow_terracotta",
+  "41": "lime_terracotta",
+  "42": "pink_terracotta",
+  "43": "gray_terracotta",
+  "44": "light_gray_terracotta",
+  "45": "mud",
+  "46": "purple_terracotta",
+  "47": "blue_terracotta",
+  "48": "brown_terracotta",
+  "49": "green_terracotta",
+  "50": "red_terracotta",
+  "51": "black_terracotta",
+  "52": "crimson_nylium",
+  "53": "crimson_planks",
+  "54": "crimson_hyphae",
+  "55": "warped_nylium",
+  "56": "warped_planks",
+  "57": "warped_hyphae",
+  "58": "warped_wart_block",
+  "59": "deepslate",
+  "60": "raw_iron_block",
+  "61": "verdant_froglight",
 };
 
 function pinnedPreset(id: string, name: string, picks: Record<string, string>): PalettePreset {
@@ -386,31 +458,52 @@ function pinnedPreset(id: string, name: string, picks: Record<string, string>): 
     enabled.push(Number(cid));
     kept[cid] = key;
   }
-  return { id, name, builtin: true, enabled, picks: kept, deliberate: enabled, toggles: blockFilterDefaults() };
+  return {
+    id,
+    name,
+    builtin: true,
+    enabled,
+    picks: kept,
+    deliberate: enabled,
+    toggles: blockFilterDefaults(),
+  };
 }
 
 function builtinPalettes(): PalettePreset[] {
   return [
     {
-      id: "builtin:full", name: "every color", builtin: true,
-      enabled: colors.map((c) => c.id), picks: {}, toggles: blockFilterDefaults(),
-    },
-    {
-      id: "builtin:survival", name: "survival default", builtin: true,
-      enabled: colors.filter((c) => !fluidOnly(c.id)).map((c) => c.id), picks: {},
+      id: "builtin:full",
+      name: "every color",
+      builtin: true,
+      enabled: colors.map((c) => c.id),
+      picks: {},
       toggles: blockFilterDefaults(),
     },
     {
-      id: "builtin:gray", name: "grayscale", builtin: true,
-      enabled: colors.filter((c) => saturation(c) < GRAY_SAT).map((c) => c.id), picks: {},
+      id: "builtin:survival",
+      name: "survival default",
+      builtin: true,
+      enabled: colors.filter((c) => !fluidOnly(c.id)).map((c) => c.id),
+      picks: {},
+      toggles: blockFilterDefaults(),
+    },
+    {
+      id: "builtin:gray",
+      name: "grayscale",
+      builtin: true,
+      enabled: colors.filter((c) => saturation(c) < GRAY_SAT).map((c) => c.id),
+      picks: {},
       toggles: blockFilterDefaults(),
     },
     pinnedPreset("builtin:b8b7", "b8b7's choice", B8B7_PICKS),
     familyPreset("builtin:carpet", "carpets only", (b) => b.endsWith("_carpet")),
     familyPreset(
-      "builtin:concrete", "concrete + terracotta",
-      (b) => b.endsWith("_concrete") || b === "terracotta"
-        || (b.endsWith("_terracotta") && !b.endsWith("_glazed_terracotta")),
+      "builtin:concrete",
+      "concrete + terracotta",
+      (b) =>
+        b.endsWith("_concrete") ||
+        b === "terracotta" ||
+        (b.endsWith("_terracotta") && !b.endsWith("_glazed_terracotta")),
     ),
   ];
 }
@@ -419,25 +512,44 @@ function builtinLoadouts(): LoadoutPreset[] {
   const env = { haste: "0", flying: false };
   return [
     {
-      id: "builtin:kit", name: "full silk kit", builtin: true,
+      id: "builtin:kit",
+      name: "full silk kit",
+      builtin: true,
       tools: structuredClone(DEFAULT_LOADOUT),
-      toggles: pickToggles(LOADOUT_FILTER_KEYS, defaultToggles()), fields: { ...env },
+      toggles: pickToggles(LOADOUT_FILTER_KEYS, defaultToggles()),
+      fields: { ...env },
     },
     {
-      id: "builtin:silkpick", name: "silk pickaxe only", builtin: true,
-      tools: [{
-        kind: "pickaxe", tier: "netherite", efficiency: 5, silk: true,
-        unbreaking: 3, mending: true,
-      }],
+      id: "builtin:silkpick",
+      name: "silk pickaxe only",
+      builtin: true,
+      tools: [
+        {
+          kind: "pickaxe",
+          tier: "netherite",
+          efficiency: 5,
+          silk: true,
+          unbreaking: 3,
+          mending: true,
+        },
+      ],
       toggles: { ...pickToggles(LOADOUT_FILTER_KEYS, defaultToggles()), class_match_only: true },
       fields: { ...env },
     },
     {
-      id: "builtin:pick", name: "pickaxe only", builtin: true,
-      tools: [{
-        kind: "pickaxe", tier: "netherite", efficiency: 5, silk: false,
-        unbreaking: 3, mending: true,
-      }],
+      id: "builtin:pick",
+      name: "pickaxe only",
+      builtin: true,
+      tools: [
+        {
+          kind: "pickaxe",
+          tier: "netherite",
+          efficiency: 5,
+          silk: false,
+          unbreaking: 3,
+          mending: true,
+        },
+      ],
       toggles: { ...pickToggles(LOADOUT_FILTER_KEYS, defaultToggles()), class_match_only: true },
       fields: { ...env },
     },
@@ -462,8 +574,14 @@ function paletteSig(p: Pick<PalettePreset, "enabled" | "picks" | "toggles">): st
 
 function loadoutSig(p: Pick<LoadoutPreset, "tools" | "toggles" | "fields">): string {
   const tools = p.tools.map((t) => [
-    t.kind, t.tier, t.efficiency, t.silk, t.nick ?? "",
-    t.unbreaking ?? 0, Boolean(t.mending), Boolean(t.unbreakable),
+    t.kind,
+    t.tier,
+    t.efficiency,
+    t.silk,
+    t.nick ?? "",
+    t.unbreaking ?? 0,
+    Boolean(t.mending),
+    Boolean(t.unbreakable),
   ]);
   return JSON.stringify([
     tools,
@@ -515,9 +633,12 @@ function syncPresetSelects() {
     ps.value = match?.id ?? "";
     const state = document.getElementById("palette-state");
     if (state) {
-      state.textContent = enabled.size === 0
-        ? "No palette selected. Try a preset or create your own."
-        : match?.builtin ? `This is the ${match.name} preset. Try another or make your own.` : "";
+      state.textContent =
+        enabled.size === 0
+          ? "No palette selected. Try a preset or create your own."
+          : match?.builtin
+            ? `This is the ${match.name} preset. Try another or make your own.`
+            : "";
       state.hidden = !state.textContent;
     }
     const meta = document.getElementById("palette-meta");
@@ -568,7 +689,10 @@ function wirePresetBar<T extends { id: string; name: string; builtin?: boolean }
   apply: (p: T) => void,
 ) {
   const sel = $(`${kind}-preset`) as HTMLSelectElement;
-  const refresh = () => { fillPresetSelect(sel, list()); syncPresetSelects(); };
+  const refresh = () => {
+    fillPresetSelect(sel, list());
+    syncPresetSelects();
+  };
   const users = () => loadPresets<T>(key);
   const selected = () => list().find((p) => p.id === sel.value);
 
@@ -594,18 +718,30 @@ function wirePresetBar<T extends { id: string; name: string; builtin?: boolean }
   };
   $(`${kind}-preset-rename`).onclick = () => {
     const p = selected();
-    if (!p || p.builtin) { status("pick one of your own presets to rename"); return; }
+    if (!p || p.builtin) {
+      status("pick one of your own presets to rename");
+      return;
+    }
     const name = prompt("New name:", p.name)?.trim();
     if (!name) return;
-    savePresets(key, users().map((q) => (q.id === p.id ? { ...q, name } : q)));
+    savePresets(
+      key,
+      users().map((q) => (q.id === p.id ? { ...q, name } : q)),
+    );
     refresh();
     sel.value = p.id;
   };
   $(`${kind}-preset-delete`).onclick = () => {
     const p = selected();
-    if (!p || p.builtin) { status("built-in presets can't be deleted"); return; }
+    if (!p || p.builtin) {
+      status("built-in presets can't be deleted");
+      return;
+    }
     if (!confirm(`Delete "${p.name}"?`)) return;
-    savePresets(key, users().filter((q) => q.id !== p.id));
+    savePresets(
+      key,
+      users().filter((q) => q.id !== p.id),
+    );
     refresh();
   };
   refresh();
@@ -621,7 +757,9 @@ interface DriftRow {
 }
 
 function pickDrift(): { stale: DriftRow[]; hidden: number[]; unusable: number[] } {
-  const stale: DriftRow[] = [], hidden: number[] = [], unusable: number[] = [];
+  const stale: DriftRow[] = [],
+    hidden: number[] = [],
+    unusable: number[] = [];
   for (const cid of enabled) {
     if (!(rankedByColor.get(cid)?.length ?? 0)) unusable.push(cid);
   }
@@ -634,9 +772,7 @@ function pickDrift(): { stale: DriftRow[]; hidden: number[]; unusable: number[] 
     else if (deliberate.has(cid)) continue;
     else if (cur.block_index !== ranked[0].block_index && pickCost(cur) > pickCost(ranked[0])) {
       const top = ranked[0];
-      const delta = cur.recovery_ticks === null
-        ? Infinity
-        : pickCost(cur) - pickCost(top);
+      const delta = cur.recovery_ticks === null ? Infinity : pickCost(cur) - pickCost(top);
       stale.push({ cid, cur, top, delta });
     }
   }
@@ -647,8 +783,11 @@ function pickDrift(): { stale: DriftRow[]; hidden: number[]; unusable: number[] 
   };
 }
 
-let currentDrift: { stale: DriftRow[]; hidden: number[]; unusable: number[] } =
-  { stale: [], hidden: [], unusable: [] };
+let currentDrift: { stale: DriftRow[]; hidden: number[]; unusable: number[] } = {
+  stale: [],
+  hidden: [],
+  unusable: [],
+};
 let driftByColor = new Map<number, DriftRow>();
 
 function ticksText(ticks: number): string {
@@ -682,8 +821,9 @@ function driftTable(stale: DriftRow[]): HTMLElement {
     colgroup.append(col);
   }
   table.append(colgroup);
-  table.innerHTML += "<thead><tr><th>color</th><th>your pick</th><th>cheapest now</th>"
-    + "<th class=\"num\">saves each</th><th class=\"num\">over this picture</th><th></th></tr></thead>";
+  table.innerHTML +=
+    "<thead><tr><th>color</th><th>your pick</th><th>cheapest now</th>" +
+    '<th class="num">saves each</th><th class="num">over this picture</th><th></th></tr></thead>';
   const body = document.createElement("tbody");
   for (const d of stale) {
     const c = colors.find((x) => x.id === d.cid);
@@ -739,9 +879,10 @@ function syncVersionNote() {
   const v = gameVersion();
   const shown = colors.filter((c) => colorExists(c.id)).length;
   const newest = versions[versions.length - 1];
-  $("version-note").textContent = v === newest
-    ? `${shown} map colors, everything this data knows`
-    : `${shown} of ${colors.length} map colors, and only blocks ${v} shipped with`;
+  $("version-note").textContent =
+    v === newest
+      ? `${shown} map colors, everything this data knows`
+      : `${shown} of ${colors.length} map colors, and only blocks ${v} shipped with`;
 }
 
 function renderPickDrift() {
@@ -752,7 +893,8 @@ function renderPickDrift() {
   if (unusable.length) {
     const p = document.createElement("p");
     p.className = "note warn-orange";
-    p.textContent = `${unusable.length} color${unusable.length > 1 ? "s" : ""} in your palette ` +
+    p.textContent =
+      `${unusable.length} color${unusable.length > 1 ? "s" : ""} in your palette ` +
       `${unusable.length > 1 ? "have" : "has"} no block your filters allow ` +
       `(${colorNames(unusable)}). ${unusable.length > 1 ? "They place" : "It places"} no blocks, ` +
       "the same as turning them off. Your pick comes back when you re-enable a filter.";
@@ -761,7 +903,8 @@ function renderPickDrift() {
   if (hidden.length) {
     const p = document.createElement("p");
     p.className = "note";
-    p.textContent = `${hidden.length} of your picks ${hidden.length > 1 ? "are" : "is"} hidden by ` +
+    p.textContent =
+      `${hidden.length} of your picks ${hidden.length > 1 ? "are" : "is"} hidden by ` +
       `your current filters (${colorNames(hidden)}). The cheapest available block is shown ` +
       "instead. Your pick comes back when you re-enable the filter.";
     div.append(p);
@@ -770,9 +913,13 @@ function renderPickDrift() {
   const bar = document.createElement("div");
   bar.className = "drift-banner";
   const msg = document.createElement("span");
-  const worth = stale.reduce((n, d) => n + (Number.isFinite(d.delta)
-    ? d.delta * (genResult?.materials[String(d.cid)] ?? 0) : 0), 0);
-  msg.textContent = `${stale.length} of your picks ${stale.length > 1 ? "aren't" : "isn't"} ` +
+  const worth = stale.reduce(
+    (n, d) =>
+      n + (Number.isFinite(d.delta) ? d.delta * (genResult?.materials[String(d.cid)] ?? 0) : 0),
+    0,
+  );
+  msg.textContent =
+    `${stale.length} of your picks ${stale.length > 1 ? "aren't" : "isn't"} ` +
     `the cheapest with this loadout` +
     (worth ? `, costing ${fmtDuration(worth)} of extra breaking on this picture.` : ".");
   const compare = document.createElement("button");
@@ -784,7 +931,10 @@ function renderPickDrift() {
   adopt.textContent = `use the cheapest for ${stale.length > 1 ? "these" : "this"}`;
   adopt.title = "drop those overrides and follow the cheapest block again";
   adopt.onclick = () => {
-    for (const d of stale) { selectionOverride.delete(d.cid); deliberate.delete(d.cid); }
+    for (const d of stale) {
+      selectionOverride.delete(d.cid);
+      deliberate.delete(d.cid);
+    }
     dismissedStale = "";
     renderPalette();
     if (genResult) renderSummary();
@@ -793,7 +943,11 @@ function renderPickDrift() {
   keep.className = "mini";
   keep.textContent = "keep mine";
   keep.title = "your palette stays as it is; the notice comes back if it changes again";
-  keep.onclick = () => { dismissedStale = sig; renderPickDrift(); persist(); };
+  keep.onclick = () => {
+    dismissedStale = sig;
+    renderPickDrift();
+    persist();
+  };
   bar.append(msg, compare, adopt, keep);
   div.append(bar);
 
@@ -871,8 +1025,10 @@ function snapshot(): SettingsFile {
 function exportSettings() {
   const doc = snapshot();
   const name = exportName();
-  download(`${name}-settings.json`,
-    new TextEncoder().encode(JSON.stringify(doc, null, 1)).buffer as ArrayBuffer);
+  download(
+    `${name}-settings.json`,
+    new TextEncoder().encode(JSON.stringify(doc, null, 1)).buffer as ArrayBuffer,
+  );
   ioResult(`Saved ${name}-settings.json with your palette, picks, loadout and settings.`);
 }
 
@@ -898,8 +1054,10 @@ function applySettingsFile(doc: SettingsFile) {
   persist();
   void refreshSolver();
   scheduleGenerate();
-  const stale = doc.data_version && doc.data_version !== dataVersion
-    ? ` (saved on data version ${doc.data_version}, this is ${dataVersion})` : "";
+  const stale =
+    doc.data_version && doc.data_version !== dataVersion
+      ? ` (saved on data version ${doc.data_version}, this is ${dataVersion})`
+      : "";
   ioResult(`Imported settings: ${enabled.size} colors${stale}.`);
 }
 
@@ -924,8 +1082,11 @@ function sharePalette(quiet = false): SharedPalette | null {
   const ids = usableIds();
   if (!ids.length) {
     if (!quiet) {
-      ioResult("no color in your palette has a block your filters allow, so there is "
-        + "nothing to share yet", true);
+      ioResult(
+        "no color in your palette has a block your filters allow, so there is " +
+          "nothing to share yet",
+        true,
+      );
     }
     return null;
   }
@@ -956,8 +1117,10 @@ async function copyShareLink() {
     } catch {
       copied = false;
     }
-    ioResult(`${palette.enabled.length} colors in ${url.length} characters, `
-      + (copied ? "copied to your clipboard." : "selected above; copy it yourself."));
+    ioResult(
+      `${palette.enabled.length} colors in ${url.length} characters, ` +
+        (copied ? "copied to your clipboard." : "selected above; copy it yourself."),
+    );
   } catch (e) {
     ioResult(String(e).replace(/^Error:\s*/, ""), true);
   }
@@ -975,10 +1138,15 @@ async function applyShareCode(code: string, announce: boolean) {
   renderPalette();
   persist();
   await refreshSolver();
-  if (genResult) { renderSummary(); scheduleGenerate(); }
+  if (genResult) {
+    renderSummary();
+    scheduleGenerate();
+  }
   if (announce) {
-    ioResult(`Loaded ${shared.enabled.length} colors from a shared palette`
-      + (switched ? `, made for ${switched}, so it switched to that.` : "."));
+    ioResult(
+      `Loaded ${shared.enabled.length} colors from a shared palette` +
+        (switched ? `, made for ${switched}, so it switched to that.` : "."),
+    );
   }
 }
 
@@ -986,8 +1154,9 @@ async function consumeShareHash() {
   const incoming = SHARE_LINK.exec(location.hash);
   if (!incoming) return;
   history.replaceState(null, "", location.pathname + location.search);
-  await applyShareCode(incoming[1], true)
-    .catch((e) => ioResult(String(e).replace(/^Error:\s*/, ""), true));
+  await applyShareCode(incoming[1], true).catch((e) =>
+    ioResult(String(e).replace(/^Error:\s*/, ""), true),
+  );
 }
 
 async function importText(text: string, sourceName: string) {
@@ -1013,8 +1182,7 @@ async function importText(text: string, sourceName: string) {
     try {
       doc = JSON.parse(trimmed) as SettingsFile;
     } catch {
-      throw new Error(
-        `${sourceName} does not read as a settings file; it may have been cut short`);
+      throw new Error(`${sourceName} does not read as a settings file; it may have been cut short`);
     }
     if (!doc || typeof doc !== "object" || !doc.enabled) {
       throw new Error("that JSON is not an Arachne settings file");
@@ -1026,26 +1194,35 @@ async function importText(text: string, sourceName: string) {
   const preset = extractPreset(trimmed);
   if (!preset) throw new Error(`${sourceName}: no mapartcraft preset or settings found`);
   const table = await loadPresetTable();
-  const imported = presetToPalette(preset, table,
-    (key) => blockIndex?.indexOf(key) !== undefined);
+  const imported = presetToPalette(preset, table, (key) => blockIndex?.indexOf(key) !== undefined);
   if (!imported.enabled.length) throw new Error("that preset did not name any usable colors");
   applyPalettePreset({
-    id: "", name: "imported", ...imported, deliberate: imported.enabled,
+    id: "",
+    name: "imported",
+    ...imported,
+    deliberate: imported.enabled,
   });
   const skipped = imported.skipped
-    ? ` · ${imported.skipped} entr${imported.skipped > 1 ? "ies" : "y"} skipped (not in 26.2)` : "";
+    ? ` · ${imported.skipped} entr${imported.skipped > 1 ? "ies" : "y"} skipped (not in 26.2)`
+    : "";
   ioResult(`Imported ${imported.enabled.length} colors from a mapartcraft palette${skipped}.`);
   offerUndo();
 }
 
 const TOOL_KINDS: OwnedTool["kind"][] = ["pickaxe", "axe", "shovel", "hoe", "shears"];
-const TOOL_TIERS: OwnedTool["tier"][] =
-  ["wood", "stone", "copper", "iron", "diamond", "netherite", "gold"];
+const TOOL_TIERS: OwnedTool["tier"][] = [
+  "wood",
+  "stone",
+  "copper",
+  "iron",
+  "diamond",
+  "netherite",
+  "gold",
+];
 
 function sanitizeTools(raw: unknown): OwnedTool[] {
   if (!Array.isArray(raw)) return [];
-  const int = (v: unknown, hi: number) =>
-    Math.min(hi, Math.max(0, Math.round(Number(v)) || 0));
+  const int = (v: unknown, hi: number) => Math.min(hi, Math.max(0, Math.round(Number(v)) || 0));
   return raw.slice(0, 16).map((t) => {
     const o = (t ?? {}) as Partial<OwnedTool>;
     const tool: OwnedTool = {
@@ -1090,7 +1267,11 @@ function autoToolName(t: OwnedTool): string {
 }
 
 const HTML_ESCAPES: Record<string, string> = {
-  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
 };
 
 function esc(s: string): string {
@@ -1099,7 +1280,8 @@ function esc(s: string): string {
 
 function toolDetail(t: OwnedTool): string {
   const extras = [t.silk ? "silk touch" : "", t.efficiency ? `efficiency ${t.efficiency}` : ""]
-    .filter(Boolean).join(", ");
+    .filter(Boolean)
+    .join(", ");
   const full = extras ? `${autoToolName(t)} (${extras})` : autoToolName(t);
   return t.nick ? `${t.nick} (${full})` : full;
 }
@@ -1150,7 +1332,9 @@ function enchantLevel(
   name.className = "ench-name";
   name.textContent = label;
   const box = document.createElement("input");
-  box.type = "number"; box.min = "0"; box.max = "255";
+  box.type = "number";
+  box.min = "0";
+  box.max = "255";
   box.className = cls;
   box.value = String(value);
   box.disabled = disabled;
@@ -1159,14 +1343,24 @@ function enchantLevel(
     const flag = document.createElement("span");
     flag.className = "ench-beyond";
     flag.textContent = "beyond vanilla";
-    flag.title = `vanilla ${label} stops at ${vanillaCap}; mods and servers go higher. `
-      + "Priced the same either way";
-    const syncFlag = () => { flag.hidden = (Number(box.value) || 0) <= vanillaCap; };
-    box.onchange = () => { clampNumberField(box); syncFlag(); on(box); };
+    flag.title =
+      `vanilla ${label} stops at ${vanillaCap}; mods and servers go higher. ` +
+      "Priced the same either way";
+    const syncFlag = () => {
+      flag.hidden = (Number(box.value) || 0) <= vanillaCap;
+    };
+    box.onchange = () => {
+      clampNumberField(box);
+      syncFlag();
+      on(box);
+    };
     syncFlag();
     wrap.append(flag);
   } else {
-    box.onchange = () => { clampNumberField(box); on(box); };
+    box.onchange = () => {
+      clampNumberField(box);
+      on(box);
+    };
   }
   if (disabled) wrap.classList.add("muted");
   return wrap;
@@ -1183,7 +1377,10 @@ function renderLoadout() {
       s.className = cls;
       for (const o of opts) s.add(new Option(o, o));
       s.value = value;
-      s.onchange = () => { on(s.value); refreshSolver(); };
+      s.onchange = () => {
+        on(s.value);
+        refreshSolver();
+      };
       return s;
     };
     const meta = toolMeta[t.kind] ?? { efficiency: true, silk_touch: true, tiered: true };
@@ -1191,14 +1388,21 @@ function renderLoadout() {
     const head = document.createElement("div");
     head.className = "tool-head";
     if (meta.tiered) {
-      head.append(sel("tool-tier",
-        ["wood", "stone", "copper", "iron", "diamond", "netherite", "gold"],
-        t.tier, (v) => (t.tier = v as OwnedTool["tier"])));
+      head.append(
+        sel(
+          "tool-tier",
+          ["wood", "stone", "copper", "iron", "diamond", "netherite", "gold"],
+          t.tier,
+          (v) => (t.tier = v as OwnedTool["tier"]),
+        ),
+      );
     }
-    head.append(sel("tool-kind", ["pickaxe", "axe", "shovel", "hoe", "shears"], t.kind, (v) => {
-      t.kind = v as OwnedTool["kind"];
-      renderLoadout();
-    }));
+    head.append(
+      sel("tool-kind", ["pickaxe", "axe", "shovel", "hoe", "shears"], t.kind, (v) => {
+        t.kind = v as OwnedTool["kind"];
+        renderLoadout();
+      }),
+    );
     const nick = document.createElement("input");
     nick.type = "text";
     nick.className = "nick";
@@ -1213,15 +1417,21 @@ function renderLoadout() {
     };
     const named = document.createElement("label");
     named.className = "tool-name";
-    named.title = "optional: your own name for this tool, so the teardown checklist "
-      + "says which one you mean";
+    named.title =
+      "optional: your own name for this tool, so the teardown checklist " +
+      "says which one you mean";
     named.append("nickname ", nick);
     head.append(named);
     const rm = document.createElement("button");
-    rm.textContent = "×"; rm.className = "mini tool-remove";
+    rm.textContent = "×";
+    rm.className = "mini tool-remove";
     rm.title = `remove this ${t.kind}`;
     rm.setAttribute("aria-label", `remove this ${t.kind}`);
-    rm.onclick = () => { loadout.splice(i, 1); renderLoadout(); refreshSolver(); };
+    rm.onclick = () => {
+      loadout.splice(i, 1);
+      renderLoadout();
+      refreshSolver();
+    };
     head.append(rm);
     item.append(head);
 
@@ -1231,48 +1441,88 @@ function renderLoadout() {
 
     const speed = document.createElement("div");
     speed.className = "ench-row";
-    speed.append(enchantLevel("tool-eff", "Efficiency",
-      "Efficiency enchantment level: how fast you break blocks (Blossom items go past V)",
-      t.efficiency, false, (el) => {
-        t.efficiency = Number(el.value) || 0;
-        refreshSolver();
-      }, 5));
+    speed.append(
+      enchantLevel(
+        "tool-eff",
+        "Efficiency",
+        "Efficiency enchantment level: how fast you break blocks (Blossom items go past V)",
+        t.efficiency,
+        false,
+        (el) => {
+          t.efficiency = Number(el.value) || 0;
+          refreshSolver();
+        },
+        5,
+      ),
+    );
     if (meta.silk_touch) {
-      speed.append(enchantBox("tool-silk", "Silk Touch",
-        "Silk Touch makes a block drop itself: stone stays stone, glass survives",
-        t.silk, false, (v) => { t.silk = v; refreshSolver(); }));
+      speed.append(
+        enchantBox(
+          "tool-silk",
+          "Silk Touch",
+          "Silk Touch makes a block drop itself: stone stays stone, glass survives",
+          t.silk,
+          false,
+          (v) => {
+            t.silk = v;
+            refreshSolver();
+          },
+        ),
+      );
     }
     ench.append(speed);
 
     const wear = document.createElement("div");
     wear.className = "ench-row";
-    wear.append(enchantLevel("tool-unbreaking", "Unbreaking",
-      "Unbreaking level: durability only. It does not make you mine faster. "
-      + "Each block has a 1-in-(level+1) chance of costing durability",
-      t.unbreaking ?? 0, never, (el) => {
-        t.unbreaking = Number(el.value) || 0;
-        if (genResult) renderSummary();
-        syncPresetSelects();
-        persist();
-      }, 3));
-    wear.append(enchantBox("tool-mending", "Mending",
-      "Mending repairs the tool from XP you pick up (2 durability per point), "
-      + "so one tool lasts the whole teardown if you keep XP handy",
-      Boolean(t.mending), never, (v) => {
-        t.mending = v;
-        if (genResult) renderSummary();
-        syncPresetSelects();
-        persist();
-      }));
-    wear.append(enchantBox("tool-unbreakable", "Unbreakable",
-      "not an enchantment: some servers hand out tools that never wear out at all",
-      never, false, (v) => {
-        t.unbreakable = v;
-        renderLoadout();
-        if (genResult) renderSummary();
-        syncPresetSelects();
-        persist();
-      }));
+    wear.append(
+      enchantLevel(
+        "tool-unbreaking",
+        "Unbreaking",
+        "Unbreaking level: durability only. It does not make you mine faster. " +
+          "Each block has a 1-in-(level+1) chance of costing durability",
+        t.unbreaking ?? 0,
+        never,
+        (el) => {
+          t.unbreaking = Number(el.value) || 0;
+          if (genResult) renderSummary();
+          syncPresetSelects();
+          persist();
+        },
+        3,
+      ),
+    );
+    wear.append(
+      enchantBox(
+        "tool-mending",
+        "Mending",
+        "Mending repairs the tool from XP you pick up (2 durability per point), " +
+          "so one tool lasts the whole teardown if you keep XP handy",
+        Boolean(t.mending),
+        never,
+        (v) => {
+          t.mending = v;
+          if (genResult) renderSummary();
+          syncPresetSelects();
+          persist();
+        },
+      ),
+    );
+    wear.append(
+      enchantBox(
+        "tool-unbreakable",
+        "Unbreakable",
+        "not an enchantment: some servers hand out tools that never wear out at all",
+        never,
+        false,
+        (v) => {
+          t.unbreakable = v;
+          renderLoadout();
+          if (genResult) renderSummary();
+          syncPresetSelects();
+          persist();
+        },
+      ),
+    );
     ench.append(wear);
     if (!meta.silk_touch && t.silk) t.silk = false;
     item.append(ench);
@@ -1281,13 +1531,12 @@ function renderLoadout() {
 }
 
 const LOADOUT_FILTER_KEYS = ["unrecoverable", "class_match_only"];
-const BLOCK_FILTER_KEYS = TOGGLE_DEFS
-  .map(([k]) => k)
-  .filter((k) => !LOADOUT_FILTER_KEYS.includes(k));
+const BLOCK_FILTER_KEYS = TOGGLE_DEFS.map(([k]) => k).filter(
+  (k) => !LOADOUT_FILTER_KEYS.includes(k),
+);
 
 const LOADOUT_FILTER_HINTS: Record<string, string> = {
-  unrecoverable:
-    "On: unrecoverable blocks stay offered and are priced as spent. Off: hide them.",
+  unrecoverable: "On: unrecoverable blocks stay offered and are priced as spent. Off: hide them.",
   class_match_only:
     "Off: every block stays offered. On: a pickaxe-only palette really is pickaxe-only.",
 };
@@ -1298,7 +1547,10 @@ const LOADOUT_FILTER_LABELS: Record<string, string> = {
 };
 
 function helpLines(text: string): string[] {
-  return text.split(/\s+(?=(?:On|Off)[:,])/).map((s) => s.trim()).filter(Boolean);
+  return text
+    .split(/\s+(?=(?:On|Off)[:,])/)
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 function toggleRow(key: string, shortHint?: string, plainLabel?: string): HTMLElement {
@@ -1310,7 +1562,11 @@ function toggleRow(key: string, shortHint?: string, plainLabel?: string): HTMLEl
   cb.type = "checkbox";
   cb.id = `toggle-${key}`;
   cb.checked = toggles[key];
-  cb.onchange = () => { toggles[key] = cb.checked; syncFilterChip(); refreshSolver(); };
+  cb.onchange = () => {
+    toggles[key] = cb.checked;
+    syncFilterChip();
+    refreshSolver();
+  };
   label.append(cb, ` ${plainLabel ?? `${word}: ${gloss}`}`);
   label.title = helpLines(help).join("\n");
   row.append(label);
@@ -1357,12 +1613,18 @@ function setToggle(key: string, value: boolean) {
 }
 
 const FLAG_KEYS: (keyof RankedDto)[] = [
-  "silk_gated", "gravity", "support_mandatory", "unstable", "constrained",
+  "silk_gated",
+  "gravity",
+  "support_mandatory",
+  "unstable",
+  "constrained",
   "flammable",
 ];
-const FLAG_DEFS: [keyof RankedDto, string, string][] = FLAG_KEYS.map(
-  (k) => [k, term(k).word, term(k).short],
-);
+const FLAG_DEFS: [keyof RankedDto, string, string][] = FLAG_KEYS.map((k) => [
+  k,
+  term(k).word,
+  term(k).short,
+]);
 
 const BREAK_PAUSE_TICKS = 5;
 const FLY_SWEEP_TICKS = 2;
@@ -1386,12 +1648,13 @@ function costTitle(r: RankedDto): string {
   if (r.recovery_ticks === null) {
     return "no way to get this block back with your current tools";
   }
-  const tool = r.recovery_tool === null || r.recovery_tool < 0
-    ? "bare hands"
-    : (() => {
-      const t = loadout[r.recovery_tool];
-      return t ? toolDetail(t) : "tool";
-    })();
+  const tool =
+    r.recovery_tool === null || r.recovery_tool < 0
+      ? "bare hands"
+      : (() => {
+          const t = loadout[r.recovery_tool];
+          return t ? toolDetail(t) : "tool";
+        })();
   const how = r.instamine
     ? "breaks instantly (one tick)"
     : `${r.recovery_ticks} ticks (${(r.recovery_ticks / 20).toFixed(2)}s)`;
@@ -1404,8 +1667,12 @@ function ticksLabel(r: RankedDto): string {
 
 function tileTitle(r: RankedDto): string {
   const b = blocks[r.block_index];
-  const props = Object.entries(b?.properties ?? {}).map(([k, v]) => `${k}=${v}`).join(",");
-  const flags = FLAG_DEFS.filter(([k]) => r[k]).map(([, label]) => label).join(", ");
+  const props = Object.entries(b?.properties ?? {})
+    .map(([k, v]) => `${k}=${v}`)
+    .join(",");
+  const flags = FLAG_DEFS.filter(([k]) => r[k])
+    .map(([, label]) => label)
+    .join(", ");
   return `${r.display_name}${props ? ` [${props}]` : ""}\nteardown: ${ticksLabel(r)}${flags ? `\n${flags}` : ""}`;
 }
 
@@ -1449,8 +1716,10 @@ const INFO_FLAGS = new Set(["26.2", "flammable"]);
 
 function flagsInline(r: RankedDto): string {
   return FLAG_DEFS.filter(([k]) => r[k])
-    .map(([, label, title]) =>
-      `<span class="flag${INFO_FLAGS.has(label) ? " info" : ""}" title="${title}">${label}</span>`)
+    .map(
+      ([, label, title]) =>
+        `<span class="flag${INFO_FLAGS.has(label) ? " info" : ""}" title="${title}">${label}</span>`,
+    )
     .join("");
 }
 
@@ -1462,19 +1731,29 @@ function sortedColors(): MapColor[] {
   const delta = (c: MapColor) => marginalDeltas?.get(c.id) ?? -1;
   const hue = (c: MapColor) => {
     const [r, g, b] = c.rgb.map((v) => v / 255);
-    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+    const mx = Math.max(r, g, b),
+      mn = Math.min(r, g, b),
+      d = mx - mn;
     if (d < 0.02) return -1;
     const h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
     return (h * 60 + 360) % 360;
   };
   switch (mode) {
-    case "name": return arr.sort((a, b) => a.name.localeCompare(b.name));
-    case "spectrum": return arr.sort((a, b) =>
-      hue(a) - hue(b) || (a.rgb[0] + a.rgb[1] + a.rgb[2]) - (b.rgb[0] + b.rgb[1] + b.rgb[2]));
-    case "cost": return arr.sort((a, b) => cost(a) - cost(b) || a.id - b.id);
-    case "count": return arr.sort((a, b) => count(b) - count(a) || a.id - b.id);
-    case "impact": return arr.sort((a, b) => delta(b) - delta(a) || a.id - b.id);
-    default: return arr;
+    case "name":
+      return arr.sort((a, b) => a.name.localeCompare(b.name));
+    case "spectrum":
+      return arr.sort(
+        (a, b) =>
+          hue(a) - hue(b) || a.rgb[0] + a.rgb[1] + a.rgb[2] - (b.rgb[0] + b.rgb[1] + b.rgb[2]),
+      );
+    case "cost":
+      return arr.sort((a, b) => cost(a) - cost(b) || a.id - b.id);
+    case "count":
+      return arr.sort((a, b) => count(b) - count(a) || a.id - b.id);
+    case "impact":
+      return arr.sort((a, b) => delta(b) - delta(a) || a.id - b.id);
+    default:
+      return arr;
   }
 }
 
@@ -1485,10 +1764,11 @@ function driftChip(cid: number): HTMLElement | null {
   const chip = document.createElement("span");
   chip.className = "chip-drift";
   chip.textContent = d.delta === Infinity ? "not recoverable" : `+${each}`;
-  chip.title = `your pick: ${d.cur.display_name} (${costText(d.cur)})\n`
-    + `cheapest now: ${d.top.display_name} (${costText(d.top)})`
-    + (total ? `\n${total} extra over this picture` : "")
-    + "\nclick to switch to the cheapest";
+  chip.title =
+    `your pick: ${d.cur.display_name} (${costText(d.cur)})\n` +
+    `cheapest now: ${d.top.display_name} (${costText(d.top)})` +
+    (total ? `\n${total} extra over this picture` : "") +
+    "\nclick to switch to the cheapest";
   chip.onclick = (e) => {
     e.stopPropagation();
     selectionOverride.delete(cid);
@@ -1522,7 +1802,7 @@ function deltaText(cid: number): string {
 function noneTile(c: MapColor, small: boolean): HTMLElement {
   const cls = small ? "tile small" : "tile";
   const none = document.createElement("button");
-  none.className = `${cls} none-tile` + (enabled.has(c.id) ? "" : " selected");
+  none.className = `${cls} none-tile${enabled.has(c.id) ? "" : " selected"}`;
   none.textContent = "×";
   none.title = `drop ${c.name} from the palette`;
   none.setAttribute("aria-label", `use no block for ${c.name}`);
@@ -1546,7 +1826,7 @@ function candidateStrip(
   strip.className = "tile-strip";
   const cls = small ? "tile small" : "tile";
   const none = document.createElement("button");
-  none.className = `${cls} none-tile` + (enabled.has(c.id) ? "" : " selected");
+  none.className = `${cls} none-tile${enabled.has(c.id) ? "" : " selected"}`;
   none.textContent = "×";
   none.title = `drop ${c.name} from the palette`;
   none.setAttribute("aria-label", `use no block for ${c.name}`);
@@ -1560,7 +1840,9 @@ function candidateStrip(
   if (withNone) strip.append(none);
   for (const r of rankedByColor.get(c.id) ?? []) {
     const t = document.createElement("button");
-    t.className = cls + (cur && cur.block_index === r.block_index ? " selected" : "") +
+    t.className =
+      cls +
+      (cur && cur.block_index === r.block_index ? " selected" : "") +
       (r.recovery_ticks === null ? " norecovery" : "");
     t.style.backgroundPosition = tilePos(r.block_index);
     t.title = tileTitle(r);
@@ -1585,7 +1867,7 @@ function candidateStrip(
 
 function swatchEl(c: MapColor, small = false): HTMLElement {
   const sw = document.createElement("span");
-  sw.className = "swatchbox" + (small ? " small" : "");
+  sw.className = `swatchbox${small ? " small" : ""}`;
   sw.style.background = swatchGradient(c);
   sw.title = `${c.name}: map color ${c.id}, vanilla ${c.constant}\nswatch shows the staircase tones`;
   return sw;
@@ -1595,21 +1877,25 @@ function renderFillerNotice() {
   const el = $("filler-notice");
   const none = ($("support-mode") as HTMLSelectElement).value === "none";
   const needy = [...enabled].filter((cid) => chosen(cid)?.support_mandatory);
-  if (!none || !needy.length) { el.hidden = true; el.replaceChildren(); return; }
+  if (!none || !needy.length) {
+    el.hidden = true;
+    el.replaceChildren();
+    return;
+  }
 
   const blocks = genResult
     ? needy.reduce((n, cid) => n + (genResult!.materials[String(cid)] ?? 0), 0)
     : 0;
   const stepped = ($("height-mode") as HTMLSelectElement).value === "stepped";
-  const subject = blocks
-    ? `${countText(blocks)} blocks`
-    : `${needy.length} of your colors`;
+  const subject = blocks ? `${countText(blocks)} blocks` : `${needy.length} of your colors`;
   if (el.hidden) ($("filler-section") as HTMLDetailsElement).open = true;
   el.hidden = false;
   el.className = stepped ? "note warn-orange" : "note";
-  el.replaceChildren(stepped
-    ? `${subject} need something underneath and a staircase leaves air there, so they pop off. `
-    : `${subject} need something underneath and rest directly on your canvas. `);
+  el.replaceChildren(
+    stepped
+      ? `${subject} need something underneath and a staircase leaves air there, so they pop off. `
+      : `${subject} need something underneath and rest directly on your canvas. `,
+  );
 
   if (!stepped) return;
   const addFiller = document.createElement("button");
@@ -1650,9 +1936,10 @@ function renderPalette() {
   if (view === "list") renderPaletteTable(div);
   else renderPaletteTiles(div);
   const off = colors.length - enabled.size;
-  $("color-meta").textContent = off === 0
-    ? `all ${colors.length} colors in play`
-    : `${enabled.size} of ${colors.length} colors, ${off} turned off`;
+  $("color-meta").textContent =
+    off === 0
+      ? `all ${colors.length} colors in play`
+      : `${enabled.size} of ${colors.length} colors, ${off} turned off`;
   renderPickDrift();
   renderFillerNotice();
   syncPresetSelects();
@@ -1670,18 +1957,45 @@ interface Column {
 }
 
 const COLUMNS: Column[] = [
-  { key: "color", label: "Color", width: "15rem", sortable: true,
-    help: "the map color. A picture can only use these 61" },
-  { key: "block", label: "Block", width: "17rem",
-    help: "what gets placed for this color. Pick another from the dropdown to change it" },
-  { key: "cost", label: "Teardown", width: "9.5rem", sortable: true,
-    help: "time to break one and get it back, with your tools" },
-  { key: "count", label: "Blocks", width: "6rem", num: true, sortable: true, imageOnly: true,
-    help: "how many this image needs" },
-  { key: "impact", label: "Δ error", width: "6rem", num: true, sortable: true, imageOnly: true,
-    help: "how much worse the picture gets if you drop this color" },
-  { key: "flags", label: "Notes", width: "auto",
-    help: "friction worth knowing before you build" },
+  {
+    key: "color",
+    label: "Color",
+    width: "15rem",
+    sortable: true,
+    help: "the map color. A picture can only use these 61",
+  },
+  {
+    key: "block",
+    label: "Block",
+    width: "17rem",
+    help: "what gets placed for this color. Pick another from the dropdown to change it",
+  },
+  {
+    key: "cost",
+    label: "Teardown",
+    width: "9.5rem",
+    sortable: true,
+    help: "time to break one and get it back, with your tools",
+  },
+  {
+    key: "count",
+    label: "Blocks",
+    width: "6rem",
+    num: true,
+    sortable: true,
+    imageOnly: true,
+    help: "how many this image needs",
+  },
+  {
+    key: "impact",
+    label: "Δ error",
+    width: "6rem",
+    num: true,
+    sortable: true,
+    imageOnly: true,
+    help: "how much worse the picture gets if you drop this color",
+  },
+  { key: "flags", label: "Notes", width: "auto", help: "friction worth knowing before you build" },
 ];
 
 function activeColumns(): Column[] {
@@ -1736,9 +2050,10 @@ function renderPaletteTable(root: HTMLElement) {
     const isOn = enabled.has(c.id);
     const cur = isOn ? chosen(c.id) : undefined;
     const tr = document.createElement("tr");
-    tr.className = `prow ${parity++ % 2 ? "alt" : ""}${isOn ? "" : " off"}`
-      + (driftByColor.has(c.id) ? " drifted" : "")
-      + (isOn && !usable(c.id) ? " unusable" : "");
+    tr.className =
+      `prow ${parity++ % 2 ? "alt" : ""}${isOn ? "" : " off"}` +
+      (driftByColor.has(c.id) ? " drifted" : "") +
+      (isOn && !usable(c.id) ? " unusable" : "");
 
     for (const col of cols) {
       const td = document.createElement("td");
@@ -1760,7 +2075,9 @@ function renderPaletteTable(root: HTMLElement) {
           sel.add(new Option("(not used)", ""));
           const cheapest = ranked[0];
           const narrow = isNarrow();
-          for (const r of [...ranked].sort((a, b) => a.display_name.localeCompare(b.display_name))) {
+          for (const r of [...ranked].sort((a, b) =>
+            a.display_name.localeCompare(b.display_name),
+          )) {
             const mark = cheapest && r.block_index === cheapest.block_index ? " · cheapest" : "";
             const text = narrow ? r.display_name : `${r.display_name} · ${costText(r)}${mark}`;
             sel.add(new Option(text, String(r.block_index)));
@@ -1785,14 +2102,16 @@ function renderPaletteTable(root: HTMLElement) {
             if (wasOff) scheduleGenerate();
             else renderSummary();
           };
-          td.append(cell(
-            cur ? tileEl(cur.block_index, "tile small") : document.createElement("span"),
-            sel,
-          ));
+          td.append(
+            cell(cur ? tileEl(cur.block_index, "tile small") : document.createElement("span"), sel),
+          );
           break;
         }
         case "cost": {
-          if (!cur) { td.textContent = "none"; break; }
+          if (!cur) {
+            td.textContent = "none";
+            break;
+          }
           const drift = driftChip(c.id);
           const time = document.createElement("span");
           time.className = "timecell";
@@ -1812,7 +2131,8 @@ function renderPaletteTable(root: HTMLElement) {
           td.title = "extra color error if this color is removed";
           break;
         case "flags":
-          td.innerHTML = cur ? (flagsInline(cur) || '<span class="dim">none</span>')
+          td.innerHTML = cur
+            ? flagsInline(cur) || '<span class="dim">none</span>'
             : '<span class="dim">none</span>';
           break;
       }
@@ -1831,7 +2151,7 @@ function renderPaletteTiles(root: HTMLElement) {
     const cur = isOn ? chosen(c.id) : undefined;
     const dead = isOn && !usable(c.id);
     const row = document.createElement("div");
-    row.className = "palette-row" + (isOn ? "" : " off") + (dead ? " unusable" : "");
+    row.className = `palette-row${isOn ? "" : " off"}${dead ? " unusable" : ""}`;
     if (dead) row.title = `${c.name} has no block your filters allow, so it places no blocks`;
 
     row.append(swatchEl(c));
@@ -1875,8 +2195,8 @@ function renderLoadoutMeta(s: AuditDto["summary"]) {
   const parts = [tools, `${s.instamine_colors} of ${colors.length} instant`];
   if (s.no_recovery_colors) parts.push(`${s.no_recovery_colors} unrecoverable`);
   el.textContent = parts.join(" · ");
-  el.title = "colors that break instantly, and colors whose cheapest block your tools "
-    + "cannot recover";
+  el.title =
+    "colors that break instantly, and colors whose cheapest block your tools " + "cannot recover";
   const empty = document.getElementById("loadout-empty");
   if (!empty) return;
   empty.textContent = s.empty_colors
@@ -1887,8 +2207,11 @@ function renderLoadoutMeta(s: AuditDto["summary"]) {
 
 async function refreshSolver() {
   if (!colors.length) return;
-  const audit = await rpc<AuditDto>(
-    { cmd: "audit", loadout: { tools: toolsForWasm() }, config: solverConfig() });
+  const audit = await rpc<AuditDto>({
+    cmd: "audit",
+    loadout: { tools: toolsForWasm() },
+    config: solverConfig(),
+  });
   rankedByColor = new Map(audit.colors.map((c) => [c.color_id, c.ranked]));
   renderLoadoutMeta(audit.summary);
   renderPalette();
@@ -1993,8 +2316,7 @@ function paletteFillerEntries(): { b: CandidateBlock; index: number }[] {
       out.set(b.block_id, { b, index: r.block_index });
     }
   }
-  return [...out.values()]
-    .sort((a, z) => a.b.display_name.localeCompare(z.b.display_name));
+  return [...out.values()].sort((a, z) => a.b.display_name.localeCompare(z.b.display_name));
 }
 
 let fillerHot = -1;
@@ -2038,7 +2360,10 @@ function renderFillerDrop() {
       row.id = `filler-opt-${optIdx}`;
       optIdx += 1;
       row.append(tileEl(e.index), document.createTextNode(e.b.display_name));
-      row.onmousedown = (ev) => { ev.preventDefault(); commitFiller(e.b.block_id); };
+      row.onmousedown = (ev) => {
+        ev.preventDefault();
+        commitFiller(e.b.block_id);
+      };
       drop.append(row);
     }
   };
@@ -2081,17 +2406,27 @@ function syncFillerUi() {
   const tile = $("filler-tile") as HTMLElement;
   tile.style.backgroundPosition = e ? tilePos(e.index) : "-9999px -9999px";
   const mode = ($("support-mode") as HTMLSelectElement).value;
-  const late = e && versionIndex(e.b.since) > versionIndex(gameVersion())
-    ? ` (needs ${e.b.since})` : "";
+  const late =
+    e && versionIndex(e.b.since) > versionIndex(gameVersion()) ? ` (needs ${e.b.since})` : "";
   $("filler-meta").textContent =
     `${FILLER_MODE_SHORT[mode] ?? mode} · ${e ? e.b.display_name : id}${late}`;
 }
 
-interface ChangelogBuild { id: string; date: string; line: string; notes: string[] }
+interface ChangelogBuild {
+  id: string;
+  date: string;
+  line: string;
+  notes: string[];
+}
 
 interface Partner {
-  id: string; name: string; url: string; logo: string;
-  line: string; sub: string | null; caption: string | null;
+  id: string;
+  name: string;
+  url: string;
+  logo: string;
+  line: string;
+  sub: string | null;
+  caption: string | null;
 }
 
 async function initCommunities() {
@@ -2101,39 +2436,43 @@ async function initCommunities() {
     const data = (await res.json()) as { partners: Partner[] };
     if (!data.partners?.length) return;
     const cards = $("communities-cards");
-    cards.replaceChildren(...data.partners.map((c) => {
-      const a = document.createElement("a");
-      a.className = "community-card";
-      a.href = c.url;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      const img = document.createElement("img");
-      img.className = "community-logo";
-      img.src = `${import.meta.env.BASE_URL}${c.logo}`;
-      img.alt = c.name;
-      const text = document.createElement("div");
-      text.className = "community-text";
-      const line = document.createElement("p");
-      line.className = "community-line";
-      line.textContent = c.line;
-      text.append(line);
-      if (c.caption) {
-        const cap = document.createElement("p");
-        cap.className = "community-caption";
-        cap.textContent = c.caption;
-        text.append(cap);
-      }
-      if (c.sub) {
-        const sub = document.createElement("p");
-        sub.className = "community-sub";
-        sub.textContent = c.sub;
-        text.append(sub);
-      }
-      a.append(img, text);
-      return a;
-    }));
+    cards.replaceChildren(
+      ...data.partners.map((c) => {
+        const a = document.createElement("a");
+        a.className = "community-card";
+        a.href = c.url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        const img = document.createElement("img");
+        img.className = "community-logo";
+        img.src = `${import.meta.env.BASE_URL}${c.logo}`;
+        img.alt = c.name;
+        const text = document.createElement("div");
+        text.className = "community-text";
+        const line = document.createElement("p");
+        line.className = "community-line";
+        line.textContent = c.line;
+        text.append(line);
+        if (c.caption) {
+          const cap = document.createElement("p");
+          cap.className = "community-caption";
+          cap.textContent = c.caption;
+          text.append(cap);
+        }
+        if (c.sub) {
+          const sub = document.createElement("p");
+          sub.className = "community-sub";
+          sub.textContent = c.sub;
+          text.append(sub);
+        }
+        a.append(img, text);
+        return a;
+      }),
+    );
     $("communities").hidden = false;
-  } catch { void 0; }
+  } catch {
+    void 0;
+  }
 }
 
 async function initWhatsNew() {
@@ -2144,24 +2483,27 @@ async function initWhatsNew() {
     if (!log.builds?.length) return;
     const panel = $("whatsnew-panel");
     const renderPanel = () => {
-      panel.replaceChildren(...log.builds.slice(0, 3).map((b) => {
-        const d = document.createElement("div");
-        const h = document.createElement("p");
-        h.className = "whatsnew-head";
-        h.textContent = `${b.date}: ${b.line}`;
-        const ul = document.createElement("ul");
-        for (const n of Array.isArray(b.notes) ? b.notes : []) {
-          const li = document.createElement("li");
-          li.textContent = n;
-          ul.append(li);
-        }
-        d.append(h, ul);
-        return d;
-      }));
+      panel.replaceChildren(
+        ...log.builds.slice(0, 3).map((b) => {
+          const d = document.createElement("div");
+          const h = document.createElement("p");
+          h.className = "whatsnew-head";
+          h.textContent = `${b.date}: ${b.line}`;
+          const ul = document.createElement("ul");
+          for (const n of Array.isArray(b.notes) ? b.notes : []) {
+            const li = document.createElement("li");
+            li.textContent = n;
+            ul.append(li);
+          }
+          d.append(h, ul);
+          return d;
+        }),
+      );
       const tip = document.createElement("p");
       tip.className = "whatsnew-tip";
-      tip.textContent = "Arachne acting strangely after an update? A hard refresh"
-        + " clears the old version: Ctrl+Shift+R, or Cmd+Shift+R on a Mac.";
+      tip.textContent =
+        "Arachne acting strangely after an update? A hard refresh" +
+        " clears the old version: Ctrl+Shift+R, or Cmd+Shift+R on a Mac.";
       panel.append(tip);
     };
     const link = $("whatsnew-link") as HTMLButtonElement;
@@ -2170,7 +2512,9 @@ async function initWhatsNew() {
       panel.hidden = !panel.hidden;
       link.setAttribute("aria-expanded", String(!panel.hidden));
     };
-  } catch { void 0; }
+  } catch {
+    void 0;
+  }
 }
 
 function syncMaterialsScope() {
@@ -2206,12 +2550,22 @@ function renderSummary() {
   const div = $("summary");
   if (!genResult) return;
   const unbuildable = unbuildableColors();
-  let teardown = 0, instamined = 0, silkBurden = 0, placed = 0, unrecoverable = 0;
+  let teardown = 0,
+    instamined = 0,
+    silkBurden = 0,
+    placed = 0,
+    unrecoverable = 0;
   const toolsUsed = new Set<number>();
   const wear = new Map<number, number>();
   const toolTicks = new Map<number, number>();
-  const lines: { name: string; color: string; shown: number; r: RankedDto | null;
-    totalTicks: number | null; title?: string }[] = [];
+  const lines: {
+    name: string;
+    color: string;
+    shown: number;
+    r: RankedDto | null;
+    totalTicks: number | null;
+    title?: string;
+  }[] = [];
   syncMaterialsScope();
   refreshSupportTotals();
   const { counts, scope } = materialsBasis();
@@ -2242,40 +2596,60 @@ function renderSummary() {
     }
     const b = blocks[r.block_index];
     const c = colors.find((x) => x.id === cid);
-    lines.push({ name: b?.display_name ?? String(cid), color: c?.name ?? "",
-      shown, r, totalTicks });
+    lines.push({
+      name: b?.display_name ?? String(cid),
+      color: c?.name ?? "",
+      shown,
+      r,
+      totalTicks,
+    });
   }
   if (supportTotals) {
     const basisSel = $("materials-basis") as HTMLSelectElement | null;
-    const fillerCount = scope && basisSel && basisSel.value !== "build"
-      ? (supportTotals.panels[Number(basisSel.value)] ?? 0)
-      : supportTotals.whole;
+    const fillerCount =
+      scope && basisSel && basisSel.value !== "build"
+        ? (supportTotals.panels[Number(basisSel.value)] ?? 0)
+        : supportTotals.whole;
     if (fillerCount) {
       const id = ($("support-block") as HTMLInputElement).value.trim() || "netherrack";
       const perPanel = scope && basisSel && basisSel.value !== "build";
-      const title = perPanel && buildMode() === "panels"
-        ? "includes the reference row this panel stands on when built alone"
-        : undefined;
-      lines.push({ name: fillerLabel(id), color: "", shown: fillerCount,
-        r: null, totalTicks: null, title });
+      const title =
+        perPanel && buildMode() === "panels"
+          ? "includes the reference row this panel stands on when built alone"
+          : undefined;
+      lines.push({
+        name: fillerLabel(id),
+        color: "",
+        shown: fillerCount,
+        r: null,
+        totalTicks: null,
+        title,
+      });
     }
   }
-  lines.sort((a, b) =>
-    (b.totalTicks ?? -1) - (a.totalTicks ?? -1) || b.shown - a.shown
-    || a.name.localeCompare(b.name));
-  const rows = lines.map((l) =>
-    `<tr><td${l.title ? ` title="${l.title}"` : ""}>${l.name}</td>` +
-    `<td class="dim">${l.color}</td>` +
-    `<td class="num" title="${countTitle(l.shown)}">${countText(l.shown)}</td>` +
-    `<td class="num">${(l.shown / SHULKER).toFixed(2)}</td>` +
-    `<td class="num">${l.r ? costText(l.r) : ""}</td>` +
-    `<td class="num">${l.totalTicks === null ? "" : ticksText(l.totalTicks)}</td></tr>`);
-  const checklist = [...toolsUsed].sort((a, b) => a - b)
-    .map((i) => {
-      const t = loadout[i];
-      return t ? esc(`${toolDetail(t)}${wearText(t, wear.get(i) ?? 0)}`) : `tool ${i}`;
-    })
-    .join(" · ") || "bare hands";
+  lines.sort(
+    (a, b) =>
+      (b.totalTicks ?? -1) - (a.totalTicks ?? -1) ||
+      b.shown - a.shown ||
+      a.name.localeCompare(b.name),
+  );
+  const rows = lines.map(
+    (l) =>
+      `<tr><td${l.title ? ` title="${l.title}"` : ""}>${l.name}</td>` +
+      `<td class="dim">${l.color}</td>` +
+      `<td class="num" title="${countTitle(l.shown)}">${countText(l.shown)}</td>` +
+      `<td class="num">${(l.shown / SHULKER).toFixed(2)}</td>` +
+      `<td class="num">${l.r ? costText(l.r) : ""}</td>` +
+      `<td class="num">${l.totalTicks === null ? "" : ticksText(l.totalTicks)}</td></tr>`,
+  );
+  const checklist =
+    [...toolsUsed]
+      .sort((a, b) => a - b)
+      .map((i) => {
+        const t = loadout[i];
+        return t ? esc(`${toolDetail(t)}${wearText(t, wear.get(i) ?? 0)}`) : `tool ${i}`;
+      })
+      .join(" · ") || "bare hands";
   const maps = scope
     ? `1 map of ${(genResult.width / 128) * (genResult.height / 128)}`
     : `${genResult.width / 128} × ${genResult.height / 128} maps`;
@@ -2291,7 +2665,10 @@ function renderSummary() {
     <dl>
       <dt>${scope ? "panel size" : "build size"}</dt><dd>${maps}, ${fmtBulk(placed)}</dd>
       <dt>time to take down</dt><dd>${fmtDuration(teardown)} of steady breaking, with the tools below${
-        unrecoverable ? ` · <span class="flag">${countText(unrecoverable)} blocks can't be recovered</span>` : ""}</dd>
+        unrecoverable
+          ? ` · <span class="flag">${countText(unrecoverable)} blocks can't be recovered</span>`
+          : ""
+      }</dd>
       <dt>breaks instantly</dt><dd>${placed ? Math.round((instamined / placed) * 100) : 0}% of blocks</dd>
       <dt>cost of silk touch</dt><dd>${fmtDuration(silkBurden)} extra vs. just smashing everything</dd>
       <dt>tools you need</dt><dd>${checklist}</dd>
@@ -2308,9 +2685,11 @@ function renderSummary() {
       <button id="copy-materials" class="mini"
         title="the same text the build sheet in the download carries">copy as text</button>
     </div>
-    <p class="note">${checked("no-cooldown")
-      ? "The takedown total counts no pause between breaks, since you run without the mining cooldown,"
-      : "The takedown total counts the game's five-tick pause after every non-instant break,"}
+    <p class="note">${
+      checked("no-cooldown")
+        ? "The takedown total counts no pause between breaks, since you run without the mining cooldown,"
+        : "The takedown total counts the game's five-tick pause after every non-instant break,"
+    }
       and prices instant blocks at your travel pace, about ${checked("flying") ? "ten" : "five"}
       a second ${checked("flying") ? "flying along" : "walking"}; the per-block column above
       shows the pure break time.</p>
@@ -2329,15 +2708,16 @@ function renderSummary() {
 }
 
 function nerdDrawer(toolTicks: Map<number, number>, placed: number): string {
-  const byTool = [...toolTicks.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .map(([idx, ticks]) => {
-      const t = loadout[idx];
-      const label = idx === -1 ? "bare hands"
-        : t ? esc(t.nick ?? autoToolName(t)) : `tool ${idx}`;
-      return `${label} ${ticksText(ticks)}`;
-    })
-    .join(" · ") || "nothing to break";
+  const byTool =
+    [...toolTicks.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([idx, ticks]) => {
+        const t = loadout[idx];
+        const label =
+          idx === -1 ? "bare hands" : t ? esc(t.nick ?? autoToolName(t)) : `tool ${idx}`;
+        return `${label} ${ticksText(ticks)}`;
+      })
+      .join(" · ") || "nothing to break";
   let drops = "every color is carrying its weight";
   if (marginalDeltas && marginalTotal >= 0) {
     const ranked = [...marginalDeltas.entries()]
@@ -2346,9 +2726,11 @@ function nerdDrawer(toolTicks: Map<number, number>, placed: number): string {
       .slice(0, 6)
       .map(([cid, d]) => {
         const name = colors.find((c) => c.id === cid)?.name ?? `color ${cid}`;
-        const cost = !Number.isFinite(d) ? "irreplaceable"
-          : marginalTotal > 0 ? `+${Math.round((d / marginalTotal) * 100)}%`
-          : `+${d.toFixed(2)}`;
+        const cost = !Number.isFinite(d)
+          ? "irreplaceable"
+          : marginalTotal > 0
+            ? `+${Math.round((d / marginalTotal) * 100)}%`
+            : `+${d.toFixed(2)}`;
         return `${name} ${cost}`;
       });
     if (ranked.length) drops = ranked.join(" · ");
@@ -2359,12 +2741,16 @@ function nerdDrawer(toolTicks: Map<number, number>, placed: number): string {
     checked("dbs-refine") ? "refined for display" : "",
     `Minecraft ${($("game-version") as HTMLSelectElement).value}`,
     ($("height-mode") as HTMLSelectElement).value === "flat"
-      ? "flat" : `staircased, max step ${capRaw || "any"}`,
-  ].filter(Boolean).join(" · ");
-  const err = marginalTotal > 0 && placed
-    ? `${marginalTotal.toFixed(1)} summed, ${(marginalTotal / placed).toFixed(4)} per
+      ? "flat"
+      : `staircased, max step ${capRaw || "any"}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const err =
+    marginalTotal > 0 && placed
+      ? `${marginalTotal.toFixed(1)} summed, ${(marginalTotal / placed).toFixed(4)} per
        block (squared OKLab distance, whole picture)`
-    : "none; every pixel is an exact palette color";
+      : "none; every pixel is an exact palette color";
   return `
     <details class="nerd">
       <summary>more numbers</summary>
@@ -2385,7 +2771,8 @@ function renderAuditSummary(a: AuditDto) {
   const s = a.summary;
   const tc = Object.entries(s.tool_class)
     .filter(([k]) => k !== "none")
-    .map(([k, v]) => `${v}× ${k}`).join(" · ");
+    .map(([k, v]) => `${v}× ${k}`)
+    .join(" · ");
   $("summary").innerHTML = `
     <p class="note">No image loaded. This is your standing palette: the best
       block for every color with the tools you own. Load an image to cost out a
@@ -2394,7 +2781,8 @@ function renderAuditSummary(a: AuditDto) {
       <dt>tools it would need</dt><dd>${tc || "none"}</dd>
       <dt>breaks instantly</dt><dd>${s.instamine_colors} of 61 colors</dd>
       <dt>needs silk touch</dt><dd>${nColors(s.silk_gated_colors)}${
-        s.silk_penalty_ticks ? `, ${fmtDuration(s.silk_penalty_ticks)} slower per full set` : ""}</dd>
+        s.silk_penalty_ticks ? `, ${fmtDuration(s.silk_penalty_ticks)} slower per full set` : ""
+      }</dd>
       <dt>changes over time</dt><dd>${nColors(s.unstable_colors)} (grass, ice, unwaxed copper…)</dd>
       <dt>can't be recovered</dt><dd>${nColors(s.no_recovery_colors)}</dd>
     </dl>`;
@@ -2425,7 +2813,10 @@ function applyPreviewScale() {
     avail = $("preview-slot").clientWidth || railWidth;
   } else if (zooming) {
     const mainEl = panel.parentElement as HTMLElement;
-    rightRoom = Math.max(0, Math.round(window.innerWidth - mainEl.getBoundingClientRect().right - 16));
+    rightRoom = Math.max(
+      0,
+      Math.round(window.innerWidth - mainEl.getBoundingClientRect().right - 16),
+    );
     const room = mainEl.clientWidth - 48 + rightRoom;
     const aspect = elCanvas.width / Math.max(1, elCanvas.height);
     const byHeight = Math.round((window.innerHeight - 160) * aspect);
@@ -2453,7 +2844,9 @@ function applyPreviewScale() {
 }
 
 function renderGridNames(cell: number) {
-  elGrid.querySelectorAll(".grid-name").forEach((n) => n.remove());
+  elGrid.querySelectorAll(".grid-name").forEach((n) => {
+    n.remove();
+  });
   if (!genResult || !checked("grid-overlay") || cell < 56) return;
   const tw = genResult.width / 128;
   const th = genResult.height / 128;
@@ -2541,7 +2934,9 @@ let pipWindow: Window | null = null;
 function copyStyles(target: Document) {
   for (const sheet of Array.from(document.styleSheets)) {
     try {
-      const css = Array.from(sheet.cssRules).map((r) => r.cssText).join("\n");
+      const css = Array.from(sheet.cssRules)
+        .map((r) => r.cssText)
+        .join("\n");
       const style = target.createElement("style");
       style.textContent = css;
       target.head.append(style);
@@ -2599,7 +2994,10 @@ function reclaimPreview() {
 function updatePreviewMeta() {
   const meta = $("preview-meta");
   $("preview-empty").hidden = Boolean(source);
-  if (!source) { meta.textContent = ""; return; }
+  if (!source) {
+    meta.textContent = "";
+    return;
+  }
   const { width: w, height: h } = source.bmp;
   const aImg = w / h;
   const aOut = num("maps-w", 1) / num("maps-h", 1);
@@ -2615,11 +3013,12 @@ function updatePreviewMeta() {
   }
   if (mismatch >= 0.01) {
     const mode = fitMode();
-    meta.textContent += mode === "stretch"
-      ? ` (stretches ~${(mismatch * 100).toFixed(0)}%)`
-      : mode === "cover"
-        ? ` (crops ~${(mismatch * 100).toFixed(0)}%)`
-        : ` (pads ~${(mismatch * 100).toFixed(0)}%)`;
+    meta.textContent +=
+      mode === "stretch"
+        ? ` (stretches ~${(mismatch * 100).toFixed(0)}%)`
+        : mode === "cover"
+          ? ` (crops ~${(mismatch * 100).toFixed(0)}%)`
+          : ` (pads ~${(mismatch * 100).toFixed(0)}%)`;
     meta.className = mode === "stretch" ? "warn-red" : "warn-orange";
   }
   $("ratio-hint").textContent = "";
@@ -2632,7 +3031,8 @@ function fitMode(): FitMode {
 }
 
 function manualWindow(bmp: ImageBitmap): { sx: number; sy: number; sw: number; sh: number } {
-  const mapsW = maps("maps-w"), mapsH = maps("maps-h");
+  const mapsW = maps("maps-w"),
+    mapsH = maps("maps-h");
   const zoom = Math.min(5, Math.max(1, num("crop-zoom", 1)));
   const px = Math.min(100, Math.max(0, num("crop-x", 50)));
   const py = Math.min(100, Math.max(0, num("crop-y", 50)));
@@ -2655,8 +3055,11 @@ function manualWindow(bmp: ImageBitmap): { sx: number; sy: number; sw: number; s
 }
 
 const ADJUST_DEFS: [string, number][] = [
-  ["adj-brightness", 0], ["adj-contrast", 0], ["adj-saturation", 100],
-  ["adj-temperature", 0], ["adj-tint", 0],
+  ["adj-brightness", 0],
+  ["adj-contrast", 0],
+  ["adj-saturation", 100],
+  ["adj-temperature", 0],
+  ["adj-tint", 0],
 ];
 
 let sourceHasAlpha = false;
@@ -2687,14 +3090,17 @@ function syncBackgroundControls() {
   const mode = ($("bg-mode") as HTMLSelectElement).value;
   const honored = honor.checked;
   $("alpha-threshold-row").hidden = mode !== "off" || !honored;
-  const why = sourceHasAlpha ? "your picture has see-through parts" : "padding leaves see-through bars";
-  $("bg-note").textContent = mode !== "off"
-    ? mode === "smooth"
-      ? "filled with the closest color a map can make, so it stays one flat block"
-      : "filled with your color, dithered like the rest of the picture"
-    : honored
-      ? `${why}, so they place no blocks`
-      : `${why}, and with transparency off they match like solid pixels and mostly come out dark. Turn it on or pick a fill`;
+  const why = sourceHasAlpha
+    ? "your picture has see-through parts"
+    : "padding leaves see-through bars";
+  $("bg-note").textContent =
+    mode !== "off"
+      ? mode === "smooth"
+        ? "filled with the closest color a map can make, so it stays one flat block"
+        : "filled with your color, dithered like the rest of the picture"
+      : honored
+        ? `${why}, so they place no blocks`
+        : `${why}, and with transparency off they match like solid pixels and mostly come out dark. Turn it on or pick a fill`;
 }
 
 function adjustOpts(): Adjust | undefined {
@@ -2724,17 +3130,20 @@ function syncAdjustControls() {
   const active = on && !adjustIsNeutral();
   chip.hidden = !active;
   if (active) {
-    const parts = ADJUST_DEFS
-      .filter(([id, dflt]) => Math.round(num(id, dflt)) !== dflt)
-      .map(([id]) => id.replace("adj-", ""));
+    const parts = ADJUST_DEFS.filter(([id, dflt]) => Math.round(num(id, dflt)) !== dflt).map(
+      ([id]) => id.replace("adj-", ""),
+    );
     chip.textContent = `adjusted: ${parts.join(", ")}`;
-    chip.title = "the picture is being changed before it is matched; "
-      + "exported settings carry these, a shared palette link does not";
+    chip.title =
+      "the picture is being changed before it is matched; " +
+      "exported settings carry these, a shared palette link does not";
   }
 }
 
 const CROP_PAIRS: [string, string][] = [
-  ["crop-zoom", "crop-zoom-num"], ["crop-x", "crop-x-num"], ["crop-y", "crop-y-num"],
+  ["crop-zoom", "crop-zoom-num"],
+  ["crop-x", "crop-x-num"],
+  ["crop-y", "crop-y-num"],
 ];
 
 function syncCropControls() {
@@ -2755,18 +3164,26 @@ function suggestRatio() {
 function fittedRgba(): { data: Uint8ClampedArray; width: number; height: number } {
   const bmp = source!.bmp;
   const aOut = num("maps-w", 1) / num("maps-h", 1);
-  let cw = bmp.width, ch = bmp.height, sx = 0, sy = 0, sw = bmp.width, sh = bmp.height;
-  let dx = 0, dy = 0;
+  let cw = bmp.width,
+    ch = bmp.height,
+    sx = 0,
+    sy = 0,
+    sw = bmp.width,
+    sh = bmp.height;
+  let dx = 0,
+    dy = 0;
   const mode = fitMode();
   if (mode === "manual") {
     ({ sx, sy, sw, sh } = manualWindow(bmp));
-    cw = sw; ch = sh;
+    cw = sw;
+    ch = sh;
   } else if (mode === "cover") {
     sw = Math.min(bmp.width, Math.round(bmp.height * aOut));
     sh = Math.min(bmp.height, Math.round(bmp.width / aOut));
     sx = Math.floor((bmp.width - sw) / 2);
     sy = Math.floor((bmp.height - sh) / 2);
-    cw = sw; ch = sh;
+    cw = sw;
+    ch = sh;
   } else if (mode === "contain") {
     cw = Math.max(bmp.width, Math.round(bmp.height * aOut));
     ch = Math.max(bmp.height, Math.round(bmp.width / aOut));
@@ -2781,34 +3198,90 @@ function fittedRgba(): { data: Uint8ClampedArray; width: number; height: number 
 }
 
 const DITHER_MODES: { value: string; name: string; desc: string; adv: boolean }[] = [
-  { value: "none", name: "none",
-    desc: "every pixel snaps to its closest map color. Sharp edges, banded gradients", adv: false },
-  { value: "floyd_steinberg", name: "Floyd-Steinberg",
-    desc: "smooth error diffusion, the usual default", adv: false },
-  { value: "atkinson", name: "Atkinson",
-    desc: "lighter diffusion that keeps highlights clean", adv: false },
-  { value: "yliluoma_bayer4", name: "Yliluoma 4×4",
-    desc: "mixes the closest colors in a fixed grid. Truest color at display distance; the grid shows up close", adv: false },
-  { value: "yliluoma_blue16", name: "Yliluoma blue noise",
-    desc: "the same color mixing as irregular grain. Reads organic, like film", adv: false },
-  { value: "min_avg_err", name: "Jarvis",
-    desc: "error diffusion with a wider spread; close to Floyd-Steinberg", adv: true },
-  { value: "burkes", name: "Burkes",
-    desc: "error diffusion variant; close to Floyd-Steinberg", adv: true },
-  { value: "sierra_lite", name: "Sierra Lite",
-    desc: "error diffusion variant; close to Floyd-Steinberg", adv: true },
-  { value: "stucki", name: "Stucki",
-    desc: "error diffusion variant; close to Floyd-Steinberg", adv: true },
-  { value: "bayer2", name: "Ordered 2×2",
-    desc: "classic threshold pattern, no color mixing. Weak on smooth gradients", adv: true },
-  { value: "ordered3", name: "Ordered 3×3",
-    desc: "classic threshold pattern, no color mixing. Weak on smooth gradients", adv: true },
-  { value: "bayer4", name: "Ordered 4×4",
-    desc: "classic threshold pattern, no color mixing. Weak on smooth gradients", adv: true },
-  { value: "yliluoma_bayer2", name: "Yliluoma 2×2",
-    desc: "color mixing on the smallest pattern; coarser mixes than the 4×4", adv: true },
-  { value: "yliluoma_ordered3", name: "Yliluoma 3×3",
-    desc: "color mixing on a 3×3 pattern", adv: true },
+  {
+    value: "none",
+    name: "none",
+    desc: "every pixel snaps to its closest map color. Sharp edges, banded gradients",
+    adv: false,
+  },
+  {
+    value: "floyd_steinberg",
+    name: "Floyd-Steinberg",
+    desc: "smooth error diffusion, the usual default",
+    adv: false,
+  },
+  {
+    value: "atkinson",
+    name: "Atkinson",
+    desc: "lighter diffusion that keeps highlights clean",
+    adv: false,
+  },
+  {
+    value: "yliluoma_bayer4",
+    name: "Yliluoma 4×4",
+    desc: "mixes the closest colors in a fixed grid. Truest color at display distance; the grid shows up close",
+    adv: false,
+  },
+  {
+    value: "yliluoma_blue16",
+    name: "Yliluoma blue noise",
+    desc: "the same color mixing as irregular grain. Reads organic, like film",
+    adv: false,
+  },
+  {
+    value: "min_avg_err",
+    name: "Jarvis",
+    desc: "error diffusion with a wider spread; close to Floyd-Steinberg",
+    adv: true,
+  },
+  {
+    value: "burkes",
+    name: "Burkes",
+    desc: "error diffusion variant; close to Floyd-Steinberg",
+    adv: true,
+  },
+  {
+    value: "sierra_lite",
+    name: "Sierra Lite",
+    desc: "error diffusion variant; close to Floyd-Steinberg",
+    adv: true,
+  },
+  {
+    value: "stucki",
+    name: "Stucki",
+    desc: "error diffusion variant; close to Floyd-Steinberg",
+    adv: true,
+  },
+  {
+    value: "bayer2",
+    name: "Ordered 2×2",
+    desc: "classic threshold pattern, no color mixing. Weak on smooth gradients",
+    adv: true,
+  },
+  {
+    value: "ordered3",
+    name: "Ordered 3×3",
+    desc: "classic threshold pattern, no color mixing. Weak on smooth gradients",
+    adv: true,
+  },
+  {
+    value: "bayer4",
+    name: "Ordered 4×4",
+    desc: "classic threshold pattern, no color mixing. Weak on smooth gradients",
+    adv: true,
+  },
+  {
+    value: "yliluoma_bayer2",
+    name: "Yliluoma 2×2",
+    desc: "color mixing on the smallest pattern; coarser mixes than the 4×4",
+    adv: true,
+  },
+  {
+    value: "yliluoma_ordered3",
+    name: "Yliluoma 3×3",
+    desc: "color mixing on a 3×3 pattern",
+    adv: true,
+  },
 ];
 const DITHER_SAMPLE_W = 72;
 const DITHER_SAMPLE_H = 24;
@@ -2857,12 +3330,12 @@ async function refreshDitherSamples() {
     DITHER_MODES.forEach((m, i) => {
       ditherChips.set(
         m.value,
-        new ImageData(bytes.slice(i * per, (i + 1) * per), DITHER_SAMPLE_W, DITHER_SAMPLE_H));
+        new ImageData(bytes.slice(i * per, (i + 1) * per), DITHER_SAMPLE_W, DITHER_SAMPLE_H),
+      );
     });
     ditherSampleKey = key;
     paintDitherChips();
   } catch {
-    /* a starved palette has no samples; chips keep their last paint */
   } finally {
     ditherSampleBusy = false;
   }
@@ -2915,7 +3388,9 @@ function buildDitherDrop() {
 }
 
 function highlightDither() {
-  ditherRows().forEach((r, i) => r.classList.toggle("hot", i === ditherHot));
+  ditherRows().forEach((r, i) => {
+    r.classList.toggle("hot", i === ditherHot);
+  });
   if (ditherHot >= 0) ditherRows()[ditherHot]?.scrollIntoView({ block: "nearest" });
 }
 
@@ -2972,18 +3447,17 @@ function renderCapNote() {
     el.textContent = `already fits: ${who} staircases ${peak} tall`;
     return;
   }
-  const pct = heightCap.de_base > 0
-    ? (heightCap.de_capped / heightCap.de_base - 1) * 100
-    : 0;
-  const cost = pct < 0.5
-    ? "no visible cost from a few blocks back"
-    : `picture error up about ${pct.toFixed(pct < 10 ? 1 : 0)}%`;
-  const flatHint = cap === 0
-    ? ". A cap of 0 is a flat build; the flat height mode makes a better flat version"
-    : "";
+  const pct = heightCap.de_base > 0 ? (heightCap.de_capped / heightCap.de_base - 1) * 100 : 0;
+  const cost =
+    pct < 0.5
+      ? "no visible cost from a few blocks back"
+      : `picture error up about ${pct.toFixed(pct < 10 ? 1 : 0)}%`;
+  const flatHint =
+    cap === 0
+      ? ". A cap of 0 is a flat build; the flat height mode makes a better flat version"
+      : "";
   const scope = heightCap.per_panel ? "every panel " : "";
-  el.textContent =
-    `recolored ${heightCap.edited_cells} blocks to fit ${scope}under ${cap}; ${cost}${flatHint}`;
+  el.textContent = `recolored ${heightCap.edited_cells} blocks to fit ${scope}under ${cap}; ${cost}${flatHint}`;
 }
 
 function syncHeightControls() {
@@ -3018,8 +3492,7 @@ async function applyHeightCap(repaint: boolean) {
   renderCapNote();
   if (repaint && genResult) {
     const preview = await rpc<ArrayBuffer>({ cmd: "preview" });
-    paintPreview(
-      new ImageData(new Uint8ClampedArray(preview), genResult.width, genResult.height));
+    paintPreview(new ImageData(new Uint8ClampedArray(preview), genResult.width, genResult.height));
     renderSummary();
     if (source) status(source.name);
   }
@@ -3037,7 +3510,10 @@ function scheduleGenerate() {
 
 async function generate() {
   if (!source) return;
-  if (generating) { queued = true; return; }
+  if (generating) {
+    queued = true;
+    return;
+  }
   generating = true;
   showProgress(0);
   try {
@@ -3045,7 +3521,10 @@ async function generate() {
     const hadAlpha = sourceHasAlpha;
     sourceHasAlpha = false;
     for (let i = 3; i < src.data.length; i += 4) {
-      if (src.data[i] < 255) { sourceHasAlpha = true; break; }
+      if (src.data[i] < 255) {
+        sourceHasAlpha = true;
+        break;
+      }
     }
     if (sourceHasAlpha !== hadAlpha) syncBackgroundControls();
     const honorAlpha = checked("honor-alpha") || fitMode() === "contain";
@@ -3071,8 +3550,7 @@ async function generate() {
     generateSeq += 1;
     await applyHeightCap(false);
     const preview = await rpc<ArrayBuffer>({ cmd: "preview" });
-    paintPreview(
-      new ImageData(new Uint8ClampedArray(preview), genResult.width, genResult.height));
+    paintPreview(new ImageData(new Uint8ClampedArray(preview), genResult.width, genResult.height));
     ($("export-download") as HTMLButtonElement).disabled = false;
     ($("export-share") as HTMLButtonElement).disabled = false;
     ($("view-build") as HTMLButtonElement).disabled = false;
@@ -3080,8 +3558,11 @@ async function generate() {
     status(source.name);
     updatePreviewMeta();
     await refreshSolver();
-    const marginal = await rpc<MarginalErrors>(
-      { cmd: "marginal", enabled: opts.enabled_color_ids, tones: opts.tones });
+    const marginal = await rpc<MarginalErrors>({
+      cmd: "marginal",
+      enabled: opts.enabled_color_ids,
+      tones: opts.tones,
+    });
     marginalDeltas = new Map(marginal.per_color);
     marginalTotal = marginal.total;
     tileMaterials = await rpc<Record<string, number>[]>({ cmd: "materials_split" });
@@ -3103,7 +3584,10 @@ async function generate() {
   } finally {
     showProgress(null);
     generating = false;
-    if (queued) { queued = false; scheduleGenerate(); }
+    if (queued) {
+      queued = false;
+      scheduleGenerate();
+    }
   }
 }
 
@@ -3141,20 +3625,29 @@ function exportOpts(quiet = false): ExportOpts | null {
   const fillerBlockId = fillerId();
   const fe = fillerEntry(fillerBlockId);
   if (!fe) {
-    if (!quiet) status(`filler block "${fillerBlockId}" is not a block this tool knows; pick one from the filler section`);
+    if (!quiet)
+      status(
+        `filler block "${fillerBlockId}" is not a block this tool knows; pick one from the filler section`,
+      );
     return null;
   }
   if (!fillerLegal(fe.b)) {
-    if (!quiet) status(versionIndex(fe.b.since) > versionIndex(gameVersion())
-      ? `your filler block ${fe.b.display_name} needs ${fe.b.since}; pick another or raise the game version`
-      : `${fe.b.display_name} cannot serve as filler; pick another in the filler section`);
+    if (!quiet)
+      status(
+        versionIndex(fe.b.since) > versionIndex(gameVersion())
+          ? `your filler block ${fe.b.display_name} needs ${fe.b.since}; pick another or raise the game version`
+          : `${fe.b.display_name} cannot serve as filler; pick another in the filler section`,
+      );
     return null;
   }
   const selection: Record<string, number> = {};
   const blocked = unbuildableColors();
   if (blocked.length) {
-    if (!quiet) status(`can't export: ${blocked.map((c) => c.name).join(", ")} `
-      + "have no usable block under your current filters");
+    if (!quiet)
+      status(
+        `can't export: ${blocked.map((c) => c.name).join(", ")} ` +
+          "have no usable block under your current filters",
+      );
     return null;
   }
   for (const cid of Object.keys(genResult.materials).map(Number)) {
@@ -3176,6 +3669,7 @@ function exportOpts(quiet = false): ExportOpts | null {
     support_mode: ($("support-mode") as HTMLSelectElement).value as ExportOpts["support_mode"],
     support_block_id: ($("support-block") as HTMLInputElement).value.trim() || "netherrack",
     build_mode: buildMode(),
+    format: schemFormat(),
     selection,
     version: gameVersion(),
   };
@@ -3206,17 +3700,24 @@ async function viewBuild() {
 async function buildSheet(name: string): Promise<string> {
   const lines: string[] = [];
   lines.push(name);
-  lines.push(`Made with Arachne · build ${__BUILD_ID__} · ${__BUILD_DATE__} · Minecraft ${gameVersion()}`);
+  lines.push(
+    `Made with Arachne · build ${__BUILD_ID__} · ${__BUILD_DATE__} · Minecraft ${gameVersion()}`,
+  );
   if (genResult) {
-    const w = genResult.width / 128, h = genResult.height / 128;
+    const w = genResult.width / 128,
+      h = genResult.height / 128;
     let placed = 0;
     for (const n of Object.values(genResult.materials)) placed += n;
     lines.push(`${w} x ${h} maps · ${fmtBulk(placed)}`);
     const mode = buildMode();
     if (w * h > 1 && mode === "panels") {
-      lines.push("Separate panels: each starts on the ground with its own reference row. Build them anywhere.");
+      lines.push(
+        "Separate panels: each starts on the ground with its own reference row. Build them anywhere.",
+      );
     } else if (w * h > 1 && mode === "continued") {
-      lines.push("Panels continue each other: paste every panel at the same Y. Southern panels stand on the row above.");
+      lines.push(
+        "Panels continue each other: paste every panel at the same Y. Southern panels stand on the row above.",
+      );
     }
   }
   lines.push("");
@@ -3252,9 +3753,10 @@ async function buildSheet(name: string): Promise<string> {
     if (opts) {
       try {
         const sig = `${generateSeq}:${JSON.stringify(opts)}`;
-        const t = sig === supportTotalsSig && supportTotals
-          ? supportTotals
-          : await rpc<SupportTotals>({ cmd: "support_totals", opts });
+        const t =
+          sig === supportTotalsSig && supportTotals
+            ? supportTotals
+            : await rpc<SupportTotals>({ cmd: "support_totals", opts });
         if (t.whole) rows.push([fillerLabel(opts.support_block_id), t.whole]);
       } catch {
         void 0;
@@ -3263,14 +3765,21 @@ async function buildSheet(name: string): Promise<string> {
     rows.sort((a, b) => b[1] - a[1]);
     const pad = rows.reduce((n, [nm]) => Math.max(n, nm.length), 0);
     for (const [nm, count] of rows) {
-      lines.push(`  ${nm.padEnd(pad)}  ${countText(count).padStart(9)}  `
-        + `${(count / SHULKER).toFixed(2).padStart(7)} shulkers`);
+      lines.push(
+        `  ${nm.padEnd(pad)}  ${countText(count).padStart(9)}  ` +
+          `${(count / SHULKER).toFixed(2).padStart(7)} shulkers`,
+      );
     }
   }
-  return lines.join("\n") + "\n";
+  return `${lines.join("\n")}\n`;
 }
 
-interface ExportFile { name: string; bytes: ArrayBuffer; type: string; count: number }
+interface ExportFile {
+  name: string;
+  bytes: ArrayBuffer;
+  type: string;
+  count: number;
+}
 
 async function buildExport(): Promise<ExportFile | null> {
   if (!genResult) return null;
@@ -3279,43 +3788,55 @@ async function buildExport(): Promise<ExportFile | null> {
   const name = exportName();
   const entries: ZipEntry[] = [];
   const skipped: string[] = [];
-    if (buildMode() !== "one_piece") {
-      const framed = await rpc<ArrayBuffer>({ cmd: "schem_split", opts });
-      unframe(framed).forEach((bytes, i) => {
-        if (bytes.length) entries.push({ name: `${name}_${panelTag(i)}.nbt`, bytes });
-        else skipped.push(panelTag(i));
-      });
-    } else {
-      const buf = await rpc<ArrayBuffer>({ cmd: "schem", opts });
-      entries.push({ name: `${name}.nbt`, bytes: new Uint8Array(buf) });
-    }
-    if (checked("mapdat-on")) {
-      const tw = genResult.width / 128, th = genResult.height / 128;
-      const base = firstMapId();
-      for (let tz = 0; tz < th; tz++) {
-        for (let tx = 0; tx < tw; tx++) {
-          const buf = await rpc<ArrayBuffer>({ cmd: "mapdat", tx, tz, version: gameVersion() });
-          entries.push({ name: `map_${base + tz * tw + tx}.dat`, bytes: new Uint8Array(buf) });
-        }
+  const ext = opts.format === "nbt" ? "nbt" : "litematic";
+  if (buildMode() !== "one_piece") {
+    const panels = (genResult.width / 128) * (genResult.height / 128);
+    const names = Array.from({ length: panels }, (_, i) => `${name}_${panelTag(i)}`);
+    const framed = await rpc<ArrayBuffer>({ cmd: "schem_split", opts: { ...opts, names } });
+    unframe(framed).forEach((bytes, i) => {
+      if (bytes.length) entries.push({ name: `${names[i]}.${ext}`, bytes });
+      else skipped.push(panelTag(i));
+    });
+  } else {
+    const buf = await rpc<ArrayBuffer>({ cmd: "schem", opts: { ...opts, name } });
+    entries.push({ name: `${name}.${ext}`, bytes: new Uint8Array(buf) });
+  }
+  if (checked("mapdat-on")) {
+    const tw = genResult.width / 128,
+      th = genResult.height / 128;
+    const base = firstMapId();
+    for (let tz = 0; tz < th; tz++) {
+      for (let tx = 0; tx < tw; tx++) {
+        const buf = await rpc<ArrayBuffer>({ cmd: "mapdat", tx, tz, version: gameVersion() });
+        entries.push({ name: `map_${base + tz * tw + tx}.dat`, bytes: new Uint8Array(buf) });
       }
     }
-    if (checked("sheet-on")) {
-      entries.push({
-        name: `${name}.txt`,
-        bytes: new TextEncoder().encode(await buildSheet(name)),
-      });
-    }
+  }
+  if (checked("sheet-on")) {
+    entries.push({
+      name: `${name}.txt`,
+      bytes: new TextEncoder().encode(await buildSheet(name)),
+    });
+  }
   const skipNote = $("export-skipped");
   skipNote.hidden = skipped.length === 0;
-  skipNote.textContent = skipped.length === 0 ? "" : skipped.length === 1
-    ? `Panel ${skipped[0]} has no blocks to place, so it has no schematic file.`
-    : `Panels ${skipped.join(", ")} have no blocks to place, so they have no schematic files.`;
+  skipNote.textContent =
+    skipped.length === 0
+      ? ""
+      : skipped.length === 1
+        ? `Panel ${skipped[0]} has no blocks to place, so it has no schematic file.`
+        : `Panels ${skipped.join(", ")} have no blocks to place, so they have no schematic files.`;
   if (entries.length === 1) {
     const only = entries[0];
     const type = only.name.endsWith(".txt") ? "text/plain" : "application/octet-stream";
     return { name: only.name, bytes: only.bytes.slice().buffer as ArrayBuffer, type, count: 1 };
   }
-  return { name: `${name}.zip`, bytes: zip(entries).buffer as ArrayBuffer, type: "application/zip", count: entries.length };
+  return {
+    name: `${name}.zip`,
+    bytes: zip(entries).buffer as ArrayBuffer,
+    type: "application/zip",
+    count: entries.length,
+  };
 }
 
 async function exportDownload() {
@@ -3343,7 +3864,12 @@ async function exportShare() {
 
 function exportName(): string {
   const raw = ($("export-name") as HTMLInputElement).value.trim() || "arachne";
-  return raw.replace(/[^\w.\- ]+/g, "").replace(/\s+/g, "-").slice(0, 60) || "arachne";
+  return (
+    raw
+      .replace(/[^\w.\- ]+/g, "")
+      .replace(/\s+/g, "-")
+      .slice(0, 60) || "arachne"
+  );
 }
 
 function firstMapId(): number {
@@ -3358,6 +3884,10 @@ function panelCoords(i: number): { x: number; z: number; id: number } {
 function panelTag(i: number): string {
   const { x, z, id } = panelCoords(i);
   return `x${x}_z${z}_map_${id}`;
+}
+
+function schemFormat(): "litematic" | "nbt" {
+  return ($("schem-format") as HTMLSelectElement).value === "nbt" ? "nbt" : "litematic";
 }
 
 function syncMapdatControls() {
@@ -3375,12 +3905,17 @@ async function boot() {
   elCanvas = $("preview") as HTMLCanvasElement;
   elGrid = $("grid-lines");
   const [init, atlasMeta] = await Promise.all([
-    rpc<{ colors: MapColor[]; blocks: CandidateBlock[]; dataVersion: number;
-          versions: string[];
-          tools: Record<string, ToolMeta>;
-          tiers: Record<string, TierMeta> }>({ cmd: "init" }),
-    fetch(`${import.meta.env.BASE_URL}atlas.json`)
-      .then((r) => r.json() as Promise<{ cols: number; tile: number; count: number; hash?: string }>),
+    rpc<{
+      colors: MapColor[];
+      blocks: CandidateBlock[];
+      dataVersion: number;
+      versions: string[];
+      tools: Record<string, ToolMeta>;
+      tiers: Record<string, TierMeta>;
+    }>({ cmd: "init" }),
+    fetch(`${import.meta.env.BASE_URL}atlas.json`).then(
+      (r) => r.json() as Promise<{ cols: number; tile: number; count: number; hash?: string }>,
+    ),
   ]);
   colors = init.colors;
   versions = init.versions ?? [];
@@ -3411,8 +3946,7 @@ async function boot() {
   vsel.value = versions[versions.length - 1] ?? "";
   blockIndex = buildBlockIndex(blocks);
   document.documentElement.style.setProperty("--atlas-cols", String(atlasMeta.cols));
-  atlasUrl = `${import.meta.env.BASE_URL}atlas.png`
-    + (atlasMeta.hash ? `?v=${atlasMeta.hash}` : "");
+  atlasUrl = `${import.meta.env.BASE_URL}atlas.webp${atlasMeta.hash ? `?v=${atlasMeta.hash}` : ""}`;
   document.documentElement.style.setProperty("--atlas-url", `url("${atlasUrl}")`);
 
   touchDefaults();
@@ -3456,7 +3990,7 @@ async function boot() {
   applyPreviewScale();
   const restored = saved ? " · your saved palette restored" : "";
   const nostore = persistenceAvailable ? "" : " · settings can't be saved in this browser";
-  status(`ready: Minecraft 26.2, ${blocks.length} blocks` + restored + nostore);
+  status(`ready: Minecraft 26.2, ${blocks.length} blocks${restored}${nostore}`);
   void initWhatsNew();
   void initCommunities();
   await refreshSolver();
@@ -3487,7 +4021,9 @@ async function boot() {
     const f = (e.target as HTMLInputElement).files?.[0];
     if (f) void loadFile(f);
   };
-  elWrap.onclick = () => { if (!pipWindow) $("file").click(); };
+  elWrap.onclick = () => {
+    if (!pipWindow) $("file").click();
+  };
   const popout = $("preview-popout") as HTMLButtonElement;
   popout.hidden = false;
   popout.title = window.documentPictureInPicture
@@ -3516,51 +4052,95 @@ async function boot() {
 
   $("maps-w").onchange = () => {
     mapsTouched = true;
-    suggestRatio(); updatePreviewMeta(); persist(); scheduleGenerate();
+    suggestRatio();
+    updatePreviewMeta();
+    persist();
+    scheduleGenerate();
   };
   $("maps-h").onchange = () => {
     mapsTouched = true;
-    updatePreviewMeta(); persist(); scheduleGenerate();
+    updatePreviewMeta();
+    persist();
+    scheduleGenerate();
   };
   $("fit").onchange = () => {
-    syncCropControls(); syncBackgroundControls(); updatePreviewMeta();
-    persist(); scheduleGenerate();
+    syncCropControls();
+    syncBackgroundControls();
+    updatePreviewMeta();
+    persist();
+    scheduleGenerate();
   };
   const cropChanged = () => {
-    updatePreviewMeta(); persist(); scheduleGenerate();
+    updatePreviewMeta();
+    persist();
+    scheduleGenerate();
   };
   for (const [rangeId, fieldId] of CROP_PAIRS) {
     const range = $(rangeId) as HTMLInputElement;
     const field = $(fieldId) as HTMLInputElement;
-    range.oninput = () => { field.value = range.value; cropChanged(); };
-    field.oninput = () => { range.value = field.value; cropChanged(); };
-    field.onchange = () => { range.value = field.value; syncCropControls(); cropChanged(); };
+    range.oninput = () => {
+      field.value = range.value;
+      cropChanged();
+    };
+    field.oninput = () => {
+      range.value = field.value;
+      cropChanged();
+    };
+    field.onchange = () => {
+      range.value = field.value;
+      syncCropControls();
+      cropChanged();
+    };
   }
   $("crop-reset").onclick = () => {
-    for (const [rangeId, dflt] of [["crop-zoom", "1"], ["crop-x", "50"], ["crop-y", "50"]] as const) {
+    for (const [rangeId, dflt] of [
+      ["crop-zoom", "1"],
+      ["crop-x", "50"],
+      ["crop-y", "50"],
+    ] as const) {
       ($(rangeId) as HTMLInputElement).value = dflt;
     }
-    syncCropControls(); cropChanged();
+    syncCropControls();
+    cropChanged();
   };
   $("bg-mode").onchange = $("bg-color").onchange = () => {
-    syncBackgroundControls(); persist(); scheduleGenerate();
+    syncBackgroundControls();
+    persist();
+    scheduleGenerate();
   };
-  $("adjust-on").onchange = () => { syncAdjustControls(); persist(); scheduleGenerate(); };
+  $("adjust-on").onchange = () => {
+    syncAdjustControls();
+    persist();
+    scheduleGenerate();
+  };
   for (const [rangeId] of ADJUST_DEFS) {
     const range = $(rangeId) as HTMLInputElement;
     const field = $(`${rangeId}-num`) as HTMLInputElement;
-    range.oninput = () => { field.value = range.value; syncAdjustControls(); };
-    range.onchange = () => { syncAdjustControls(); persist(); scheduleGenerate(); };
-    field.oninput = () => { range.value = field.value; };
+    range.oninput = () => {
+      field.value = range.value;
+      syncAdjustControls();
+    };
+    range.onchange = () => {
+      syncAdjustControls();
+      persist();
+      scheduleGenerate();
+    };
+    field.oninput = () => {
+      range.value = field.value;
+    };
     field.onchange = () => {
       clampNumberField(field);
       range.value = field.value;
-      syncAdjustControls(); persist(); scheduleGenerate();
+      syncAdjustControls();
+      persist();
+      scheduleGenerate();
     };
   }
   $("adjust-reset").onclick = () => {
     for (const [id, dflt] of ADJUST_DEFS) ($(id) as HTMLInputElement).value = String(dflt);
-    syncAdjustControls(); persist(); scheduleGenerate();
+    syncAdjustControls();
+    persist();
+    scheduleGenerate();
   };
   $("honor-alpha").onchange = () => {
     honorAlphaUser = checked("honor-alpha");
@@ -3576,17 +4156,28 @@ async function boot() {
     const range = $("alpha-threshold") as HTMLInputElement;
     const field = $("alpha-threshold-num") as HTMLInputElement;
     field.value = range.value;
-    range.oninput = () => { field.value = range.value; };
-    range.onchange = () => { persist(); scheduleGenerate(); };
-    field.oninput = () => { range.value = field.value; };
+    range.oninput = () => {
+      field.value = range.value;
+    };
+    range.onchange = () => {
+      persist();
+      scheduleGenerate();
+    };
+    field.oninput = () => {
+      range.value = field.value;
+    };
     field.onchange = () => {
       clampNumberField(field);
       range.value = field.value;
-      persist(); scheduleGenerate();
+      persist();
+      scheduleGenerate();
     };
   }
-  $("dither").onchange = $("dbs-refine").onchange =
-    () => { persist(); syncDitherButton(); scheduleGenerate(); };
+  $("dither").onchange = $("dbs-refine").onchange = () => {
+    persist();
+    syncDitherButton();
+    scheduleGenerate();
+  };
   const dbtn = $("dither-btn") as HTMLButtonElement;
   dbtn.onclick = () => {
     if ($("dither-drop").hidden) openDitherDrop();
@@ -3615,8 +4206,16 @@ async function boot() {
       closeDitherDrop();
     }
   });
-  $("game-version").onchange = () => { persist(); syncFillerUi(); refreshSolver(); };
-  $("height-mode").onchange = () => { renderPalette(); syncHeightControls(); scheduleGenerate(); };
+  $("game-version").onchange = () => {
+    persist();
+    syncFillerUi();
+    refreshSolver();
+  };
+  $("height-mode").onchange = () => {
+    renderPalette();
+    syncHeightControls();
+    scheduleGenerate();
+  };
   $("max-height").onchange = () => {
     const el = $("max-height") as HTMLInputElement;
     if (el.value !== "") clampNumberField(el);
@@ -3629,22 +4228,35 @@ async function boot() {
     persist();
     if (genResult) renderSummary();
   };
-  $("cliff-cap").onchange = () => { persist(); void applyHeightCap(true); };
-  $("build-mode").onchange = () => { persist(); void applyHeightCap(true); };
+  $("cliff-cap").onchange = () => {
+    persist();
+    void applyHeightCap(true);
+  };
+  $("build-mode").onchange = () => {
+    persist();
+    void applyHeightCap(true);
+  };
   $("export-name").onchange = () => persist();
   const fillerSearch = $("filler-search") as HTMLInputElement;
-  fillerSearch.onfocus = () => { fillerSearch.select(); renderFillerDrop(); };
+  fillerSearch.onfocus = () => {
+    fillerSearch.select();
+    renderFillerDrop();
+  };
   fillerSearch.oninput = () => renderFillerDrop();
-  fillerSearch.onblur = () => { closeFillerDrop(); syncFillerUi(); };
+  fillerSearch.onblur = () => {
+    closeFillerDrop();
+    syncFillerUi();
+  };
   fillerSearch.onkeydown = (ev) => {
     if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
       ev.preventDefault();
       if (($("filler-drop") as HTMLElement).hidden) renderFillerDrop();
       const rows = fillerRows();
       if (!rows.length) return;
-      fillerHot = ev.key === "ArrowDown"
-        ? (fillerHot + 1) % rows.length
-        : (fillerHot - 1 + rows.length) % rows.length;
+      fillerHot =
+        ev.key === "ArrowDown"
+          ? (fillerHot + 1) % rows.length
+          : (fillerHot - 1 + rows.length) % rows.length;
       rows.forEach((r, i) => {
         r.classList.toggle("hot", i === fillerHot);
         r.setAttribute("aria-selected", String(i === fillerHot));
@@ -3668,19 +4280,30 @@ async function boot() {
     persist();
   };
   $("zoom-in").onclick = () => {
-    previewZoom = Math.min(8, previewZoom * 2); applyPreviewScale(); persist();
+    previewZoom = Math.min(8, previewZoom * 2);
+    applyPreviewScale();
+    persist();
   };
   $("zoom-out").onclick = () => {
-    previewZoom = Math.max(0.25, previewZoom / 2); applyPreviewScale(); persist();
+    previewZoom = Math.max(0.25, previewZoom / 2);
+    applyPreviewScale();
+    persist();
   };
-  $("zoom-fit").onclick = () => { previewZoom = 1; applyPreviewScale(); persist(); };
+  $("zoom-fit").onclick = () => {
+    previewZoom = 1;
+    applyPreviewScale();
+    persist();
+  };
   $("preview-toggle").onclick = () => {
     previewHidden = !previewHidden;
     setPreviewHidden(previewHidden);
     persist();
   };
   window.addEventListener("resize", () => applyPreviewScale());
-  $("grid-overlay").onchange = () => { applyPreviewScale(); persist(); };
+  $("grid-overlay").onchange = () => {
+    applyPreviewScale();
+    persist();
+  };
   $("preview-place").onclick = () => {
     previewInline = !previewInline;
     syncPlacement();
@@ -3690,9 +4313,20 @@ async function boot() {
   $("export-download").onclick = () => void exportDownload();
   $("export-share").onclick = () => void exportShare();
   $("view-build").onclick = $("view-build-export").onclick = () => void viewBuild();
-  $("colors-all").onclick = () => { colors.forEach((c) => enabled.add(c.id)); renderPalette(); scheduleGenerate(); };
-  $("colors-none").onclick = () => { enabled.clear(); renderPalette(); scheduleGenerate(); };
-  $("haste").onchange = () => { syncHasteNote(); void refreshSolver(); };
+  $("colors-all").onclick = () => {
+    for (const c of colors) enabled.add(c.id);
+    renderPalette();
+    scheduleGenerate();
+  };
+  $("colors-none").onclick = () => {
+    enabled.clear();
+    renderPalette();
+    scheduleGenerate();
+  };
+  $("haste").onchange = () => {
+    syncHasteNote();
+    void refreshSolver();
+  };
   $("flying").onchange = () => void refreshSolver();
   $("no-cooldown").onchange = () => {
     persist();
@@ -3704,20 +4338,31 @@ async function boot() {
     renderLoadout();
     void refreshSolver();
   };
-  $("materials-basis").onchange = () => { renderSummary(); persist(); };
+  $("materials-basis").onchange = () => {
+    renderSummary();
+    persist();
+  };
   $("palette-view").onchange = () => renderPalette();
   $("palette-sort").onchange = () => renderPalette();
-  $("tile-size").onchange = () => { applyTileSize(); persist(); };
+  $("tile-size").onchange = () => {
+    applyTileSize();
+    persist();
+  };
 
   wirePresetBar<PalettePreset>(
-    "palette", KEY_PALETTE_PRESETS, palettePresets,
+    "palette",
+    KEY_PALETTE_PRESETS,
+    palettePresets,
     (name, id) => ({ id, name, ...currentPalette() }),
     applyPalettePreset,
   );
   wirePresetBar<LoadoutPreset>(
-    "loadout", KEY_LOADOUT_PRESETS, loadoutPresets,
+    "loadout",
+    KEY_LOADOUT_PRESETS,
+    loadoutPresets,
     (name, id) => ({
-      id, name,
+      id,
+      name,
       tools: structuredClone(loadout),
       toggles: pickToggles(LOADOUT_FILTER_KEYS, toggles),
       fields: fieldValues(LOADOUT_FIELDS),
@@ -3726,7 +4371,8 @@ async function boot() {
   );
 
   $("reset-default").onclick = () => {
-    if (!confirm("Reset palette, loadout and settings to defaults? Saved presets are kept.")) return;
+    if (!confirm("Reset palette, loadout and settings to defaults? Saved presets are kept."))
+      return;
     clearWorkspace();
     applyFields(factoryFields);
     loadout = structuredClone(DEFAULT_LOADOUT);
@@ -3751,7 +4397,9 @@ async function boot() {
   };
 }
 
-void boot().then(() => {
-  initMobile();
-  registerWorker(import.meta.env.BASE_URL);
-}).catch((e) => status(`init failed: ${e}`));
+void boot()
+  .then(() => {
+    initMobile();
+    registerWorker(import.meta.env.BASE_URL);
+  })
+  .catch((e) => status(`init failed: ${e}`));

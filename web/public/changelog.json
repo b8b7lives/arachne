@@ -1,6 +1,18 @@
 {
   "builds": [
     {
+      "id": "2026-09-03-litematic-colors-changelog",
+      "date": "2026-09-03",
+      "line": "schematics download as .litematic, every map color has a page, cherry leaves are pink again, and these notes have their own address",
+      "notes": [
+        "Schematics download as .litematic files now, which is Litematica's own format. Each file carries its name, so it shows under that name in Litematica's list, and its description says it came from Arachne. If you want the vanilla structure .nbt instead, which WorldEdit also reads, pick it in the schematic select under download.",
+        "A new page at /arachne/colors/ lists all 61 map colors with their three shades and every block Arachne offers for each, with the same flags the app uses. It is handy for planning a palette away from the app or for sharing a block list with a friend.",
+        "These release notes have a page of their own at /arachne/changelog/, and the feed carries the same entries.",
+        "Cherry leaves and pale oak leaves showed green in the block pictures. The picture tints now follow the game's own rules, so leaves that carry no tint show their real color, and tinted blocks such as grass and water use the game's default colors.",
+        "A few smaller things landed too. The app calls itself a map art maker, dim text is a touch brighter, keyboard users get a skip link straight to the controls, the installed app icon fits every phone's icon shape, and the block picture sheet is about half the size it was."
+      ]
+    },
+    {
       "id": "2026-08-28-build-modes",
       "date": "2026-08-28",
       "line": "separate panels start on the ground, and you pick how the build is cut next to max height",

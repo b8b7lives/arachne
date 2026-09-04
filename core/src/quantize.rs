@@ -249,7 +249,10 @@ pub enum Dither {
         candidates: usize,
         levels: Option<usize>,
     },
-    Diffusion { kernel: Kernel, serpentine: bool },
+    Diffusion {
+        kernel: Kernel,
+        serpentine: bool,
+    },
 }
 
 fn shortlist(target: OkLab, palette: &Palette, k: usize) -> Vec<usize> {
@@ -699,8 +702,16 @@ mod tests {
         let srgb = lin.map(crate::color::linear_channel_to_srgb);
         let img = flat_image(8, 8, [srgb[0], srgb[1], srgb[2], 255]);
         let g = quantize(&img, &p, &Dither::Ordered(bayer4()), None);
-        let darks = g.cells.iter().filter(|c| c.unwrap().1 == Tone::Dark).count();
-        let lights = g.cells.iter().filter(|c| c.unwrap().1 == Tone::Light).count();
+        let darks = g
+            .cells
+            .iter()
+            .filter(|c| c.unwrap().1 == Tone::Dark)
+            .count();
+        let lights = g
+            .cells
+            .iter()
+            .filter(|c| c.unwrap().1 == Tone::Light)
+            .count();
         assert!(
             darks * 4 >= g.cells.len() && lights * 4 >= g.cells.len(),
             "midpoint should mix both tones: {darks} dark, {lights} light"

@@ -16,7 +16,7 @@ from PIL import Image
 HERE = Path(__file__).resolve().parent
 JAR = HERE / "../../analysis/mapartcraft/26x-data/minecraft-26.2-client.jar"
 BLOCKS = HERE / "../data/blocks-26.2.json"
-OUT_PNG = HERE / "../web/public/atlas.png"
+OUT_IMG = HERE / "../web/public/atlas.webp"
 OUT_META = HERE / "../web/public/atlas.json"
 
 TILE = texture.TILE
@@ -24,23 +24,27 @@ ATLAS_COLS = 32
 
 GRASS_DEFAULT = (124, 189, 107)
 FOLIAGE_DEFAULT = (72, 181, 24)
-GRASS_TINTED = {
-    "grass_block", "short_grass", "tall_grass", "fern", "large_fern",
-    "sugar_cane", "potted_fern",
+WATER_DEFAULT = (63, 118, 228)
+TINTS = {
+    **dict.fromkeys(
+        ("grass_block", "short_grass", "tall_grass", "fern", "large_fern",
+         "potted_fern", "bush", "pink_petals", "wildflowers", "sugar_cane"),
+        GRASS_DEFAULT),
+    **dict.fromkeys(
+        ("oak_leaves", "jungle_leaves", "acacia_leaves", "dark_oak_leaves",
+         "mangrove_leaves", "vine"),
+        FOLIAGE_DEFAULT),
+    "spruce_leaves": (97, 153, 97),
+    "birch_leaves": (128, 167, 85),
+    "lily_pad": (32, 128, 48),
+    "attached_melon_stem": (224, 199, 28),
+    "attached_pumpkin_stem": (224, 199, 28),
+    "water": WATER_DEFAULT,
+    "bubble_column": WATER_DEFAULT,
 }
-FOLIAGE_TINTED = {
-    "vine", "lily_pad", "melon_stem", "pumpkin_stem",
-    "attached_melon_stem", "attached_pumpkin_stem",
-}
-FOLIAGE_SUFFIX = ("_leaves",)
 
 def default_tint(bid):
-    """Vanilla's default client tint for a grayscale texture, or None."""
-    if bid in GRASS_TINTED:
-        return GRASS_DEFAULT
-    if bid in FOLIAGE_TINTED or bid.endswith(FOLIAGE_SUFFIX):
-        return FOLIAGE_DEFAULT
-    return None
+    return TINTS.get(bid)
 
 def tint(img, rgb):
     r, g, b = rgb
@@ -127,17 +131,17 @@ def main():
                 img = side_view(img, kind)
         atlas.paste(img, ((i % ATLAS_COLS) * TILE, (i // ATLAS_COLS) * TILE))
 
-    OUT_PNG.parent.mkdir(exist_ok=True)
+    OUT_IMG.parent.mkdir(exist_ok=True)
     for name in ("blocks-26.2.json", "mapartcraft-presets-26.2.json"):
-        shutil.copyfile(BLOCKS.parent / name, OUT_PNG.parent / name)
-    atlas.save(OUT_PNG, optimize=True)
-    digest = hashlib.sha1(OUT_PNG.read_bytes()).hexdigest()[:12]
+        shutil.copyfile(BLOCKS.parent / name, OUT_IMG.parent / name)
+    atlas.save(OUT_IMG, "WEBP", lossless=True, quality=100, method=6, exact=True)
+    digest = hashlib.sha1(OUT_IMG.read_bytes()).hexdigest()[:12]
     json.dump(
         {"tile": TILE, "cols": ATLAS_COLS, "count": len(entries), "hash": digest},
         open(OUT_META, "w"),
     )
     print(f"atlas: {len(entries)} tiles ({len(fallbacks)} tint fallbacks), "
-          f"{atlas.width}x{atlas.height} -> {OUT_PNG.name}")
+          f"{atlas.width}x{atlas.height} -> {OUT_IMG.name}")
     if fallbacks:
         print("fallbacks:", " ".join(sorted(set(fallbacks))[:40]))
 

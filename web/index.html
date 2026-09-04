@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Arachne · Minecraft map art generator</title>
-    <meta name="description" content="Turn a picture into Minecraft map art: survival-priced palettes, Litematica and WorldEdit schematics, and map.dat files. Runs in your browser. No tracking." />
+    <title>Arachne · Minecraft map art maker and generator</title>
+    <meta name="description" content="Free Minecraft map art maker. Turn a picture into a Litematica or WorldEdit schematic with a palette priced for survival. It runs in your browser with no tracking." />
     <link rel="canonical" href="https://b8b7.live/arachne/" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://b8b7.live/arachne/" />
-    <meta property="og:title" content="Arachne · Minecraft map art generator" />
-    <meta property="og:description" content="Turn a picture into Minecraft map art in your browser. Free, no account, no tracking." />
+    <meta property="og:title" content="Arachne · Minecraft map art maker and generator" />
+    <meta property="og:description" content="Free Minecraft map art maker. Turn a picture into map art in your browser, with no account and no tracking." />
     <meta property="og:image" content="https://b8b7.live/assets/brand/og-card.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -22,7 +22,7 @@
       "@type": "WebApplication",
       "name": "Arachne",
       "url": "https://b8b7.live/arachne/",
-      "description": "Turn a picture into Minecraft map art: survival-priced palettes, Litematica and WorldEdit schematics, and map.dat files. Runs in your browser. No tracking.",
+      "description": "Free Minecraft map art maker. Turn a picture into a Litematica or WorldEdit schematic with a palette priced for survival. It runs in your browser with no tracking.",
       "applicationCategory": "UtilitiesApplication",
       "operatingSystem": "Any",
       "browserRequirements": "Requires JavaScript and WebAssembly",
@@ -35,21 +35,23 @@
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="alternate" type="application/atom+xml" title="Arachne release notes" href="https://b8b7.live/arachne/feed.xml" />
     <meta name="theme-color" content="#16181d" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
+    <a class="skip-link" href="#source-panel">Skip to the tool</a>
     <header>
       <h1>Arachne <span class="beta-chip">beta</span></h1>
-      <p class="tag">Minecraft map art generator</p>
+      <p class="tag">Minecraft map art maker</p>
       <span id="status" class="status">loading…</span>
     </header>
     <section id="about-panel">
       <h2>About</h2>
-      <p class="note">Free map art tool for survival builders, made and run by me, b8b7!
-        Give it a picture and it plans the whole build: palette, schematics, and
-        materials. Below: the source, my other Minecraft work, and a tip jar if
-        you enjoyed the project.</p>
+      <p class="note">Free Minecraft map art maker for survival builders, made and run by me, b8b7!
+        Give it a picture and it plans the whole build, from the palette to the
+        schematics and the materials list. Below you will find the source, my
+        other Minecraft work, and a tip jar if you enjoyed the project.</p>
       <div class="row brand-row">
         <a class="brand-chip" href="https://github.com/b8b7lives/arachne" target="_blank" rel="noopener noreferrer" title="the footer offers the source of this exact build"><img class="brand-ico" src="/icons/github.svg" alt="" />source on GitHub</a>
         <a class="brand-chip" href="https://modrinth.com/user/b8b7" target="_blank" rel="noopener noreferrer"><img class="brand-ico" src="/icons/modrinth.svg" alt="" />Modrinth</a>
@@ -65,7 +67,7 @@
     </section>
 
     <main>
-      <section id="source-panel">
+      <section id="source-panel" tabindex="-1">
         <h2>Source</h2>
         <div class="row">
           <input type="file" id="file" accept="image/*" />
@@ -105,7 +107,7 @@
             <input type="number" class="slider-num" id="crop-y-num" min="0" max="100" step="1" value="50" title="type or arrow for fine changes" />
             <span class="field-unit">%</span></label>
             <div class="field-actions">
-              <button id="crop-reset" class="mini" title="back to a centered 1× crop">center</button>
+              <button type="button" id="crop-reset" class="mini" title="back to a centered 1× crop">center</button>
             </div>
           </div>
         </div>
@@ -115,7 +117,7 @@
             <label title="brightness, contrast, saturation and white balance. Changes what Arachne builds from; the picture on disk is never touched">
               <input type="checkbox" id="adjust-on" /> adjust color properties</label>
             <span id="adjust-state" class="chip-adjust" hidden></span>
-            <button id="adjust-reset" class="mini" hidden title="back to no adjustment">neutral</button>
+            <button type="button" id="adjust-reset" class="mini" hidden title="back to no adjustment">neutral</button>
           </div>
           <div class="field-grid" id="adjust-controls" hidden>
           <label class="field" title="lighter or darker overall">
@@ -277,17 +279,17 @@
         </h2>
         <div class="row preview-controls">
           <span class="ctl-name">view</span>
-          <button id="preview-place" class="mini"
+          <button type="button" id="preview-place" class="mini"
             title="sit the preview in the page under Source instead of the scrolling rail">into the page</button>
-          <button id="preview-popout" class="mini" hidden
+          <button type="button" id="preview-popout" class="mini" hidden
             title="open the preview in its own always-on-top window">pop out</button>
-          <button id="preview-toggle" class="mini preview-toggle"
+          <button type="button" id="preview-toggle" class="mini preview-toggle"
             title="collapse the preview panel">hide</button>
         </div>
         <div class="row preview-controls preview-zoom">
-          <button id="zoom-out" class="mini" title="zoom out">−</button>
-          <button id="zoom-fit" class="mini" title="fit the whole map in the panel">fit</button>
-          <button id="zoom-in" class="mini" title="zoom in; the preview grows over the page and keeps following your scroll">+</button>
+          <button type="button" id="zoom-out" class="mini" title="zoom out">−</button>
+          <button type="button" id="zoom-fit" class="mini" title="fit the whole map in the panel">fit</button>
+          <button type="button" id="zoom-in" class="mini" title="zoom in; the preview grows over the page and keeps following your scroll">+</button>
           <label class="mini-label" title="map panel boundaries, named the way the download names files"><input type="checkbox" id="grid-overlay" /> grid</label>
         </div>
         <div id="preview-slot">
@@ -303,17 +305,17 @@
         </div>
         <div id="preview-away" hidden>
           <span class="away-text">The preview is in its own window.</span>
-          <button id="preview-return">bring it back</button>
+          <button type="button" id="preview-return">bring it back</button>
         </div>
         <p class="note" id="preview-hint">drag and drop or paste a picture anywhere on the page</p>
         <div class="panel-utility preview-utility">
           <div class="utility-row">
-            <button id="view-build" class="mini" disabled
+            <button type="button" id="view-build" class="mini" disabled
               title="the whole schematic block by block: real textures, heights, and the exact blocks these settings pick. Nothing downloads and nothing leaves the page">view the build</button>
             <a class="mini jump" href="#export-panel">go to download</a>
           </div>
           <div class="utility-row">
-            <button id="reset-default" class="mini danger"
+            <button type="button" id="reset-default" class="mini danger"
               title="back to the starting loadout, palette, filters and settings. Your saved presets are kept">reset all settings</button>
           </div>
         </div>
@@ -324,16 +326,16 @@
         <div class="row preset-bar">
           <label title="a saved kit: your tools, the conditions you mine in, and the two filters that depend on what you carry">preset
             <select id="loadout-preset"></select></label>
-          <button id="loadout-preset-save" class="mini"
+          <button type="button" id="loadout-preset-save" class="mini"
             title="save the current tools, conditions and tool-dependent filters under a name">save…</button>
-          <button id="loadout-preset-rename" class="mini">rename</button>
-          <button id="loadout-preset-delete" class="mini">delete</button>
+          <button type="button" id="loadout-preset-rename" class="mini">rename</button>
+          <button type="button" id="loadout-preset-delete" class="mini">delete</button>
         </div>
 
         <div class="subsection">
           <div class="sub-head">your tools</div>
           <div id="loadout"></div>
-          <button id="tool-add" class="mini">+ tool</button>
+          <button type="button" id="tool-add" class="mini">+ tool</button>
         </div>
 
         <div class="subsection">
@@ -371,10 +373,10 @@
         <div class="subsection">
           <div class="sub-head">bring a palette in</div>
           <div class="row">
-            <button id="import-open" class="mini">import a palette…</button>
+            <button type="button" id="import-open" class="mini">import a palette…</button>
             <input type="file" id="import-file" accept=".txt,.json,text/plain,application/json" hidden />
             <input type="text" id="import-paste" placeholder="or paste a mapartcraft preset or link" />
-            <button id="import-apply" class="mini">use it</button>
+            <button type="button" id="import-apply" class="mini">use it</button>
           </div>
           <p class="note" id="io-note">Takes a mapartcraft palette: the
           <code>MapartcraftPalette.txt</code> they export, a link containing
@@ -386,9 +388,9 @@
         <div class="subsection">
           <div class="sub-head">take yours out</div>
           <div class="row">
-            <button id="share-link" class="mini"
+            <button type="button" id="share-link" class="mini"
               title="a short link carrying just this palette: the colors you have on and the block you picked for each">copy a link to this palette</button>
-            <button id="export-settings" class="mini"
+            <button type="button" id="export-settings" class="mini"
               title="everything on this page as a file you can keep or send to someone">export my settings</button>
           </div>
           <div class="row" id="share-row" hidden>
@@ -428,10 +430,10 @@
           <div class="row preset-bar">
           <label title="a saved palette: which colors you use and which block you use for each">preset
             <select id="palette-preset"></select></label>
-          <button id="palette-preset-save" class="mini"
+          <button type="button" id="palette-preset-save" class="mini"
             title="save the enabled colors and your per-color block picks under a name">save…</button>
-          <button id="palette-preset-rename" class="mini">rename</button>
-          <button id="palette-preset-delete" class="mini">delete</button>
+          <button type="button" id="palette-preset-rename" class="mini">rename</button>
+          <button type="button" id="palette-preset-delete" class="mini">delete</button>
         </div>
         </div>
 
@@ -457,8 +459,8 @@
           <div class="sub-head">
             <span id="color-meta"></span>
             <span class="spacer"></span>
-            <button id="colors-all" class="mini">enable all</button>
-            <button id="colors-none" class="mini">disable all</button>
+            <button type="button" id="colors-all" class="mini">enable all</button>
+            <button type="button" id="colors-none" class="mini">disable all</button>
           </div>
           <div class="row opt-row">
             <label><span class="field-name">view</span>
@@ -505,6 +507,14 @@
             <input type="number" id="first-map-id" value="0" min="0" step="1" /></label>
         </div>
         <div class="row">
+          <label class="field-inline" title="which schematic file to write. A .litematic carries its own name and shows under it in Litematica's list. A vanilla structure .nbt is the file Litematica and WorldEdit both read"><span class="field-name">schematic</span>
+            <select id="schem-format">
+              <option value="litematic" selected>.litematic (Litematica)</option>
+              <option value="nbt">.nbt (vanilla structure, Litematica and WorldEdit)</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
           <label class="checkbox" title="a plain text file listing every block and how many you need, with a link that reopens this exact palette in Arachne. Keep it with the schematic and the build can be remade or continued later"><input
             type="checkbox" id="sheet-on" checked /> build sheet (materials, and a link back to this palette)</label>
         </div>
@@ -518,9 +528,9 @@
           (1.20.5 and later) or <code>filled_map{map:<span id="mapdat-example-old">0</span>}</code>
           before that. No blocks are placed, so block and teardown settings don't apply.</p>
         <div class="row">
-          <button id="export-download" disabled title="one file, named what you named it: a vanilla structure .nbt that litematica and worldedit both read, zipped together with the rest when there is more than one">download</button>
-          <button id="view-build-export" disabled title="the whole schematic block by block: real textures, heights, and the exact blocks these settings pick. Nothing downloads and nothing leaves the page">view the build</button>
-          <button id="export-share" hidden disabled title="the same file, handed to another app on this device such as Discord, mail or a drive">share</button>
+          <button type="button" id="export-download" disabled title="one file, named what you named it: the schematic in the format picked above, zipped together with the rest when there is more than one">download</button>
+          <button type="button" id="view-build-export" disabled title="the whole schematic block by block: real textures, heights, and the exact blocks these settings pick. Nothing downloads and nothing leaves the page">view the build</button>
+          <button type="button" id="export-share" hidden disabled title="the same file, handed to another app on this device such as Discord, mail or a drive">share</button>
         </div>
         <p class="note" id="export-skipped" hidden></p>
         <p class="note" id="export-mode-note">Every schematic includes a reference row along its
@@ -540,9 +550,11 @@
         rel="noopener noreferrer">GPL-3.0</a> · your image never leaves this browser ·
         your palette and presets are saved in this browser only</p>
       <p class="build">build <code id="build-id" title="click to copy, then quote it when reporting anything">…</code>
-        · <a id="build-source" href="">download this build's source</a></p>
+        · <a id="build-source" href="https://github.com/b8b7lives/arachne">download this build's source</a></p>
       <p class="build">questions and bug reports:
         <a href="mailto:arachne@b8b7.live">arachne@b8b7.live</a></p>
+      <p class="build"><a href="colors/">every map color and the blocks that make it</a>
+        · <a href="changelog/">release notes</a></p>
       <p class="legal">Minecraft block textures and block data are the property of
         Mojang. This project is independent and has no connection to Mojang or
         Microsoft.</p>

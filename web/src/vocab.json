@@ -1,0 +1,56 @@
+{
+  "silk_gated": {
+    "word": "silk",
+    "gloss": "silk-touch-only blocks",
+    "short": "needs silk touch to recover the block itself",
+    "long": "Without Silk Touch, stone gives cobble and glass gives nothing at all. Off: only blocks that drop themselves with any tool."
+  },
+  "gravity": {
+    "word": "gravity",
+    "gloss": "blocks that fall",
+    "short": "falls without support",
+    "long": "Sand and gravel fall when the block beneath them goes missing. Off: kept out of your palette entirely."
+  },
+  "support_mandatory": {
+    "word": "support",
+    "gloss": "blocks needing something beneath",
+    "short": "needs a support block beneath",
+    "long": "Vanilla pops carpets and pressure plates off if nothing is underneath, however you place them, so the schematic adds filler. Off: only blocks that stand on their own."
+  },
+  "unstable": {
+    "word": "unstable",
+    "gloss": "blocks that change over time",
+    "short": "changes over time once placed (grass, ice, unwaxed copper, coral)",
+    "long": "Grass spreads and unwaxed copper oxidizes, so the map drifts away from what you built. Off: only blocks that stay exactly as placed."
+  },
+  "constrained": {
+    "word": "constrained",
+    "gloss": "blocks needing a specific base",
+    "short": "needs a specific substrate/neighbor to stay placed",
+    "long": "Wheat needs farmland and kelp needs water. Plain filler will not hold either. Off: only blocks that sit on anything."
+  },
+  "flammable": {
+    "word": "flammable",
+    "gloss": "blocks that burn",
+    "short": "can burn",
+    "long": "Fire spreads through wool and wood. Matters if the build sits near lava or in the Nether. Off: nothing that burns."
+  },
+  "fluid": {
+    "word": "fluid",
+    "gloss": "fluids",
+    "short": "a fluid, placed with a bucket",
+    "long": "Water is a fluid, not a block you mine; it goes down with a bucket and comes back up with one."
+  },
+  "unrecoverable": {
+    "word": "can't recover",
+    "gloss": "blocks you can't get back",
+    "short": "no way to get this block back with your current tools",
+    "long": "Your loadout has no way to get these back when you tear the map down, so you would be spending them permanently. Off: hide them."
+  },
+  "class_match_only": {
+    "word": "match my loadout",
+    "gloss": "only blocks my tools are made for",
+    "short": "your loadout has no tool of the class this block wants",
+    "long": "For strict palettes such as silk pick only. Hides anything your loadout carries no matching tool for, even where you could still break it slowly. On: a pickaxe-only palette really is pickaxe-only."
+  }
+}

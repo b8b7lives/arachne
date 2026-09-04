@@ -149,9 +149,13 @@ export interface ExportOpts {
   selection: Record<string, number>;
   build_mode: BuildMode;
   version?: string;
+  format?: SchemFormat;
+  name?: string;
+  names?: string[];
 }
 
 export type BuildMode = "one_piece" | "panels" | "continued";
+export type SchemFormat = "litematic" | "nbt";
 
 export interface SupportTotals {
   whole: number;
@@ -208,7 +212,14 @@ export interface ViewModel {
 
 export type WorkerRequest =
   | { id: number; cmd: "init" }
-  | { id: number; cmd: "generate"; rgba: ArrayBuffer; width: number; height: number; opts: GenerateOpts }
+  | {
+      id: number;
+      cmd: "generate";
+      rgba: ArrayBuffer;
+      width: number;
+      height: number;
+      opts: GenerateOpts;
+    }
   | { id: number; cmd: "preview" }
   | { id: number; cmd: "mapdat"; tx: number; tz: number; version?: string }
   | { id: number; cmd: "schem"; opts: ExportOpts }
@@ -218,7 +229,13 @@ export type WorkerRequest =
   | { id: number; cmd: "read_share_code"; code: string }
   | { id: number; cmd: "materials_split" }
   | { id: number; cmd: "support_totals"; opts: ExportOpts }
-  | { id: number; cmd: "rank"; colorId: number; loadout: { tools: OwnedTool[] }; config: SolverConfig }
+  | {
+      id: number;
+      cmd: "rank";
+      colorId: number;
+      loadout: { tools: OwnedTool[] };
+      config: SolverConfig;
+    }
   | { id: number; cmd: "audit"; loadout: { tools: OwnedTool[] }; config: SolverConfig }
   | { id: number; cmd: "marginal"; enabled: number[]; tones: string[] }
   | { id: number; cmd: "height_cap"; opts: HeightCapOpts }

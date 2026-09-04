@@ -70,7 +70,7 @@ pub fn break_ticks(
         _ => 1.0,
     };
     if speed > 1.0 {
-        let eff = tool.unwrap().efficiency;
+        let eff = tool.map_or(0, |t| t.efficiency);
         if eff > 0 {
             speed += (u32::from(eff) * u32::from(eff) + 1) as f32;
         }

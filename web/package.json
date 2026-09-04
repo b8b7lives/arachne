@@ -4,24 +4,33 @@
   "version": "0.1.0",
   "type": "module",
   "license": "GPL-3.0-only",
+  "author": "b8b7",
   "scripts": {
     "wasm": "wasm-pack build ../wasm --target web --out-dir ../web/src/wasm-pkg --no-pack",
     "data": "mkdir -p public && cp ../data/blocks-26.2.json ../data/mapartcraft-presets-26.2.json public/",
-    "predev": "npm run data && (node -e \"process.exit(require('fs').existsSync('src/wasm-pkg')?0:1)\" || npm run wasm)",
+    "predev": "npm run data && npm run pages && (node -e \"process.exit(require('fs').existsSync('src/wasm-pkg')?0:1)\" || npm run wasm)",
     "dev": "vite",
-    "prebuild": "npm run wasm && npm run data && npm run feed",
+    "prebuild": "npm run wasm && npm run data && npm run feed && npm run pages",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "shot": "node tools/shot.js",
     "e2e": "node tools/e2e.js",
     "dither-compare": "node tools/dither-compare.js",
-    "feed": "node tools/feed.js"
+    "feed": "node tools/feed.js",
+    "pages": "node tools/pages.js",
+    "check": "biome ci .",
+    "format": "biome format --write . && biome check --write ."
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.12",
     "typescript": "^7.0.2",
-    "vite": "^8.2.1"
+    "vite": "^8.2.1",
+    "wasm-pack": "0.15.0"
   },
   "engines": {
     "node": ">=22"
+  },
+  "allowScripts": {
+    "wasm-pack@0.15.0": true
   }
 }

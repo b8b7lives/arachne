@@ -1,30 +1,12 @@
-import { readFileSync, writeFileSync } from "fs";
+import { writeFileSync } from "node:fs";
+import { esc, fail, readJson, SITE } from "./lib.js";
 
 const CHANGELOG = process.env.FEED_CHANGELOG || "public/changelog.json";
 const OUT = process.env.FEED_OUT || "public/feed.xml";
-const SITE = "https://b8b7.live/arachne/";
-const SELF = "https://b8b7.live/arachne/feed.xml";
+const SELF = `${SITE}feed.xml`;
 
-const esc = (s) =>
-  String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-
-const fail = (msg) => {
-  console.error(`feed.js: ${msg}`);
-  process.exit(1);
-};
-
-let data;
-try {
-  data = JSON.parse(readFileSync(CHANGELOG, "utf8"));
-} catch (e) {
-  fail(`cannot read ${CHANGELOG}: ${e.message}`);
-}
-
-const builds = data && data.builds;
+const data = readJson(CHANGELOG);
+const builds = data?.builds;
 if (!Array.isArray(builds) || builds.length === 0)
   fail("changelog has no builds array or it is empty");
 
@@ -34,13 +16,19 @@ for (const b of builds) {
     fail(`build id missing or not a slug: ${JSON.stringify(b.id)}`);
   if (seen.has(b.id)) fail(`duplicate build id: ${b.id}`);
   seen.add(b.id);
-  if (typeof b.date !== "string" || Number.isNaN(Date.parse(b.date)) ||
-      !/^\d{4}-\d{2}-\d{2}$/.test(b.date))
+  if (
+    typeof b.date !== "string" ||
+    Number.isNaN(Date.parse(b.date)) ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(b.date)
+  )
     fail(`build ${b.id}: date missing or not YYYY-MM-DD`);
   if (typeof b.line !== "string" || b.line.trim() === "")
     fail(`build ${b.id}: line missing or empty`);
-  if (!Array.isArray(b.notes) || b.notes.length === 0 ||
-      b.notes.some((n) => typeof n !== "string" || n.trim() === ""))
+  if (
+    !Array.isArray(b.notes) ||
+    b.notes.length === 0 ||
+    b.notes.some((n) => typeof n !== "string" || n.trim() === "")
+  )
     fail(`build ${b.id}: notes missing, empty, or non-string`);
 }
 
@@ -51,10 +39,7 @@ const newest = builds
 
 const entries = builds
   .map((b) => {
-    const html =
-      `<p>${esc(b.line)}</p><ul>` +
-      b.notes.map((n) => `<li>${esc(n)}</li>`).join("") +
-      `</ul>`;
+    const html = `<p>${esc(b.line)}</p><ul>${b.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>`;
     return [
       `  <entry>`,
       `    <title>${esc(b.line)}</title>`,
@@ -71,7 +56,7 @@ const xml = [
   `<?xml version="1.0" encoding="utf-8"?>`,
   `<feed xmlns="http://www.w3.org/2005/Atom">`,
   `  <title>Arachne release notes</title>`,
-  `  <subtitle>What changed in each published build of Arachne, the Minecraft map art generator.</subtitle>`,
+  `  <subtitle>What changed in each published build of Arachne, the Minecraft map art maker.</subtitle>`,
   `  <id>${SITE}</id>`,
   `  <link href="${SITE}"/>`,
   `  <link rel="self" href="${SELF}"/>`,

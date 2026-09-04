@@ -188,16 +188,21 @@ pub fn encode(data: &BlockData, palette: &SharedPalette) -> Result<String, Strin
 
     let at = match &palette.version {
         None => 0,
-        Some(v) => data
-            .version_index(v)
-            .ok_or_else(|| format!("{v} is not a release this data knows"))?
-            + 1,
+        Some(v) => {
+            data.version_index(v)
+                .ok_or_else(|| format!("{v} is not a release this data knows"))?
+                + 1
+        }
     };
     if at >= ALPHABET.len() {
         return Err("too many releases to carry in a share code".to_string());
     }
     let stamp = ALPHABET[at] as char;
-    let body = format!("{VERSION}{stamp}{}{}", fp_string(&slots), to_base64url(&value));
+    let body = format!(
+        "{VERSION}{stamp}{}{}",
+        fp_string(&slots),
+        to_base64url(&value)
+    );
     Ok(format!("{body}{}", checksum(&body)))
 }
 
@@ -289,7 +294,11 @@ mod tests {
             enabled.push(slot.color_id);
             picks.insert(slot.color_id.to_string(), slot.keys[0].clone());
         }
-        SharedPalette { enabled, picks, version: None }
+        SharedPalette {
+            enabled,
+            picks,
+            version: None,
+        }
     }
 
     #[test]
@@ -430,8 +439,12 @@ mod tests {
     #[test]
     fn the_release_rides_along_and_survives_the_trip() {
         let d = data();
-        for want in [None, Some("1.13".to_string()), Some("1.16".to_string()),
-                     Some("26.2".to_string())] {
+        for want in [
+            None,
+            Some("1.13".to_string()),
+            Some("1.16".to_string()),
+            Some("26.2".to_string()),
+        ] {
             let p = SharedPalette {
                 version: want.clone(),
                 ..full(&d)
