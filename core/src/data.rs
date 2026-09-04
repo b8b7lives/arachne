@@ -124,11 +124,17 @@ pub struct CandidateBlock {
     pub flammable: bool,
     pub unstable: bool,
     pub constrained: bool,
-    #[serde(default)]
-    pub fluid: bool,
 }
 
 impl BlockData {
+    /// Map colors at least one offered block renders. The game's table has
+    /// colors no block makes (water's, since fluids are not offered).
+    pub fn buildable_colors(&self) -> impl Iterator<Item = &MapColor> {
+        self.colors
+            .iter()
+            .filter(|c| self.blocks.iter().any(|b| b.color_id == c.id))
+    }
+
     /// Position of a release in the supported list. Comparing these is how
     /// availability is decided; the strings are only for display.
     pub fn version_index(&self, version: &str) -> Option<usize> {
@@ -179,20 +185,20 @@ mod tests {
         let d = load();
         assert_eq!(d.meta.data_version, 4903);
         assert_eq!(d.colors.len(), 61);
-        assert_eq!(d.blocks.len(), 618);
+        assert_eq!(d.blocks.len(), 617);
     }
 
     #[test]
-    fn every_color_keeps_a_candidate() {
+    fn every_color_but_water_keeps_a_candidate() {
         let d = load();
-        for c in &d.colors {
-            assert!(
-                d.blocks.iter().any(|b| b.color_id == c.id),
-                "color {} ({}) has no candidate",
-                c.id,
-                c.name
-            );
-        }
+        let empty: Vec<u8> = d
+            .colors
+            .iter()
+            .filter(|c| !d.blocks.iter().any(|b| b.color_id == c.id))
+            .map(|c| c.id)
+            .collect();
+        assert_eq!(empty, vec![12], "only water's color has no block");
+        assert_eq!(d.buildable_colors().count(), 60);
     }
 
     #[test]
@@ -238,19 +244,6 @@ mod tests {
             ] {
                 assert!(seen.insert(t), "duplicate tone RGB {t:?} (color {})", c.id);
             }
-        }
-    }
-
-    #[test]
-    fn every_color_has_a_candidate() {
-        let d = load();
-        for c in &d.colors {
-            assert!(
-                d.candidates_for(c.id).next().is_some(),
-                "color {} ({}) has no candidate blocks",
-                c.id,
-                c.name
-            );
         }
     }
 
@@ -303,6 +296,7 @@ mod tests {
             "lantern",
             "grindstone",
             "anvil",
+            "water",
         ] {
             assert!(
                 !d.blocks.iter().any(|b| b.block_id == gone),

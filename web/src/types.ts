@@ -30,7 +30,6 @@ export interface CandidateBlock {
   flammable: boolean;
   unstable: boolean;
   constrained: boolean;
-  fluid: boolean;
 }
 
 export interface OwnedTool {

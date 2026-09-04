@@ -112,7 +112,8 @@ Releases.
 
 ## Community, bugs and contributions
 
-The community Discord lives at
+The FAQ lives at <https://b8b7.live/arachne/faq/>. The
+community Discord lives at
 [b8b7.live/discord](https://b8b7.live/discord): help with a build
 plan, finished map art, and release notes for every published build.
 

@@ -74,6 +74,25 @@ header h1 {
   margin-left: auto;
   color: var(--dim);
 }
+.page-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.page-links a {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.05rem 0.6rem;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  font-size: var(--t-small);
+  color: var(--dim);
+  text-decoration: none;
+}
+.page-links a:hover {
+  color: var(--accent);
+  border-color: var(--edge-control);
+}
 .skip-link {
   position: absolute;
   top: 0.6rem;
@@ -1673,7 +1692,8 @@ ul.note li {
     min-height: 44px;
   }
   button.mini,
-  .brand-chip {
+  .brand-chip,
+  .page-links a {
     min-height: 40px;
     padding-top: 0.3rem;
     padding-bottom: 0.3rem;

@@ -68,8 +68,6 @@ unobfuscated jar's class files (constant pools and bytecode; `javap -c
 - Fixed colors from the same class: spruce leaves `#619961`, birch
   leaves `#80a755`, lily pad `#208030` (in-world value), attached melon
   and pumpkin stems `#e0c71c`.
-- Water and bubble column: the plains biome `water_color`, `#3f76e4`
-  (`data/minecraft/worldgen/biome/plains.json`).
 - Untinted, so absent from the table on purpose: cherry, pale oak,
   azalea and flowering azalea leaves ship pre-colored textures.
 - Omitted because the tint depends on state and the block never

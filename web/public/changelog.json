@@ -1,6 +1,16 @@
 {
   "builds": [
     {
+      "id": "2026-09-04-faq-header-water",
+      "date": "2026-09-04",
+      "line": "a questions and answers page, page links in the header, and water leaves the palette",
+      "notes": [
+        "A new page at /arachne/faq/ answers the questions people ask before and after a first build, from how a map shades its blocks to which file to download. The header of the app now links it along with the map colors and these release notes, so the pages are no longer only in the footer.",
+        "Water is no longer offered. The game shades water by its depth, which Arachne did not model, so no plan it made for water was right in game, and no one builds map art with it. Its map color leaves the colors page as well, which now lists the sixty colors Arachne builds with.",
+        "The survival default palette preset was every color minus water and is now the same as every color, so it is gone."
+      ]
+    },
+    {
       "id": "2026-09-03-litematic-colors-changelog",
       "date": "2026-09-03",
       "line": "schematics download as .litematic, every map color has a page, cherry leaves are pink again, and these notes have their own address",

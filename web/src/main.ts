@@ -382,11 +382,6 @@ function blockFilterDefaults(): Record<string, boolean> {
   return pickToggles(BLOCK_FILTER_KEYS, defaultToggles());
 }
 
-function fluidOnly(cid: number): boolean {
-  const cands = blocks.filter((b) => b.color_id === cid);
-  return cands.length > 0 && cands.every((b) => b.fluid);
-}
-
 const B8B7_PICKS: Record<string, string> = {
   "1": "slime_block",
   "2": "sandstone",
@@ -476,14 +471,6 @@ function builtinPalettes(): PalettePreset[] {
       name: "every color",
       builtin: true,
       enabled: colors.map((c) => c.id),
-      picks: {},
-      toggles: blockFilterDefaults(),
-    },
-    {
-      id: "builtin:survival",
-      name: "survival default",
-      builtin: true,
-      enabled: colors.filter((c) => !fluidOnly(c.id)).map((c) => c.id),
       picks: {},
       toggles: blockFilterDefaults(),
     },
@@ -1962,7 +1949,7 @@ const COLUMNS: Column[] = [
     label: "Color",
     width: "15rem",
     sortable: true,
-    help: "the map color. A picture can only use these 61",
+    help: "the map color. A picture can only use these",
   },
   {
     key: "block",
@@ -2302,7 +2289,7 @@ function fillerEntry(id: string): { b: CandidateBlock; index: number } | null {
 }
 
 function fillerLegal(b: CandidateBlock): boolean {
-  if (b.gravity || b.support_mandatory || b.fluid || b.constrained) return false;
+  if (b.gravity || b.support_mandatory || b.constrained) return false;
   const v = versionIndex(b.since);
   return v === -1 || v <= versionIndex(gameVersion());
 }
@@ -2779,7 +2766,7 @@ function renderAuditSummary(a: AuditDto) {
       specific build.</p>
     <dl>
       <dt>tools it would need</dt><dd>${tc || "none"}</dd>
-      <dt>breaks instantly</dt><dd>${s.instamine_colors} of 61 colors</dd>
+      <dt>breaks instantly</dt><dd>${s.instamine_colors} of ${colors.length} colors</dd>
       <dt>needs silk touch</dt><dd>${nColors(s.silk_gated_colors)}${
         s.silk_penalty_ticks ? `, ${fmtDuration(s.silk_penalty_ticks)} slower per full set` : ""
       }</dd>
@@ -3969,7 +3956,7 @@ async function boot() {
       if (COLLAPSIBLE.includes(id)) collapsedSections.add(id);
     }
   } else {
-    for (const c of colors) if (!fluidOnly(c.id)) enabled.add(c.id);
+    for (const c of colors) enabled.add(c.id);
   }
 
   wireCollapsibles();

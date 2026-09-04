@@ -211,6 +211,48 @@ table.blocks td:first-child {
   margin: 0.3rem 0;
 }
 
+.qlist {
+  margin: 1rem 0 0.5rem;
+  padding-left: 1.4rem;
+  font-size: var(--t-small);
+}
+.qlist li {
+  margin: 0.15rem 0;
+}
+.q {
+  border-top: 1px solid var(--edge);
+  padding: 1rem 0 0.4rem;
+}
+.q h2 a {
+  color: var(--ink);
+  text-decoration: none;
+}
+.q h2 a:hover {
+  color: var(--accent);
+}
+.q p {
+  margin: 0.4rem 0;
+  max-width: 46rem;
+}
+.ctl {
+  color: var(--ink);
+  font-weight: 700;
+}
+.copy-build {
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  color: var(--dim);
+  background: none;
+  border: 1px solid var(--edge-control);
+  border-radius: 4px;
+  padding: 0 0.4em;
+  cursor: pointer;
+}
+.copy-build:hover {
+  color: var(--ink);
+}
+
 .site-foot {
   color: var(--dim);
   border-top: 1px solid var(--edge);

@@ -60,7 +60,7 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
 
   const ws1 = await s.evaluate(WORKSPACE);
   check("workspace written", ws1 !== null);
-  check("enabled colors persisted", ws1.enabled.length === 59, `${ws1.enabled.length} of 61`);
+  check("enabled colors persisted", ws1.enabled.length === 59, `${ws1.enabled.length} of 60`);
   check(
     "block pick persisted by identity",
     Object.values(ws1.picks).length === 1 && /^[a-z_]+(\[.+\])?$/.test(Object.values(ws1.picks)[0]),
@@ -151,7 +151,7 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   })()`);
   check(
     "dropped color still dropped",
-    after.offRows === 2 && after.meta === "59 of 61 colors, 2 turned off",
+    after.offRows === 1 && after.meta === "59 of 60 colors, 1 turned off",
     after.meta,
   );
   check(
@@ -273,7 +273,7 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   }))()`);
   check(
     "reset restores defaults",
-    reset.meta === "all 61 colors in play" && reset.haste === "0" && reset.nick === "",
+    reset.meta === "all 60 colors in play" && reset.haste === "0" && reset.nick === "",
     JSON.stringify(reset),
   );
   check("reset keeps saved presets", reset.presets === 1);
@@ -1019,7 +1019,7 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   check("a mapartcraft link imports", /Imported 59 colors/.test(imported.status), imported.status);
   check(
     "colors the palette leaves out are switched off",
-    imported.meta === "59 of 61 colors, 2 turned off" && imported.enabled === 59,
+    imported.meta === "59 of 60 colors, 1 turned off" && imported.enabled === 59,
     imported.meta,
   );
   check("every color keeps the block they chose", imported.picks === 59, `${imported.picks} picks`);
@@ -1063,8 +1063,8 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   check("settings export is a named file", /-settings\.json$/.test(roundTrip.name), roundTrip.name);
   check(
     "settings round-trip restores the palette",
-    roundTrip.emptied === "0 of 61 colors, 61 turned off" &&
-      roundTrip.restored === "59 of 61 colors, 2 turned off" &&
+    roundTrip.emptied === "0 of 60 colors, 60 turned off" &&
+      roundTrip.restored === "59 of 60 colors, 1 turned off" &&
       roundTrip.picks === 59,
     `${roundTrip.emptied} -> ${roundTrip.restored}, ${roundTrip.picks} picks`,
   );
@@ -1224,7 +1224,7 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   );
   check(
     "the palette is never edited behind the artist",
-    filler.stepped.palette === "59 of 61 colors, 2 turned off",
+    filler.stepped.palette === "59 of 60 colors, 1 turned off",
     filler.stepped.palette,
   );
   check("the notice clears once filler is on", filler.withFiller === true);
@@ -1406,7 +1406,7 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   );
   check(
     "the app still renders after a hostile import",
-    hostile.rows === 61,
+    hostile.rows === 60,
     `${hostile.rows} rows`,
   );
   check("an import can be undone", hostile.undo.includes("undo"), JSON.stringify(hostile.undo));

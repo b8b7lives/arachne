@@ -136,6 +136,11 @@
    "reason": "multiblock"
   },
   {
+   "block_id": "lava",
+   "default_color_id": 4,
+   "reason": "no_item"
+  },
+  {
    "block_id": "light_blue_bed",
    "default_color_id": 17,
    "reason": "multiblock"
@@ -269,6 +274,11 @@
    "block_id": "warped_door",
    "default_color_id": 56,
    "reason": "multiblock"
+  },
+  {
+   "block_id": "water",
+   "default_color_id": 12,
+   "reason": "no_item"
   },
   {
    "block_id": "waxed_copper_door",
@@ -1273,11 +1283,6 @@
   {
    "block_id": "large_amethyst_bud",
    "default_color_id": 24,
-   "reason": "not_mapart"
-  },
-  {
-   "block_id": "lava",
-   "default_color_id": 4,
    "reason": "not_mapart"
   },
   {

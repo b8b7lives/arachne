@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { esc, fail, OG_ALT, OG_IMAGE, readJson, SITE, THEME_COLOR } from "./lib.js";
 
@@ -6,6 +7,7 @@ const VERSIONS = process.env.PAGES_VERSIONS || "../data/versions.json";
 const ATLAS = process.env.PAGES_ATLAS || "public/atlas.json";
 const CHANGELOG = process.env.PAGES_CHANGELOG || "public/changelog.json";
 const VOCAB = process.env.PAGES_VOCAB || "src/vocab.json";
+const FAQ = process.env.PAGES_FAQ || "src/faq.json";
 const OUT = process.env.PAGES_OUT || ".";
 const TILE_PX = 32;
 
@@ -17,17 +19,72 @@ const slug = (s) =>
     .replace(/(^-|-$)/g, "");
 
 const vocab = readJson(VOCAB);
-const FLAG_WORDS = [
-  "support_mandatory",
-  "gravity",
-  "unstable",
-  "constrained",
-  "flammable",
-  "fluid",
-].map((k) => {
-  if (!vocab[k]) fail(`vocab.json has no entry for ${k}`);
-  return [k, vocab[k].word, vocab[k].short];
-});
+const FLAG_WORDS = ["support_mandatory", "gravity", "unstable", "constrained", "flammable"].map(
+  (k) => {
+    if (!vocab[k]) fail(`vocab.json has no entry for ${k}`);
+    return [k, vocab[k].word, vocab[k].short];
+  },
+);
+
+const LINK_PREFIXES = [
+  "https://b8b7.live/",
+  "https://github.com/b8b7lives",
+  "https://modrinth.com/",
+  "https://ko-fi.com/b8b7live",
+  "https://rebane2001.com/mapartcraft/",
+  "https://enginehub.org/worldedit",
+  "mailto:arachne@b8b7.live",
+];
+
+function linkOk(href) {
+  if (/^(\.\.\/|#)/.test(href)) return true;
+  return LINK_PREFIXES.some((p) => href.startsWith(p));
+}
+
+function buildStamp(dataVersion) {
+  let id = "unknown";
+  try {
+    const sha = execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim();
+    const dirty = execSync("git status --porcelain", { encoding: "utf8" }).trim() !== "";
+    id = dirty ? `${sha}+local` : sha;
+  } catch {}
+  return `${id} · ${new Date().toISOString().slice(0, 10)} · data ${dataVersion}`;
+}
+
+const MARK = /\{\{build id\}\}|\[([^\]]+)\]\(([^)]+)\)|\{([^}]+)\}/g;
+
+function plain(s) {
+  return s.replace(MARK, (m, text, _href, ctl) =>
+    m === "{{build id}}" ? "build id" : (text ?? ctl),
+  );
+}
+
+function inline(s, stamp) {
+  const out = [];
+  let last = 0;
+  for (const m of s.matchAll(MARK)) {
+    out.push(esc(s.slice(last, m.index)));
+    if (m[0] === "{{build id}}") {
+      out.push(
+        `<button type="button" class="copy-build" data-copy="${esc(stamp)}" title="click to copy">${esc(stamp.split(" · ")[0])}</button>`,
+      );
+    } else if (m[1] !== undefined) {
+      if (!linkOk(m[2])) fail(`faq: link not allowed: ${m[2]}`);
+      const blank = /^https?:/.test(m[2]) ? ` target="_blank" rel="noopener noreferrer"` : "";
+      out.push(`<a href="${esc(m[2])}"${blank}>${esc(m[1])}</a>`);
+    } else {
+      out.push(`<span class="ctl">${esc(m[3])}</span>`);
+    }
+    last = m.index + m[0].length;
+  }
+  out.push(esc(s.slice(last)));
+  return out.join("");
+}
+
+function copyCheck(where, text) {
+  const t = plain(text);
+  if (/[:;–—]| - /.test(t)) fail(`${where}: colon, semicolon or dash in copy: ${t.slice(0, 60)}`);
+}
 
 const TIER_WORD = {
   stone: "stone or better",
@@ -88,7 +145,7 @@ function shell({ path, title, description, body, ld, extraHead = "" }) {
     `    <header class="site-head">`,
     `      <a class="site-name" href="../">Arachne</a>`,
     `      <span class="site-tag">Minecraft map art maker</span>`,
-    `      <nav class="site-nav"><a href="../colors/">map colors</a><a href="../changelog/">release notes</a></nav>`,
+    `      <nav class="site-nav"><a href="../faq/">FAQ</a><a href="../colors/">map colors</a><a href="../changelog/">release notes</a></nav>`,
     `    </header>`,
     `    <main class="page-main">`,
     body,
@@ -124,8 +181,10 @@ function breadcrumb(name, path) {
 }
 
 function colorsPage(data, versions, atlas) {
-  const colors = [...data.colors].sort((a, b) => a.id - b.id);
   const blocks = data.blocks;
+  const colors = data.colors
+    .filter((c) => blocks.some((b) => b.color_id === c.id))
+    .sort((a, b) => a.id - b.id);
   const latest = Object.entries(versions.data_versions).find(
     ([, dv]) => dv === data.meta.data_version,
   )?.[0];
@@ -136,7 +195,6 @@ function colorsPage(data, versions, atlas) {
     if (!byColor.has(b.color_id)) byColor.set(b.color_id, []);
     byColor.get(b.color_id).push({ ...b, tile: i });
   });
-  for (const c of colors) if (!byColor.has(c.id)) fail(`color ${c.id} has no blocks`);
   const ids = new Set();
   const anchors = colors.map((c) => {
     const a = slug(c.name);
@@ -146,7 +204,7 @@ function colorsPage(data, versions, atlas) {
   });
 
   const title = `Minecraft map art colors and blocks · Arachne`;
-  const description = `All ${colors.length} Minecraft map colors with their three staircase shades and every block that renders each one, ${floor} to ${latest}, read from the game itself.`;
+  const description = `The ${colors.length} Minecraft map colors Arachne builds with, each with its three staircase shades and every block that renders it, ${floor} to ${latest}, read from the game itself.`;
 
   const toc = colors
     .map(
@@ -199,9 +257,9 @@ function colorsPage(data, versions, atlas) {
 
   const body = [
     `<h1>Minecraft map art colors and blocks</h1>`,
-    `<p class="lede">A filled map paints every block as one of ${colors.length} colors. Each one below is listed with its three buildable shades and every block that renders it, from Minecraft ${esc(floor)} to ${esc(latest)}. The block list, colors and flags are read from the game's own files. The color names are Arachne's, since the game only numbers them.</p>`,
+    `<p class="lede">A filled map paints every block as one of a fixed set of map colors. The ${colors.length} Arachne builds with are listed below, each with its three buildable shades and every block that renders it, from Minecraft ${esc(floor)} to ${esc(latest)}. The block list, colors and flags are read from the game's own files. The color names are Arachne's, since the game only numbers them.</p>`,
     `<p>On a staircased map a block's shade depends on its height against the block directly north of it. Higher reads light, level reads normal, and lower reads dark. A flat map only ever shows the normal shade. That is why the first row of a map art build needs a reference row along its north edge, or the top row renders a shade too bright. A fourth, darker shade exists in the game's color table, but no arrangement of blocks produces it. The game uses it only on explorer map previews, so for a build it appears only in map data written directly.</p>`,
-    `<p>Every block listed under a color renders the exact same pixel. The choice between them is about what you mine and haul, which is what <a href="../">Arachne</a> prices for your tools. Blocks that need a special ground or a fluid to exist, and blocks that make no sense as map art, are left out on purpose.</p>`,
+    `<p>Every block listed under a color renders the exact same pixel. The choice between them is about what you mine and haul, which is what <a href="../">Arachne</a> prices for your tools. Fluids, blocks that need a special ground to exist, and blocks that make no sense as map art are left out on purpose.</p>`,
     `<nav class="toc" aria-label="colors">${toc}</nav>`,
     sections.join("\n"),
   ].join("\n");
@@ -261,10 +319,63 @@ function changelogPage(changelog) {
   return { html, entries: sorted.length };
 }
 
+function faqPage(faq, stamp) {
+  const items = faq.items;
+  if (!Array.isArray(items) || items.length === 0) fail("faq has no items");
+  const ids = new Set();
+  for (const it of items) {
+    if (!/^[a-z][a-z0-9-]*$/.test(it.id || "")) fail(`faq: bad id ${JSON.stringify(it.id)}`);
+    if (ids.has(it.id)) fail(`faq: duplicate id ${it.id}`);
+    ids.add(it.id);
+    if (typeof it.q !== "string" || !/\?$/.test(it.q))
+      fail(`faq ${it.id}: the question must end with a question mark`);
+    if (!Array.isArray(it.a) || it.a.length === 0) fail(`faq ${it.id}: no answer`);
+    copyCheck(`faq ${it.id} question`, it.q);
+    for (const p of it.a) {
+      if (typeof p !== "string" || !/\.$/.test(plain(p)))
+        fail(`faq ${it.id}: every paragraph ends with a period`);
+      copyCheck(`faq ${it.id}`, p);
+    }
+  }
+  for (const it of items) {
+    for (const p of it.a) {
+      for (const m of p.matchAll(/\]\(#([a-z0-9-]+)\)/g)) {
+        if (!ids.has(m[1])) fail(`faq ${it.id}: link to unknown anchor ${m[1]}`);
+      }
+    }
+  }
+  const title = `Minecraft map art questions and answers · Arachne`;
+  const description = `Plain answers to the questions people ask about Minecraft map art and about Arachne, from how a map shades its blocks to which file to download.`;
+  const index = `<ol class="qlist">${items.map((it) => `<li><a href="#${it.id}">${esc(it.q)}</a></li>`).join("")}</ol>`;
+  const sections = items.map((it) =>
+    [
+      `<section class="q" id="${it.id}">`,
+      `<h2><a href="#${it.id}">${esc(it.q)}</a></h2>`,
+      ...it.a.map((p) => `<p>${inline(p, stamp)}</p>`),
+      `</section>`,
+    ].join("\n"),
+  );
+  const body = [
+    `<h1>Minecraft map art questions and answers</h1>`,
+    `<p class="lede">What people ask before and after a first build.</p>`,
+    index,
+    sections.join("\n"),
+  ].join("\n");
+  const html = shell({
+    path: "faq/",
+    title,
+    description,
+    body,
+    ld: breadcrumb("Minecraft map art questions and answers", "faq/"),
+    extraHead: `    <script type="module" src="/src/faq.ts"></script>`,
+  });
+  return { html, questions: items.length };
+}
+
 function check(name, html) {
   if (html.includes("<!--")) fail(`${name}: comment in served output`);
   if (/\sstyle="/.test(html)) fail(`${name}: inline style in served output`);
-  if (/<script(?![^>]*application\/ld\+json)/.test(html))
+  if (/<script(?![^>]*(application\/ld\+json|\ssrc="))/.test(html))
     fail(`${name}: inline script in served output`);
   if (/[–—]/.test(html)) fail(`${name}: en or em dash in visitor copy`);
 }
@@ -278,14 +389,18 @@ if (atlas.count !== data.blocks.length)
 
 const colors = colorsPage(data, versions, atlas);
 const notes = changelogPage(changelog);
+const faq = faqPage(readJson(FAQ), buildStamp(data.meta.data_version));
 check("colors", colors.html);
 check("changelog", notes.html);
+check("faq", faq.html);
 
 mkdirSync(`${OUT}/colors`, { recursive: true });
 mkdirSync(`${OUT}/changelog`, { recursive: true });
+mkdirSync(`${OUT}/faq`, { recursive: true });
 writeFileSync(`${OUT}/colors/index.html`, colors.html);
 writeFileSync(`${OUT}/colors/colors.css`, colors.css);
 writeFileSync(`${OUT}/changelog/index.html`, notes.html);
+writeFileSync(`${OUT}/faq/index.html`, faq.html);
 console.log(
-  `pages.js: colors (${colors.colors} colors, ${colors.blocks} blocks), changelog (${notes.entries} entries)`,
+  `pages.js: colors (${colors.colors} colors, ${colors.blocks} blocks), changelog (${notes.entries} entries), faq (${faq.questions} questions)`,
 );

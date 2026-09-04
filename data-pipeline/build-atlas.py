@@ -24,7 +24,6 @@ ATLAS_COLS = 32
 
 GRASS_DEFAULT = (124, 189, 107)
 FOLIAGE_DEFAULT = (72, 181, 24)
-WATER_DEFAULT = (63, 118, 228)
 TINTS = {
     **dict.fromkeys(
         ("grass_block", "short_grass", "tall_grass", "fern", "large_fern",
@@ -39,8 +38,6 @@ TINTS = {
     "lily_pad": (32, 128, 48),
     "attached_melon_stem": (224, 199, 28),
     "attached_pumpkin_stem": (224, 199, 28),
-    "water": WATER_DEFAULT,
-    "bubble_column": WATER_DEFAULT,
 }
 
 def default_tint(bid):

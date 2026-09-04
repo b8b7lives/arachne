@@ -297,7 +297,7 @@ impl Session {
     }
 
     pub fn colors(&self) -> Result<String, String> {
-        json(&self.data.colors)
+        json(&self.data.buildable_colors().collect::<Vec<_>>())
     }
 
     pub fn blocks(&self) -> Result<String, String> {
@@ -1094,8 +1094,8 @@ mod tests {
         let s = session();
         let a: serde_json::Value =
             serde_json::from_str(&s.audit(silk_kit_json(), r#"{}"#).unwrap()).unwrap();
-        assert_eq!(a["colors"].as_array().unwrap().len(), 61);
-        assert_eq!(a["summary"]["no_recovery_colors"], 1);
+        assert_eq!(a["colors"].as_array().unwrap().len(), 60);
+        assert_eq!(a["summary"]["no_recovery_colors"], 0);
         let top = &a["colors"][0]["ranked"][0];
         assert!(top["block_index"].is_number());
         assert!(top["recovery_ticks"].is_number());

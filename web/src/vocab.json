@@ -35,12 +35,6 @@
     "short": "can burn",
     "long": "Fire spreads through wool and wood. Matters if the build sits near lava or in the Nether. Off: nothing that burns."
   },
-  "fluid": {
-    "word": "fluid",
-    "gloss": "fluids",
-    "short": "a fluid, placed with a bucket",
-    "long": "Water is a fluid, not a block you mine; it goes down with a bucket and comes back up with one."
-  },
   "unrecoverable": {
     "word": "can't recover",
     "gloss": "blocks you can't get back",

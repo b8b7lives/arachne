@@ -32,7 +32,7 @@ echo "audit: ok"
 echo "tsc: ok"
 
 (cd "$ROOT/web" && node tools/feed.js && node tools/pages.js) >"$LOG" 2>&1 || fail pages
-echo "pages: $(grep -o 'colors ([^)]*)' "$LOG"), $(grep -o 'changelog ([^)]*)' "$LOG")"
+echo "pages: $(grep -o 'colors ([^)]*)' "$LOG"), $(grep -o 'changelog ([^)]*)' "$LOG"), $(grep -o 'faq ([^)]*)' "$LOG")"
 
 (cd "$ROOT/web" && node tools/e2e.js) >"$LOG" 2>&1 || fail e2e
 echo "e2e: $(grep -c '^ok ' "$LOG") checks ok"

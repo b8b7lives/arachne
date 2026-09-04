@@ -68,8 +68,6 @@ def not_mapart(bid):
 def mapart_verdict(bid, row):
     if not_mapart(bid):
         return "not_mapart"
-    if row.get("class") == "LiquidBlock":
-        return None
     if row.get("fluid", "minecraft:empty") != "minecraft:empty":
         return "needs_fluid"
     if row.get("on_stone") == "false":
@@ -325,7 +323,7 @@ def main():
         return row["rt_min"] == "true" or row["class"].startswith("Coral")
 
     def curation_verdict(row):
-        if row["item"] != "true" and row["class"] != "LiquidBlock":
+        if row["item"] != "true":
             return "no_item"
         if row["multiblock"] == "true":
             return "multiblock"
@@ -395,7 +393,6 @@ def main():
                 "flammable": int(row["burn"]) > 0,
                 "unstable": unstable_of(row),
                 "constrained": row["constrained"] == "true",
-                "fluid": row.get("class") == "LiquidBlock",
             })
 
     kept = []

@@ -70,7 +70,7 @@ pub struct PaletteAudit<'a> {
 pub fn audit<'a>(data: &'a BlockData, loadout: &Loadout, cfg: &SolverConfig) -> PaletteAudit<'a> {
     let mut colors = Vec::with_capacity(data.colors.len());
     let mut s = AuditSummary::default();
-    for c in &data.colors {
+    for c in data.buildable_colors() {
         let ranked = rank_color(data, c.id, loadout, cfg);
         match ranked.first() {
             None => s.empty_colors += 1,
@@ -134,40 +134,26 @@ mod tests {
     fn audit_covers_all_colors() {
         let d = data();
         let a = audit(&d, &full_kit(true), &SolverConfig::default());
-        assert_eq!(a.colors.len(), 61);
+        assert_eq!(a.colors.len(), 60);
+        assert!(a.colors.iter().all(|c| c.color_id != 12));
         assert_eq!(a.summary.empty_colors, 0);
         assert!(a.colors.iter().all(|c| !c.ranked.is_empty()));
         let class_total: u32 = a.summary.tool_class.values().sum();
-        assert_eq!(class_total, 61);
+        assert_eq!(class_total, 60);
     }
 
     #[test]
     fn silk_kit_recovers_every_color() {
         let d = data();
         let a = audit(&d, &full_kit(true), &SolverConfig::default());
-        assert_eq!(a.summary.no_recovery_colors, 1);
-        let water = a.colors.iter().find(|c| c.color_id == 12).unwrap();
-        let top = water.top().unwrap();
-        assert!(top.block.fluid && top.block.block_id == "water");
-        assert!(top.recovery_ticks().is_none());
+        assert_eq!(a.summary.no_recovery_colors, 0);
+        assert!(
+            a.colors
+                .iter()
+                .all(|c| c.top().unwrap().recovery_ticks().is_some())
+        );
         assert_eq!(a.summary.silk_penalty_ticks, 0);
         assert!(a.summary.instamine_colors > 0);
-    }
-
-    #[test]
-    fn constrained_toggle_reverts_water_to_unpriceable() {
-        let d = data();
-        let cfg = SolverConfig {
-            toggles: crate::solver::Toggles {
-                constrained: false,
-                ..Default::default()
-            },
-            ..SolverConfig::default()
-        };
-        let a = audit(&d, &full_kit(true), &cfg);
-        let water = a.colors.iter().find(|c| c.color_id == 12).unwrap();
-        assert_eq!(water.top().unwrap().block.block_id, "water");
-        assert_eq!(a.summary.no_recovery_colors, 1);
     }
 
     #[test]

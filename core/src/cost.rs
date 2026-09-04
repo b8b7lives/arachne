@@ -214,7 +214,6 @@ mod tests {
             flammable: false,
             unstable: false,
             constrained: false,
-            fluid: false,
         }
     }
 

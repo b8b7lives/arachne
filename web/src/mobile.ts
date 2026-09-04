@@ -154,7 +154,7 @@ function touchHints(): void {
     skip.className = "note";
     skip.id = "skip-hint";
     skip.textContent =
-      "The survival default palette and a full netherite kit are already in place. If you only want the build, use Download at the bottom.";
+      "Every color and a full netherite kit are already in place. If you only want the build, use Download at the bottom.";
     file.closest(".row")?.after(skip);
   }
   const hint = $("preview-hint");

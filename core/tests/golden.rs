@@ -281,7 +281,7 @@ fn bless_fixtures() {
     use arachne_core::quantize::{Dither, FLOYD_STEINBERG, quantize};
 
     let data = load_data();
-    let all_ids: Vec<u8> = data.colors.iter().map(|c| c.id).collect();
+    let all_ids: Vec<u8> = data.buildable_colors().map(|c| c.id).collect();
     let (w, h) = (128usize, 128usize);
     let mut rgba = Vec::with_capacity(w * h * 4);
     for z in 0..h {
