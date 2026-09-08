@@ -308,6 +308,17 @@ table.fonts tr:has(+ tr.sample) td {
   margin: 0.4rem 0;
   max-width: 46rem;
 }
+figure {
+  margin: 0.7rem 0;
+  max-width: 46rem;
+}
+figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--edge);
+  border-radius: 3px;
+}
 .ctl {
   color: var(--ink);
   font-weight: 700;

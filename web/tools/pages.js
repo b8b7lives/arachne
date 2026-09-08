@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { esc, fail, OG_ALT, OG_IMAGE, readJson, SITE, THEME_COLOR } from "./lib.js";
 
 const BLOCKS = process.env.PAGES_BLOCKS || "../data/blocks-26.2.json";
@@ -87,6 +87,48 @@ function inline(s, stamp) {
 function copyCheck(where, text) {
   const t = plain(text);
   if (/[:;–—]| - /.test(t)) fail(`${where}: colon, semicolon or dash in copy: ${t.slice(0, 60)}`);
+}
+
+const IMG = /^!\[([^\]]*)\]\(([^)]+)\)$/;
+const SHOTS = process.env.PAGES_SHOTS || "public/shots";
+const IMG_MAX_W = 1600;
+
+function webpSize(file, path) {
+  const b = readFileSync(path);
+  if (
+    b.length < 30 ||
+    b.toString("ascii", 0, 4) !== "RIFF" ||
+    b.toString("ascii", 8, 12) !== "WEBP"
+  )
+    fail(`image ${file} is not a WebP file`);
+  const chunk = b.toString("ascii", 12, 16);
+  if (chunk === "VP8 ") {
+    if (b[23] !== 0x9d || b[24] !== 0x01 || b[25] !== 0x2a)
+      fail(`image ${file} has no VP8 sync code`);
+    return { w: b.readUInt16LE(26) & 0x3fff, h: b.readUInt16LE(28) & 0x3fff };
+  }
+  if (chunk === "VP8L") {
+    if (b[20] !== 0x2f) fail(`image ${file} has no VP8L signature`);
+    const n = b.readUInt32LE(21);
+    return { w: (n & 0x3fff) + 1, h: ((n >>> 14) & 0x3fff) + 1 };
+  }
+  if (chunk === "VP8X") {
+    const u24 = (o) => b[o] | (b[o + 1] << 8) | (b[o + 2] << 16);
+    return { w: u24(24) + 1, h: u24(27) + 1 };
+  }
+  return fail(`image ${file} has an unsupported WebP chunk ${chunk}`);
+}
+
+function imageFigure(where, file, alt) {
+  if (!alt.trim()) fail(`${where}: image ${file} has no alt text`);
+  if (!/^[a-z0-9][a-z0-9-]*\.webp$/.test(file))
+    fail(`${where}: image must be a lowercase webp name, got ${file}`);
+  const path = `${SHOTS}/${file}`;
+  if (!existsSync(path)) fail(`${where}: image not found: ${path}`);
+  copyCheck(`${where} alt`, alt);
+  const { w, h } = webpSize(file, path);
+  if (w > IMG_MAX_W) fail(`${where}: image ${file} is ${w}px wide, over the ${IMG_MAX_W} limit`);
+  return `<figure><img src="../shots/${esc(file)}" alt="${esc(alt)}" width="${w}" height="${h}" loading="lazy" decoding="async" /></figure>`;
 }
 
 const TIER_WORD = {
@@ -335,8 +377,10 @@ function faqPage(faq, stamp) {
     if (!Array.isArray(it.a) || it.a.length === 0) fail(`faq ${it.id}: no answer`);
     copyCheck(`faq ${it.id} question`, it.q);
     for (const p of it.a) {
-      if (typeof p !== "string" || !/\.$/.test(plain(p)))
-        fail(`faq ${it.id}: every paragraph ends with a period`);
+      if (typeof p !== "string") fail(`faq ${it.id}: every paragraph is a string`);
+      if (IMG.test(p)) continue;
+      if (/!\[/.test(p)) fail(`faq ${it.id}: an image mark must be a paragraph of its own`);
+      if (!/\.$/.test(plain(p))) fail(`faq ${it.id}: every paragraph ends with a period`);
       copyCheck(`faq ${it.id}`, p);
     }
   }
@@ -354,7 +398,10 @@ function faqPage(faq, stamp) {
     [
       `<section class="q" id="${it.id}">`,
       `<h2><a href="#${it.id}">${esc(it.q)}</a></h2>`,
-      ...it.a.map((p) => `<p>${inline(p, stamp)}</p>`),
+      ...it.a.map((p) => {
+        const m = p.match(IMG);
+        return m ? imageFigure(`faq ${it.id}`, m[2], m[1]) : `<p>${inline(p, stamp)}</p>`;
+      }),
       `</section>`,
     ].join("\n"),
   );

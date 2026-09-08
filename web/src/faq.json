@@ -39,14 +39,16 @@
       "id": "shades",
       "q": "Why does a staircased map have three shades and a flat map one?",
       "a": [
-        "The game paints a block by its map color and by its height against the block directly north of it. The same block reads light when it stands higher, normal when it stands level, and dark when it stands lower. A flat map has no height differences, so every block reads its normal shade and the palette is the plain set of map colors. A staircased map steps blocks up and down along each column to reach the light and dark shades on purpose, which roughly triples the palette at the cost of a taller, hillier build. Arachne works out the heights for you and keeps every step as low as it can. You choose between the two under {height} in [Source](../#source-panel), and the [colors page](../colors/) shows all three shades of every color."
+        "The game paints a block by its map color and by its height against the block directly north of it. The same block reads light when it stands higher, normal when it stands level, and dark when it stands lower. A flat map has no height differences, so every block reads its normal shade and the palette is the plain set of map colors. A staircased map steps blocks up and down along each column to reach the light and dark shades on purpose, which roughly triples the palette at the cost of a taller, hillier build. Arachne works out the heights for you and keeps every step as low as it can. You choose between the two under {height} in [Source](../#source-panel), and the [colors page](../colors/) shows all three shades of every color.",
+        "![Eight columns of blocks stepping up and down, beside the map they make, where every column reads light, normal and dark](shades.webp)"
       ]
     },
     {
       "id": "noobline",
       "q": "What is the noobline, and why is the plan one row taller than my picture?",
       "a": [
-        "A map shades every block by comparing its height with the block directly north of it, and the first row of your picture has nothing north of it to compare against. Left alone, that whole row renders a shade brighter than the plan intended, which shows as a line across the top of every map. The noobline is a reference row placed along the north edge, one block for every column, that gives the first row something to stand against. Every schematic and materials list from Arachne includes it, so the plan is always one row taller than the picture. The row itself sits just outside the map and never shows on it."
+        "A map shades every block by comparing its height with the block directly north of it, and the first row of your picture has nothing north of it to compare against. Left alone, that whole row renders a shade brighter than the plan intended, which shows as a line across the top of every map. The noobline is a reference row placed along the north edge, one block for every column, that gives the first row something to stand against. Every schematic and materials list from Arachne includes it, so the plan is always one row taller than the picture. The row itself sits just outside the map and never shows on it.",
+        "![Two framed maps of the same pair of stacked panels, and on the right the lower panel has no reference row so a bright line runs across the join](noobline.webp)"
       ]
     },
     {
@@ -123,7 +125,8 @@
       "id": "map-data",
       "q": "What is the map data file for?",
       "a": [
-        "It skips the build. A map data file is the game's own record of a finished map, so dropping it into your world puts the picture straight onto a map item with no blocks placed. That only works where you can write to the world save, which means singleplayer or a server you run. On 26.1 and later the zip holds a minecraft folder that goes inside the world's data folder, so the maps land in data/minecraft/maps. On older versions the map files go straight into the data folder. Then give yourself the map with the command the [Download](../#export-panel) section shows for your version. Set {first map id} above the highest map your world already has, or the file replaces one of yours. Choose {make} at the top of [Source](../#source-panel) and pick the map file. In that mode the palette is every color the game knows in all four shades, including the fourth one no block can make, and the block, filler and height settings fold away because nothing is placed."
+        "It skips the build. A map data file is the game's own record of a finished map, so dropping it into your world puts the picture straight onto a map item with no blocks placed. That only works where you can write to the world save, which means singleplayer or a server you run. On 26.1 and later the zip holds a minecraft folder that goes inside the world's data folder, so the maps land in data/minecraft/maps. On older versions the map files go straight into the data folder. Then give yourself the map with the command the [Download](../#export-panel) section shows for your version. Set {first map id} above the highest map your world already has, or the file replaces one of yours. Choose {make} at the top of [Source](../#source-panel) and pick the map file. In that mode the palette is every color the game knows in all four shades, including the fourth one no block can make, and the block, filler and height settings fold away because nothing is placed.",
+        "![Twelve maps in item frames on a wall, together showing one painting](map-wall.webp)"
       ]
     },
     {
@@ -131,6 +134,7 @@
       "q": "Can I put text on my map?",
       "a": [
         "Yes. Turn on {text on the map} in [Source](../#source-panel), type a line, and drag it on the preview to where it should sit. Every font comes from a set of 142 free faces, listed with samples on the [fonts page](../fonts/), and only the ones you pick are downloaded.",
+        "![Sixteen maps on a wall, each showing the word Arachne in a different font and style](text-wall.webp)",
         "Under 20 blocks tall the letters are drawn crisp, one solid map color with hard edges and no dither, which is what reads at sign size. From 20 blocks up they are drawn smooth and dithered like the picture, and {letter style} overrides that either way. Its third choice, hinted, is for 8 to 19 blocks. The letters are fitted to the block grid ahead of time by the font's own hinting, so they come out the same in every browser. With no picture behind it, the transparency settings decide what the rest of the map becomes, a fill color or nothing at all. The letters cost no more blocks than any other part of the picture.",
         "A line can be turned a quarter or half turn, mirrored, flipped or stacked one letter per line, underlined, and on smooth letters given a two color gradient. Undo and redo sit in the head with the usual keys, and the arrow keys nudge the selected line a block at a time. Letter spacing needs a current browser, Safari from 18.4. The text tool as a whole needs Safari 17 or newer, the same floor as loading a picture, since both draw through an offscreen canvas."
       ]

@@ -1,6 +1,12 @@
 {
   "builds": [
     {
+      "id": "2026-09-08-faq-pictures",
+      "date": "2026-09-08",
+      "line": "images on the FAQ page",
+      "notes": ["Supporting images added to the FAQ page."]
+    },
+    {
       "id": "2026-09-07-text-fonts-map-data",
       "date": "2026-09-07",
       "line": "text on the map with 142 free fonts, and a map data mode that skips the build",
