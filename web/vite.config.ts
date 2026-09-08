@@ -22,6 +22,7 @@ export default defineConfig(({ command }) => ({
         colors: "colors/index.html",
         changelog: "changelog/index.html",
         faq: "faq/index.html",
+        fonts: "fonts/index.html",
         sw: "src/sw.ts",
       },
       output: {

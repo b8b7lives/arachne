@@ -22,6 +22,7 @@ self.onmessage = async (ev: MessageEvent<WorkerRequest>) => {
           ok: true,
           result: {
             colors: JSON.parse(session.colors()),
+            colorsAll: JSON.parse(session.colors_all()),
             blocks: JSON.parse(session.blocks()),
             dataVersion: session.data_version(),
             versions: JSON.parse(session.versions()),
@@ -38,6 +39,8 @@ self.onmessage = async (ev: MessageEvent<WorkerRequest>) => {
           new Uint8Array(req.rgba),
           req.width,
           req.height,
+          req.overlay ? new Uint8Array(req.overlay) : undefined,
+          req.nearest ? new Uint8Array(req.nearest) : undefined,
           JSON.stringify(req.opts),
           (f: number) => {
             const pct = Math.round(f * 100);

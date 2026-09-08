@@ -573,7 +573,8 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
       name: d.name,
       note: document.getElementById("mapdat-note").hidden,
       example: document.getElementById("mapdat-example").textContent,
-      dats: [...new Set([...text.matchAll(/map_\\d+\\.dat/g)].map((m) => m[0]))],
+      dats: [...new Set([...text.matchAll(/(?:minecraft\\/maps\\/|map_)\\d+\\.dat/g)].map((m) => m[0]))],
+      whereNew: !document.getElementById("mapdat-where-new").hidden,
       nbts: [...new Set([...text.matchAll(/arachne\\.litematic/g)].map((m) => m[0]))],
       status: document.getElementById("status").textContent,
     };
@@ -592,14 +593,50 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     "that one file carries the schematic and every map data file",
     JSON.stringify(dats.nbts) === JSON.stringify(["arachne.litematic"]) &&
       JSON.stringify(dats.dats) ===
-        JSON.stringify(["map_7.dat", "map_8.dat", "map_9.dat", "map_10.dat"]),
-    JSON.stringify({ nbts: dats.nbts, dats: dats.dats }),
+        JSON.stringify([
+          "minecraft/maps/7.dat",
+          "minecraft/maps/8.dat",
+          "minecraft/maps/9.dat",
+          "minecraft/maps/10.dat",
+        ]) &&
+      dats.whereNew === true,
+    JSON.stringify({ nbts: dats.nbts, dats: dats.dats, whereNew: dats.whereNew }),
   );
   check(
     "it says how many files it bundled",
     /6 files in arachne\.zip/.test(dats.status),
     dats.status,
   );
+  await s.evaluate(`(() => {
+    const v = document.getElementById("game-version");
+    v.value = "1.21.8"; v.dispatchEvent(new Event("change", { bubbles: true }));
+  })()`);
+  await s.evaluate(`new Promise((r) => setTimeout(r, 5000))`);
+  await s.evaluate(
+    `(() => { window.__dl = []; document.getElementById("export-download").click(); })()`,
+  );
+  await s.evaluate(`new Promise((r) => setTimeout(r, 5000))`);
+  const oldDats = await s.evaluate(`(async () => {
+    const d = window.__dl[0];
+    if (!d) return { dats: [], whereOld: null };
+    const text = new TextDecoder("latin1").decode(new Uint8Array(await d.blob.arrayBuffer()));
+    return {
+      dats: [...new Set([...text.matchAll(/(?:minecraft\\/maps\\/|map_)\\d+\\.dat/g)].map((m) => m[0]))],
+      whereOld: !document.getElementById("mapdat-where-old").hidden,
+    };
+  })()`);
+  check(
+    "before 26.1 the map files keep the old name and place",
+    JSON.stringify(oldDats.dats) ===
+      JSON.stringify(["map_7.dat", "map_8.dat", "map_9.dat", "map_10.dat"]) &&
+      oldDats.whereOld === true,
+    JSON.stringify(oldDats),
+  );
+  await s.evaluate(`(() => {
+    const v = document.getElementById("game-version");
+    v.value = "26.2"; v.dispatchEvent(new Event("change", { bubbles: true }));
+  })()`);
+  await s.evaluate(`new Promise((r) => setTimeout(r, 5000))`);
 
   const sheet = await s.evaluate(`(async () => {
     const d = window.__dl[0];
@@ -1158,7 +1195,7 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     view.dispatchEvent(new Event("change", { bubbles: true }));
     const chips = [...new Set([...document.querySelectorAll(".flag")].map((e) => e.textContent))];
     const filters = [...document.querySelectorAll("#toggles label")]
-      .map((l) => l.textContent.trim().split(": ")[0]);
+      .map((l) => (l.querySelector("b") || l).textContent.trim().split(": ")[0]);
     return {
       chips,
       filters,
@@ -1339,7 +1376,7 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
   );
   check(
     "a tight cap reports what it recolored and what it costs",
-    /recolored \d+ blocks to fit (every panel )?under 1; (no visible cost|picture error up about)/.test(
+    /recolored \d+ blocks to fit (every panel )?under 1\. (no visible cost|picture error up about)/.test(
       heightCap.capped,
     ),
     heightCap.capped,
@@ -1781,23 +1818,33 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     refused,
   );
 
-  const whatsnew = await s.evaluate(`(() => {
-    const panel = document.getElementById("whatsnew-panel");
-    const link = document.getElementById("whatsnew-link");
-    link.click();
-    const entries = panel.querySelectorAll(".whatsnew-head").length;
-    const tip = /Ctrl\\+Shift\\+R/.test(panel.textContent);
-    const openAfterLink = !panel.hidden;
-    link.click();
-    return { entries, tip, openAfterLink, closedAgain: panel.hidden };
+  const pills = await s.evaluate(`(() => {
+    const chips = [...document.querySelectorAll("#about-panel .brand-chip")];
+    const labels = chips.map((c) => c.textContent.trim());
+    const cf = chips.find((c) => /curseforge\\.com/.test(c.href));
+    const hint = document.querySelector("#communities .sub-head .hint");
+    return {
+      labels,
+      curseforge: !!cf && cf.target === "_blank" && /noopener/.test(cf.rel),
+      whatsnew: !!document.getElementById("whatsnew-link"),
+      hint: hint ? hint.title : "",
+      hintNamed: hint ? hint.getAttribute("aria-label") === hint.title : false,
+    };
   })()`);
   check(
-    "the what's new link opens the panel with entries",
-    whatsnew.openAfterLink === true && whatsnew.entries >= 2,
-    `${whatsnew.entries} entries`,
+    "the About pills read GitHub, Modrinth, CurseForge, Ko-fi, Discord",
+    pills.labels.join(",") === "GitHub,Modrinth,CurseForge,Ko-fi,Discord",
+    pills.labels.join(","),
   );
-  check("the panel carries the hard-refresh tip", whatsnew.tip === true);
-  check("the link toggles the panel closed again", whatsnew.closedAgain === true);
+  check("the CurseForge pill opens a new tab without an opener", pills.curseforge === true);
+  check("the what's new pill is gone from About", pills.whatsnew === false);
+  check(
+    "the communities head carries a hint that names the relationship, readable by screen readers",
+    pills.hintNamed &&
+      /nothing here is paid or sponsored/i.test(pills.hint) &&
+      /none of them run/.test(pills.hint),
+    pills.hint,
+  );
   const communities = await s.evaluate(`(() => {
     const wrap = document.getElementById("communities");
     const card = wrap ? wrap.querySelector(".community-card") : null;
@@ -1894,6 +1941,589 @@ await withBrowser({ width: 1400, height: 1000 }, async (s) => {
     "reset keeps the image and refits the grid to it",
     afterReset.w === "1" && afterReset.h === "2",
     `${afterReset.w} x ${afterReset.h}`,
+  );
+
+  await goto();
+  const fontCount = await s.evaluate(`new Promise((res) => {
+    const t0 = Date.now();
+    const tick = () => {
+      const n = Number(document.getElementById("text-font-drop").dataset.count || 0);
+      if (n > 0 || Date.now() - t0 > ${READY_MS}) return res(n);
+      setTimeout(tick, 100);
+    };
+    tick();
+  })`);
+  check("font picker filled from the catalog", fontCount > 100, `${fontCount} faces`);
+  await s.evaluate(`(() => {
+    document.getElementById("text-add").click();
+    const ta = document.getElementById("text-text");
+    ta.value = "Plot 07";
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+  })()`);
+  const textStatus = await s.evaluate(`new Promise((res) => {
+    const t0 = Date.now();
+    const tick = () => {
+      const st = document.getElementById("status")?.textContent ?? "";
+      if (/^text on an empty map/.test(st)) return res(st);
+      if (Date.now() - t0 > ${READY_MS}) return res("TIMEOUT: " + st);
+      setTimeout(tick, 200);
+    };
+    tick();
+  })`);
+  check("text on an empty map generates", /^text on an empty map/.test(textStatus), textStatus);
+  await s.evaluate(SETTLE);
+  const textProbe = await s.evaluate(`(() => {
+    const cv = document.getElementById("preview");
+    const px = cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data;
+    let on = 0, off = 0;
+    for (let i = 3; i < px.length; i += 4) (px[i] ? on++ : off++);
+    const ws = ${WORKSPACE};
+    return {
+      on, off,
+      kind: document.getElementById("text-kind-chip").textContent,
+      items: (ws && ws.text) ? ws.text.map((t) => t.text) : [],
+      empty: document.getElementById("preview-empty").hidden,
+      fill: getComputedStyle(document.getElementById("background-row")).display !== "none",
+      hint: document.getElementById("preview-hint").textContent,
+      snap: document.getElementById("text-snap").textContent,
+      touch: getComputedStyle(cv).touchAction,
+    };
+  })()`);
+  check(
+    "the color chip names an enabled map color",
+    /^lands on \S/.test(textProbe.snap),
+    textProbe.snap,
+  );
+  check(
+    "the preview refuses touch scrolling while text exists",
+    textProbe.touch === "none",
+    textProbe.touch,
+  );
+  check(
+    "letters placed, the rest left as holes",
+    textProbe.on > 50 && textProbe.off > textProbe.on,
+    `${textProbe.on} cells on, ${textProbe.off} off`,
+  );
+  check("16 block text is crisp by default", /one color/.test(textProbe.kind), textProbe.kind);
+  check(
+    "text item persisted in the workspace",
+    textProbe.items[0] === "Plot 07",
+    JSON.stringify(textProbe.items),
+  );
+  check("preview prompt hidden once text exists", textProbe.empty === true);
+  const reloaded = await goto();
+  check("reload with saved text boots", /^ready/.test(reloaded), reloaded);
+  const bootStatus = await s.evaluate(`new Promise((res) => {
+    const t0 = Date.now();
+    const tick = () => {
+      const st = document.getElementById("status")?.textContent ?? "";
+      if (/^text on an empty map/.test(st)) return res(st);
+      if (Date.now() - t0 > ${READY_MS}) return res("TIMEOUT: " + st);
+      setTimeout(tick, 200);
+    };
+    tick();
+  })`);
+  check("saved text generates on reload", /^text on an empty map/.test(bootStatus), bootStatus);
+  const afterReload = await s.evaluate(`(() => ({
+    pills: [...document.querySelectorAll("#text-items .text-item")].map((b) => b.textContent),
+    fields: !document.getElementById("text-fields").hidden,
+    empty: document.getElementById("preview-empty").hidden,
+  }))()`);
+  check(
+    "saved text restored into the section",
+    afterReload.pills[0] === "Plot 07" && afterReload.fields && afterReload.empty,
+    JSON.stringify(afterReload),
+  );
+  check("fill controls offered for text on an empty map", textProbe.fill === true);
+  const setCap = (v) => `(() => {
+    const el = document.getElementById("max-height");
+    el.value = ${JSON.stringify(v)};
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  })()`;
+  await s.evaluate(setCap("1"));
+  const pinnedNote = await s.evaluate(`new Promise((res) => {
+    const t0 = Date.now();
+    const tick = () => {
+      const n = document.getElementById("max-height-note").textContent;
+      if (/cannot fit/.test(n)) return res(n);
+      if (Date.now() - t0 > ${READY_MS}) return res("TIMEOUT: " + n);
+      setTimeout(tick, 200);
+    };
+    tick();
+  })`);
+  check(
+    "a cap that pinned text cannot meet says so",
+    /cannot fit under 1/.test(pinnedNote) && /pinned/.test(pinnedNote),
+    pinnedNote,
+  );
+  await s.evaluate(setCap(""));
+  await s.evaluate(SETTLE);
+  const order = await s.evaluate(`(() => {
+    const text = document.getElementById("text-section");
+    const bg = document.getElementById("background-row");
+    return Boolean(text.compareDocumentPosition(bg) & Node.DOCUMENT_POSITION_FOLLOWING);
+  })()`);
+  check("the transparency subsection follows the text subsection", order === true);
+  const waitNote = (re) => `new Promise((res) => {
+    const t0 = Date.now();
+    const tick = () => {
+      const n = document.getElementById("text-font-note");
+      const t = n.hidden ? "" : n.textContent;
+      if (${re}.test(t)) return res(t);
+      if (Date.now() - t0 > ${READY_MS}) return res("TIMEOUT: " + t);
+      setTimeout(tick, 200);
+    };
+    tick();
+  })`;
+  const setText = (v) => `(() => {
+    const ta = document.getElementById("text-text");
+    ta.value = ${JSON.stringify(v)};
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+  })()`;
+  await s.evaluate(setText("Plot 07 \u{13080}"));
+  const leftOutNote = await s.evaluate(waitNote("/left out/"));
+  check(
+    "a character no font covers is left out and said so",
+    /left out \u{13080}/u.test(leftOutNote),
+    leftOutNote,
+  );
+  await s.evaluate(setText("日本"));
+  await s.evaluate(`document.getElementById("text-font-search").focus()`);
+  await s.evaluate(SETTLE);
+  const lacks = await s.evaluate(`(() => ({
+    rows: document.querySelectorAll("#text-font-drop .picker-row").length,
+    lacks: document.querySelectorAll("#text-font-drop .picker-row.lacks").length,
+    cjk: !document.querySelector('#text-font-drop .picker-row[data-id="dotgothic16"]')?.classList.contains("lacks"),
+  }))()`);
+  check(
+    "faces without the typed characters are dimmed in the picker",
+    lacks.lacks > 100 && lacks.lacks < lacks.rows && lacks.cjk,
+    JSON.stringify(lacks),
+  );
+  await s.evaluate(`(() => {
+    const inp = document.getElementById("text-font-search");
+    inp.value = "Micro 5";
+    inp.dispatchEvent(new Event("input", { bubbles: true }));
+    inp.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+  })()`);
+  await s.evaluate(setText("Plot 07"));
+  await s.evaluate(SETTLE);
+  const pixelProbe = await s.evaluate(`(() => {
+    const ws = ${WORKSPACE};
+    const t = ws && ws.text ? ws.text[0] : {};
+    return { font: t.font, size: t.size, step: document.getElementById("text-size").step };
+  })()`);
+  check(
+    "a pixel face snaps the size to its grid",
+    pixelProbe.font === "micro-5" && pixelProbe.size % 5 === 0 && pixelProbe.step === "5",
+    JSON.stringify(pixelProbe),
+  );
+  await s.evaluate(
+    `(() => { const i = document.getElementById("text-font-search"); i.blur(); i.focus(); })()`,
+  );
+  await s.evaluate(SETTLE);
+  const bigOnly = await s.evaluate(
+    `document.querySelector('#text-font-drop .picker-row[data-id="abril-fatface"] .name')?.textContent || ""`,
+  );
+  check("a face judged for big text says so in the picker", /big text only/.test(bigOnly), bigOnly);
+  await s.evaluate(`document.getElementById("text-font-search").blur()`);
+  check(
+    "preview hint explains dragging text",
+    /drag the text/.test(textProbe.hint),
+    textProbe.hint,
+  );
+  const D_INK = `(() => {
+    const cv = document.getElementById("preview");
+    const px = cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data;
+    let x0 = cv.width, y0 = cv.height, x1 = -1, y1 = -1, n = 0;
+    for (let y = 0; y < cv.height; y++) for (let x = 0; x < cv.width; x++) {
+      if (px[(y * cv.width + x) * 4 + 3]) { n++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    }
+    return { w: x1 - x0 + 1, h: y1 - y0 + 1, n, cy: (y0 + y1) / 2, height: cv.height };
+  })()`;
+  const D_REGEN = `new Promise((r) => setTimeout(r, 1500))`;
+  const dSel = (id, v) => `(() => {
+    const el = document.getElementById(${JSON.stringify(id)});
+    el.value = ${JSON.stringify(v)};
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  })()`;
+  const dChk = (id, v) => `(() => {
+    const el = document.getElementById(${JSON.stringify(id)});
+    el.checked = ${v};
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  })()`;
+  const dKey = (k, extra = "") =>
+    `document.body.dispatchEvent(new KeyboardEvent("keydown", { key: ${JSON.stringify(k)}, bubbles: true, cancelable: true${extra} }))`;
+  await s.evaluate(dSel("text-kind", "crisp"));
+  await s.evaluate(dSel("text-ink-num", "64"));
+  await s.evaluate(D_REGEN);
+  const inkLow = await s.evaluate(D_INK);
+  await s.evaluate(dSel("text-ink-num", "192"));
+  await s.evaluate(D_REGEN);
+  const inkHigh = await s.evaluate(D_INK);
+  check(
+    "lower ink fattens crisp letters, higher thins them",
+    inkLow.n > inkHigh.n,
+    `${inkLow.n} vs ${inkHigh.n} cells`,
+  );
+  await s.evaluate(dSel("text-ink-num", "128"));
+  const D_HASH = `(() => {
+    const cv = document.getElementById("preview");
+    const px = cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data;
+    let h = 2166136261, n = 0;
+    for (let i = 0; i < px.length; i++) {
+      h = Math.imul(h ^ px[i], 16777619) >>> 0;
+      if ((i & 3) === 3 && px[i]) n++;
+    }
+    return { hash: h, n, chip: document.getElementById("text-kind-chip").textContent };
+  })()`;
+  const pickFont = (id) => `(() => {
+    const input = document.getElementById("text-font-search");
+    input.focus();
+    const row = document.querySelector('#text-font-drop .picker-row[data-id="' + ${JSON.stringify(id)} + '"]');
+    row.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
+    input.blur();
+  })()`;
+  await s.evaluate(pickFont("atkinson-hyperlegible-next"));
+  await s.evaluate(dSel("text-size-num", "12"));
+  await s.evaluate(D_REGEN);
+  const hCrisp = await s.evaluate(D_HASH);
+  await s.evaluate(dSel("text-kind", "hinted"));
+  await s.evaluate(D_REGEN);
+  await s.evaluate(D_REGEN);
+  const hHinted = await s.evaluate(D_HASH);
+  check(
+    "hinted letters draw from the sheet and differ from crisp",
+    hHinted.n > 0 && /fitted to the block grid/.test(hHinted.chip) && hHinted.hash !== hCrisp.hash,
+    `${hHinted.n} px, chip "${hHinted.chip}", same as crisp: ${hHinted.hash === hCrisp.hash}`,
+  );
+  await s.evaluate(dKey("ArrowRight"));
+  await s.evaluate(D_REGEN);
+  await s.evaluate(dKey("ArrowLeft"));
+  await s.evaluate(D_REGEN);
+  const hAgain = await s.evaluate(D_HASH);
+  const sheetFetches = await s.evaluate(
+    `performance.getEntriesByType("resource").filter((e) => /hinted\\.bin/.test(e.name)).length`,
+  );
+  check(
+    "a hinted line renders the same pixels every time from one sheet fetch",
+    hAgain.hash === hHinted.hash && sheetFetches === 1,
+    `hash ${hAgain.hash === hHinted.hash ? "same" : "differs"}, ${sheetFetches} fetch(es)`,
+  );
+  await s.evaluate(dSel("text-size-num", "24"));
+  await s.evaluate(D_REGEN);
+  const hBig = await s.evaluate(D_HASH);
+  check(
+    "hinted outside 8 to 19 blocks says so and draws crisp",
+    /hinted covers 8 to 19 blocks, drawing crisp/.test(hBig.chip),
+    hBig.chip,
+  );
+  await s.evaluate(dSel("text-size-num", "12"));
+  const pixelFace = await s.evaluate(
+    `fetch("/fonts/catalog/fonts.json").then((r) => r.json()).then((m) => m.faces.find((f) => f.native && !f.hidden).id)`,
+  );
+  await s.evaluate(pickFont(pixelFace));
+  await s.evaluate(D_REGEN);
+  const hPixel = await s.evaluate(D_HASH);
+  check(
+    "a pixel face on hinted says it already sits on the grid",
+    /pixel faces already sit on the block grid, drawing crisp/.test(hPixel.chip),
+    `${pixelFace}: ${hPixel.chip}`,
+  );
+  await s.evaluate(pickFont("atkinson-hyperlegible-next"));
+  await s.evaluate(dSel("text-size-num", "16"));
+  await s.evaluate(D_REGEN);
+  const hBoot = await goto();
+  const hBootStatus = await s.evaluate(`new Promise((res) => {
+    const t0 = Date.now();
+    const tick = () => {
+      const st = document.getElementById("status")?.textContent ?? "";
+      if (/^text on an empty map/.test(st)) return res(st);
+      if (Date.now() - t0 > ${READY_MS}) return res("TIMEOUT: " + st);
+      setTimeout(tick, 200);
+    };
+    tick();
+  })`);
+  await s.evaluate(SETTLE);
+  const hKept = await s.evaluate(`(${WORKSPACE}).text[0].kind`);
+  const hChipBoot = await s.evaluate(`document.getElementById("text-kind-chip").textContent`);
+  check(
+    "the hinted choice survives a reload",
+    /^ready/.test(hBoot) &&
+      /^text on an empty map/.test(hBootStatus) &&
+      hKept === "hinted" &&
+      /fitted to the block grid/.test(hChipBoot),
+    `${hKept}, "${hChipBoot}", ${hBootStatus}`,
+  );
+  await s.evaluate(dSel("text-kind", "auto"));
+  await s.evaluate(D_REGEN);
+  const dFlat = await s.evaluate(D_INK);
+  await s.evaluate(dSel("text-rotate", "90"));
+  await s.evaluate(D_REGEN);
+  const dTurned = await s.evaluate(D_INK);
+  check(
+    "a quarter turn makes the line taller than wide",
+    dFlat.w > dFlat.h && dTurned.h > dTurned.w,
+    `dFlat ${dFlat.w}x${dFlat.h}, dTurned ${dTurned.w}x${dTurned.h}`,
+  );
+  await s.evaluate(dSel("text-rotate", "0"));
+  await s.evaluate(D_REGEN);
+  const dPlain = await s.evaluate(D_INK);
+  await s.evaluate(dChk("text-underline", "true"));
+  await s.evaluate(D_REGEN);
+  const dRuled = await s.evaluate(D_INK);
+  check(
+    "underline adds a rule below the letters",
+    dRuled.n > dPlain.n && dRuled.h > dPlain.h,
+    `${dPlain.n} to ${dRuled.n} px`,
+  );
+  await s.evaluate(dKey("z", ", ctrlKey: true"));
+  await s.evaluate(SETTLE);
+  const dUndone = await s.evaluate(`(${WORKSPACE}).text[0].underline`);
+  await s.evaluate(dKey("y", ", ctrlKey: true"));
+  await s.evaluate(SETTLE);
+  const dRedone = await s.evaluate(`(${WORKSPACE}).text[0].underline`);
+  check(
+    "Ctrl+Z undoes and Ctrl+Y redoes a text change",
+    dUndone === false && dRedone === true,
+    `${dUndone} then ${dRedone}`,
+  );
+  await s.evaluate(dChk("text-underline", "false"));
+  await s.evaluate(dKey("ArrowRight"));
+  await s.evaluate(SETTLE);
+  const dNudged = await s.evaluate(`(${WORKSPACE}).text[0].ax`);
+  await s.evaluate(dKey("ArrowLeft"));
+  await s.evaluate(SETTLE);
+  const dBack = await s.evaluate(`(${WORKSPACE}).text[0].ax`);
+  check(
+    "arrow keys nudge the selected line by one block",
+    dNudged > 50 && dNudged < 52 && Math.abs(dBack - 50) < 0.01,
+    `${dNudged} then ${dBack}`,
+  );
+  await s.evaluate(dSel("text-y-num", "20"));
+  await s.evaluate(`document.getElementById("text-center").click()`);
+  await s.evaluate(D_REGEN);
+  const dCentered = await s.evaluate(D_INK);
+  check(
+    "center puts the line in the middle of the map",
+    Math.abs(dCentered.cy - dCentered.height / 2) <= 3,
+    `middle at ${dCentered.cy} of ${dCentered.height}`,
+  );
+  await s.evaluate(`document.getElementById("text-dup").click()`);
+  await s.evaluate(SETTLE);
+  const dupProbe = await s.evaluate(`(() => {
+    const ws = ${WORKSPACE};
+    const items = (ws && ws.text) ? ws.text : [];
+    return { texts: items.map((t) => t.text), ids: new Set(items.map((t) => t.id)).size };
+  })()`);
+  check(
+    "duplicate copies the selected text with a fresh id",
+    dupProbe.texts.length === 2 && dupProbe.texts[1] === "Plot 07" && dupProbe.ids === 2,
+    JSON.stringify(dupProbe),
+  );
+  await s.evaluate(`document.getElementById("text-delete").click()`);
+  await s.evaluate(SETTLE);
+  const afterRemove = await s.evaluate(`(() => {
+    const ws = ${WORKSPACE};
+    return (ws && ws.text) ? ws.text.length : -1;
+  })()`);
+  check("delete drops only the selected copy", afterRemove === 1, `${afterRemove} items`);
+  await s.evaluate(`(() => {
+    const c = document.getElementById("text-on");
+    c.checked = false;
+    c.dispatchEvent(new Event("change", { bubbles: true }));
+  })()`);
+  await s.evaluate(SETTLE);
+  const offProbe = await s.evaluate(`(() => {
+    const cv = document.getElementById("preview");
+    const px = cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data;
+    let on = 0;
+    for (let i = 3; i < px.length; i += 4) if (px[i]) on++;
+    const ws = ${WORKSPACE};
+    return {
+      on,
+      fields: document.getElementById("text-fields").hidden,
+      kept: (ws && ws.text) ? ws.text.length : -1,
+      flag: ws ? ws.textOn : null,
+      prompt: !document.getElementById("preview-empty").hidden,
+      status: document.getElementById("status").textContent,
+    };
+  })()`);
+  check(
+    "text off clears the map and keeps the line",
+    offProbe.on === 0 &&
+      offProbe.fields &&
+      offProbe.kept === 1 &&
+      offProbe.flag === false &&
+      offProbe.prompt,
+    JSON.stringify(offProbe),
+  );
+  await s.evaluate(`document.querySelector("#build-section > .sub-head > .fold").click()`);
+  await s.evaluate(SETTLE);
+  const foldProbe = await s.evaluate(`(() => {
+    const ws = ${WORKSPACE};
+    return {
+      closed: document.getElementById("build-section").classList.contains("collapsed"),
+      shown: document.getElementById("height-mode").getClientRects().length > 0,
+      saved: ws ? (ws.collapsedSubs || []) : null,
+    };
+  })()`);
+  check(
+    "subsection fold hides its settings and is remembered",
+    foldProbe.closed && !foldProbe.shown && (foldProbe.saved || []).includes("build-section"),
+    JSON.stringify(foldProbe),
+  );
+  await s.evaluate(`document.getElementById("reset-default").click()`);
+  await s.evaluate(SETTLE);
+  const textReset = await s.evaluate(`(() => {
+    const ws = ${WORKSPACE};
+    return {
+      lines: (ws && ws.text) ? ws.text.length : 0,
+      pills: document.querySelectorAll("#text-items .text-item").length,
+      on: document.getElementById("text-on").checked,
+      reopened: !document.getElementById("build-section").classList.contains("collapsed"),
+    };
+  })()`);
+  check(
+    "reset all settings drops the text lines, turns text back on and reopens folds",
+    textReset.lines === 0 && textReset.pills === 0 && textReset.on && textReset.reopened,
+    JSON.stringify(textReset),
+  );
+
+  const foldIdioms = await s.evaluate(`(() => ({
+    filler: !!document.querySelector("#filler-section > .sub-head > .fold"),
+    filters: !!document.querySelector("#filters-section > .sub-head > .fold"),
+    details: document.querySelectorAll("main details").length,
+  }))()`);
+  check(
+    "filler and the block filters use the same fold as every subsection",
+    foldIdioms.filler && foldIdioms.filters,
+    JSON.stringify(foldIdioms),
+  );
+  await s.evaluate(`localStorage.setItem("arachne.workspace", JSON.stringify({
+    v: 1, enabled: 3, picks: 9, deliberate: "x", tools: "no", toggles: null, fields: 7,
+    previewZoom: "big", previewHidden: "yes", dismissedStale: 5, collapsed: "x",
+    collapsedSubs: 5, text: { a: 1 }, textOn: "no",
+  }))`);
+  let garbageBoot = "";
+  try {
+    garbageBoot = await goto();
+  } catch (e) {
+    garbageBoot = `FAILED ${e.message}`;
+  }
+  check("a garbage workspace still boots", /^ready/.test(garbageBoot), garbageBoot);
+  const afterGarbage = await s.evaluate(`(() => ({
+    textOn: document.getElementById("text-on").checked,
+    filtersClosed: document.getElementById("filters-section").classList.contains("collapsed"),
+    buildOpen: !document.getElementById("build-section").classList.contains("collapsed"),
+  }))()`);
+  check(
+    "garbage fields fall back to defaults",
+    afterGarbage.textOn && afterGarbage.filtersClosed && afterGarbage.buildOpen,
+    JSON.stringify(afterGarbage),
+  );
+
+  // map data mode (#83): the whole table in four shades, nothing placed.
+  // The garbage workspace above left the palette empty; start from defaults.
+  await s.evaluate(`document.getElementById("reset-default").click()`);
+  await s.evaluate(`new Promise((r) => setTimeout(r, 3000))`);
+  await s.evaluate(`(async () => {
+    const cv = document.createElement("canvas");
+    cv.width = 256; cv.height = 256;
+    const g = cv.getContext("2d");
+    const grad = g.createLinearGradient(0, 0, 0, 256);
+    grad.addColorStop(0, "#000000"); grad.addColorStop(0.5, "#202020"); grad.addColorStop(1, "#c04040");
+    g.fillStyle = grad; g.fillRect(0, 0, 256, 256);
+    const blob = await new Promise((r) => cv.toBlob(r, "image/png"));
+    const dt = new DataTransfer();
+    dt.items.add(new File([blob], "dark.png", { type: "image/png" }));
+    const input = document.getElementById("file");
+    input.files = dt.files;
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  })()`);
+  await s.evaluate(`new Promise((r) => setTimeout(r, 5000))`);
+  await s.evaluate(`(() => {
+    const m = document.getElementById("make-mode");
+    m.value = "mapdata"; m.dispatchEvent(new Event("change", { bubbles: true }));
+  })()`);
+  await s.evaluate(`new Promise((r) => setTimeout(r, 6000))`);
+  const mapMode = await s.evaluate(`(async () => {
+    const hidden = (id) => getComputedStyle(document.getElementById(id)).display === "none";
+    const d = await (await fetch("/blocks-26.2.json")).json();
+    const fourth = new Set(d.colors.map((c) => c.tones.unobtainable.join(",")));
+    const others = new Set(d.colors.flatMap((c) => [c.tones.dark, c.tones.normal, c.tones.light].map((t) => t.join(","))));
+    const c = document.getElementById("preview");
+    const px = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+    let fourthCells = 0;
+    for (let i = 0; i < px.length; i += 4) {
+      const k = px[i] + "," + px[i + 1] + "," + px[i + 2];
+      if (fourth.has(k) && !others.has(k)) fourthCells++;
+    }
+    return {
+      cls: document.body.classList.contains("mode-mapdata"),
+      hidden: ["loadout-panel", "filler-section", "height-row", "build-as-row", "summary-panel", "schem-row"].every(hidden),
+      rows: document.querySelectorAll("#palette .prow, #palette .palette-row").length,
+      picks: document.querySelectorAll("#palette .blocksel").length,
+      meta: document.getElementById("color-meta").textContent,
+      note: !document.getElementById("mapdat-note").hidden,
+      fourthCells,
+    };
+  })()`);
+  check(
+    "map data mode folds the block panels away and offers all 61 colors",
+    mapMode.cls && mapMode.hidden && mapMode.rows === 61 && mapMode.picks === 0 && mapMode.note,
+    JSON.stringify({
+      rows: mapMode.rows,
+      picks: mapMode.picks,
+      meta: mapMode.meta,
+      hidden: mapMode.hidden,
+    }),
+  );
+  check(
+    "the fourth shade is used on a dark picture",
+    mapMode.fourthCells > 0,
+    `${mapMode.fourthCells} cells`,
+  );
+  await s.evaluate(`(() => {
+    window.__dl = [];
+    const origCreate = URL.createObjectURL.bind(URL);
+    URL.createObjectURL = (blob) => { window.__blob = blob; return origCreate(blob); };
+    HTMLAnchorElement.prototype.click = function () {
+      if (this.download) { window.__dl.push({ name: this.download, blob: window.__blob }); return; }
+    };
+    document.getElementById("export-download").click();
+  })()`);
+  await s.evaluate(`new Promise((r) => setTimeout(r, 5000))`);
+  const mapOnly = await s.evaluate(`(async () => {
+    const d = window.__dl[0];
+    if (!d) return { name: null, names: [] };
+    const text = new TextDecoder("latin1").decode(new Uint8Array(await d.blob.arrayBuffer()));
+    return {
+      name: d.name,
+      names: [...new Set([...text.matchAll(/(?:minecraft\\/maps\\/\\d+\\.dat|[a-z0-9_]+\\.(?:litematic|nbt|txt))/g)].map((m) => m[0]))],
+    };
+  })()`);
+  check(
+    "a map data export is only map files, always zipped",
+    mapOnly.name === "arachne.zip" &&
+      mapOnly.names.length >= 1 &&
+      mapOnly.names.every((n) => /^minecraft\/maps\/\d+\.dat$/.test(n)),
+    JSON.stringify(mapOnly),
+  );
+  await s.evaluate(`(() => {
+    const m = document.getElementById("make-mode");
+    m.value = "build"; m.dispatchEvent(new Event("change", { bubbles: true }));
+  })()`);
+  await s.evaluate(`new Promise((r) => setTimeout(r, 6000))`);
+  const backToBuild = await s.evaluate(`(() => ({
+    cls: document.body.classList.contains("mode-mapdata"),
+    rows: document.querySelectorAll("#palette .prow, #palette .palette-row").length,
+    loadout: getComputedStyle(document.getElementById("loadout-panel")).display !== "none",
+  }))()`);
+  check(
+    "back in build mode the palette is the 60 buildable colors again",
+    !backToBuild.cls && backToBuild.rows === 60 && backToBuild.loadout,
+    JSON.stringify(backToBuild),
   );
 
   const errors = s.logs.filter((l) => /EXCEPTION|error:/i.test(l));

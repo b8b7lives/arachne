@@ -1,0 +1,6544 @@
+{
+ "contract": 1,
+ "source": {
+  "repo": "google/fonts",
+  "commit": "5e35378e6bda803962ee6fd257e444a7d459660d"
+ },
+ "strips": {
+  "names": {
+   "file": "fonts-names.webp",
+   "w": 240,
+   "h": 32
+  },
+  "samples": {
+   "file": "fonts-samples.webp",
+   "w": 720,
+   "h": 44
+  }
+ },
+ "faces": [
+  {
+   "id": "abril-fatface",
+   "name": "Abril Fatface",
+   "designer": "TypeTogether",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/abrilfatface",
+   "tags": {
+    "/Expressive/Active": 10,
+    "/Expressive/Business": 30,
+    "/Expressive/Competent": 10,
+    "/Expressive/Cute": 5,
+    "/Expressive/Excited": 10,
+    "/Expressive/Happy": 11,
+    "/Expressive/Loud": 64,
+    "/Expressive/Rugged": 60,
+    "/Expressive/Vintage": 76,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 80,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Serif/Fat Face": 90,
+    "/Serif/Modern": 90
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "AbrilFatface-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 20724,
+     "upstream": "AbrilFatface-Regular.ttf"
+    }
+   ],
+   "strip": 0,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 35076,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "alfa-slab-one",
+   "name": "Alfa Slab One",
+   "designer": "JM Solé",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/alfaslabone",
+   "tags": {
+    "/Expressive/Business": 20,
+    "/Expressive/Cute": 10,
+    "/Expressive/Excited": 26,
+    "/Expressive/Loud": 88,
+    "/Expressive/Rugged": 75,
+    "/Expressive/Stiff": 20,
+    "/Expressive/Vintage": 51,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 65,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 60,
+    "/Serif/Fat Face": 70,
+    "/Slab/Geometric": 50,
+    "/Slab/Humanist": 50
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "AlfaSlabOne-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 34556,
+     "upstream": "AlfaSlabOne-Regular.ttf"
+    }
+   ],
+   "strip": 1,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 37690,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "almendra",
+   "name": "Almendra",
+   "designer": "Ana Sanfelippo",
+   "category": "SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/almendra",
+   "tags": {
+    "/Expressive/Active": 10,
+    "/Expressive/Artistic": 29,
+    "/Expressive/Cute": 10,
+    "/Expressive/Happy": 10,
+    "/Expressive/Playful": 20,
+    "/Expressive/Rugged": 30,
+    "/Expressive/Vintage": 90,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 65,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 80,
+    "/Seasonal/Christmas": 96,
+    "/Serif/Humanist Venetian": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Almendra-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 19872,
+     "upstream": "Almendra-Regular.ttf"
+    },
+    {
+     "file": "Almendra-Bold.woff2",
+     "weight": 700,
+     "style": "normal",
+     "bytes": 13052,
+     "upstream": "Almendra-Bold.ttf"
+    }
+   ],
+   "strip": 2,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 49032,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "almendra-display",
+   "name": "Almendra Display",
+   "designer": "Ana Sanfelippo",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/almendradisplay",
+   "tags": {
+    "/Expressive/Active": 10,
+    "/Expressive/Artistic": 29,
+    "/Expressive/Awkward": 45,
+    "/Expressive/Cute": 20,
+    "/Expressive/Excited": 10,
+    "/Expressive/Happy": 10,
+    "/Expressive/Playful": 20,
+    "/Expressive/Rugged": 6,
+    "/Expressive/Vintage": 85,
+    "/Quality/Concept": 40,
+    "/Quality/Drawing": 65,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 90,
+    "/Theme/Blackletter": 100
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "AlmendraDisplay-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 12124,
+     "upstream": "AlmendraDisplay-Regular.ttf"
+    }
+   ],
+   "strip": 3,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 20356,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "amatic-sc",
+   "name": "Amatic SC",
+   "designer": "Vernon Adams, Ben Nathan, Thomas Jockin",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/amaticsc",
+   "tags": {
+    "/Expressive/Awkward": 41,
+    "/Expressive/Childlike": 20,
+    "/Expressive/Excited": 5,
+    "/Expressive/Happy": 33,
+    "/Expressive/Rugged": 6,
+    "/Expressive/Sincere": 5,
+    "/Expressive/Vintage": 20,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 55,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 90,
+    "/Script/Handwritten": 100,
+    "/Seasonal/Christmas": 85,
+    "/Seasonal/Halloween": 75,
+    "/Seasonal/Lunar New Year": 76
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "AmaticSC-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 66708,
+     "upstream": "AmaticSC-Regular.ttf"
+    },
+    {
+     "file": "AmaticSC-Bold.woff2",
+     "weight": 700,
+     "style": "normal",
+     "bytes": 67916,
+     "upstream": "AmaticSC-Bold.ttf"
+    }
+   ],
+   "strip": 4,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 49759,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "anton",
+   "name": "Anton",
+   "designer": "Vernon Adams",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/anton",
+   "tags": {
+    "/Expressive/Business": 20,
+    "/Expressive/Excited": 10,
+    "/Expressive/Happy": 10,
+    "/Expressive/Loud": 80,
+    "/Expressive/Rugged": 69,
+    "/Expressive/Sincere": 20,
+    "/Expressive/Stiff": 35,
+    "/Expressive/Vintage": 40,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 70,
+    "/Sans/Grotesque": 30,
+    "/Sans/Neo Grotesque": 70
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Anton-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 57492,
+     "upstream": "Anton-Regular.ttf"
+    }
+   ],
+   "strip": 5,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 31187,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "archivo-narrow",
+   "name": "Archivo Narrow",
+   "designer": "Omnibus-Type",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/archivonarrow",
+   "tags": {
+    "/Expressive/Loud": 3,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 75,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 70,
+    "/Sans/Grotesque": 70
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "ArchivoNarrow-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 36108,
+     "upstream": "ArchivoNarrow[wght].ttf"
+    }
+   ],
+   "strip": 6,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 50678,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "are-you-serious",
+   "name": "Are You Serious",
+   "designer": "Robert Leuschke",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/areyouserious",
+   "tags": {
+    "/Expressive/Active": 44,
+    "/Expressive/Awkward": 70,
+    "/Expressive/Cute": 10,
+    "/Expressive/Excited": 42,
+    "/Expressive/Happy": 40,
+    "/Expressive/Playful": 55,
+    "/Expressive/Rugged": 12,
+    "/Expressive/Sincere": 5,
+    "/Expressive/Vintage": 35,
+    "/Quality/Concept": 50,
+    "/Quality/Drawing": 50,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 70,
+    "/Seasonal/Halloween": 100,
+    "/Theme/Wacky": 40
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "AreYouSerious-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 60272,
+     "upstream": "AreYouSerious-Regular.ttf"
+    }
+   ],
+   "strip": 7,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 32374,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "astloch",
+   "name": "Astloch",
+   "designer": "Dan Rhatigan",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/astloch",
+   "tags": {
+    "/Expressive/Artistic": 33,
+    "/Expressive/Awkward": 50,
+    "/Expressive/Cute": 20,
+    "/Expressive/Excited": 5,
+    "/Expressive/Happy": 20,
+    "/Expressive/Innovative": 82,
+    "/Expressive/Playful": 40,
+    "/Expressive/Rugged": 30,
+    "/Expressive/Sincere": 40,
+    "/Expressive/Vintage": 80,
+    "/Quality/Concept": 40,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 80,
+    "/Seasonal/Christmas": 73,
+    "/Theme/Blackletter": 100
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Astloch-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 18684,
+     "upstream": "Astloch-Regular.ttf"
+    },
+    {
+     "file": "Astloch-Bold.woff2",
+     "weight": 700,
+     "style": "normal",
+     "bytes": 29952,
+     "upstream": "Astloch-Bold.ttf"
+    }
+   ],
+   "strip": 8,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 52209,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "atkinson-hyperlegible-next",
+   "name": "Atkinson Hyperlegible Next",
+   "designer": "Braille Institute, Applied Design Works, Elliott Scott, Megan Eiswerth, Letters From Sweden",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/atkinsonhyperlegiblenext",
+   "tags": {
+    "/Expressive/Loud": 1,
+    "/Expressive/Rugged": 56,
+    "/Expressive/Vintage": 10,
+    "/Purpose/Easy Reading": 100,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 90,
+    "/Sans/Geometric": 20,
+    "/Sans/Grotesque": 70
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "AtkinsonHyperlegibleNext-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 48136,
+     "upstream": "AtkinsonHyperlegibleNext[wght].ttf"
+    }
+   ],
+   "strip": 9,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 56893,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "audiowide",
+   "name": "Audiowide",
+   "designer": "Astigmatic",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/audiowide",
+   "tags": {
+    "/Expressive/Awkward": 30,
+    "/Expressive/Business": 5,
+    "/Expressive/Futuristic": 92,
+    "/Expressive/Loud": 21,
+    "/Expressive/Rugged": 85,
+    "/Expressive/Sincere": 5,
+    "/Expressive/Stiff": 52,
+    "/Expressive/Vintage": 60,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 55,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 60,
+    "/Theme/Techno": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Audiowide-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 22992,
+     "upstream": "Audiowide-Regular.ttf"
+    }
+   ],
+   "strip": 10,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 39001,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "ballet",
+   "name": "Ballet",
+   "designer": "Omnibus-Type, Maximiliano Sproviero",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/ballet",
+   "tags": {
+    "/Expressive/Active": 5,
+    "/Expressive/Artistic": 100,
+    "/Expressive/Awkward": 45,
+    "/Expressive/Excited": 30,
+    "/Expressive/Fancy": 100,
+    "/Expressive/Innovative": 45,
+    "/Expressive/Sincere": 80,
+    "/Expressive/Sophisticated": 84,
+    "/Expressive/Vintage": 90,
+    "/Quality/Concept": 75,
+    "/Quality/Drawing": 80,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 100,
+    "/Script/Formal": 100,
+    "/Seasonal/Christmas": 96,
+    "/Seasonal/Valentine's Day": 94
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Ballet-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 55504,
+     "upstream": "Ballet[opsz].ttf"
+    }
+   ],
+   "strip": 11,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 51158,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "baloo-2",
+   "name": "Baloo 2",
+   "designer": "Ek Type",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/baloo2",
+   "tags": {
+    "/Expressive/Loud": 1,
+    "/Expressive/Rugged": 45,
+    "/Expressive/Vintage": 10,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 100,
+    "/Sans/Rounded": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Baloo2-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 179944,
+     "upstream": "Baloo2[wght].ttf"
+    }
+   ],
+   "strip": 12,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 60433,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "bangers",
+   "name": "Bangers",
+   "designer": "Vernon Adams",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/bangers",
+   "tags": {
+    "/Expressive/Active": 67,
+    "/Expressive/Awkward": 5,
+    "/Expressive/Excited": 74,
+    "/Expressive/Happy": 75,
+    "/Expressive/Loud": 80,
+    "/Expressive/Playful": 91,
+    "/Expressive/Rugged": 60,
+    "/Expressive/Vintage": 70,
+    "/Quality/Concept": 75,
+    "/Quality/Drawing": 65,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 90,
+    "/Seasonal/Christmas": 61,
+    "/Seasonal/Halloween": 75
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Bangers-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 36896,
+     "upstream": "Bangers-Regular.ttf"
+    }
+   ],
+   "strip": 13,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 35483,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "barlow-condensed",
+   "name": "Barlow Condensed",
+   "designer": "Jeremy Tribby",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/barlowcondensed",
+   "tags": {
+    "/Expressive/Active": 10,
+    "/Expressive/Business": 40,
+    "/Expressive/Calm": 70,
+    "/Expressive/Competent": 20,
+    "/Expressive/Futuristic": 10,
+    "/Expressive/Loud": 1,
+    "/Expressive/Rugged": 55,
+    "/Expressive/Sincere": 10,
+    "/Expressive/Stiff": 20,
+    "/Expressive/Vintage": 40,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 65,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 80,
+    "/Sans/Grotesque": 80,
+    "/Sans/Rounded": 80
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "BarlowCondensed-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 37268,
+     "upstream": "BarlowCondensed-Regular.ttf"
+    },
+    {
+     "file": "BarlowCondensed-Bold.woff2",
+     "weight": 700,
+     "style": "normal",
+     "bytes": 39408,
+     "upstream": "BarlowCondensed-Bold.ttf"
+    }
+   ],
+   "strip": 14,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 54375,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "bebas-neue",
+   "name": "Bebas Neue",
+   "designer": "Ryoichi Tsunekawa",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/bebasneue",
+   "tags": {
+    "/Expressive/Business": 10,
+    "/Expressive/Excited": 10,
+    "/Expressive/Futuristic": 10,
+    "/Expressive/Loud": 9,
+    "/Expressive/Rugged": 65,
+    "/Expressive/Sincere": 30,
+    "/Expressive/Stiff": 20,
+    "/Expressive/Vintage": 40,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 75,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 100,
+    "/Sans/Neo Grotesque": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "BebasNeue-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 21504,
+     "upstream": "BebasNeue-Regular.ttf"
+    }
+   ],
+   "strip": 15,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 23849,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "bellefair",
+   "name": "Bellefair",
+   "designer": "Nick Shinn, Liron Lavi Turkenic",
+   "category": "SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/bellefair",
+   "tags": {
+    "/Expressive/Business": 50,
+    "/Expressive/Competent": 40,
+    "/Expressive/Rugged": 20,
+    "/Expressive/Sincere": 60,
+    "/Expressive/Vintage": 70,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 75,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 100,
+    "/Seasonal/Christmas": 90,
+    "/Serif/Humanist Venetian": 25,
+    "/Serif/Old Style Garalde": 75
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Bellefair-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 27512,
+     "upstream": "Bellefair-Regular.ttf"
+    }
+   ],
+   "strip": 16,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 31741,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "berkshire-swash",
+   "name": "Berkshire Swash",
+   "designer": "Astigmatic",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/berkshireswash",
+   "tags": {
+    "/Expressive/Active": 10,
+    "/Expressive/Awkward": 22,
+    "/Expressive/Business": 5,
+    "/Expressive/Cute": 47,
+    "/Expressive/Excited": 10,
+    "/Expressive/Happy": 10,
+    "/Expressive/Innovative": 5,
+    "/Expressive/Loud": 29,
+    "/Expressive/Playful": 33,
+    "/Expressive/Rugged": 35,
+    "/Expressive/Sincere": 10,
+    "/Expressive/Vintage": 40,
+    "/Quality/Concept": 65,
+    "/Quality/Drawing": 50,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 60,
+    "/Script/Upright Script": 50,
+    "/Seasonal/Christmas": 99
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "BerkshireSwash-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 23616,
+     "upstream": "BerkshireSwash-Regular.ttf"
+    }
+   ],
+   "strip": 17,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 38447,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "big-shoulders",
+   "name": "Big Shoulders",
+   "designer": "Patric King",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/bigshoulders",
+   "tags": {
+    "/Expressive/Calm": 60,
+    "/Expressive/Excited": 5,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 90,
+    "/Sans/Geometric": 20,
+    "/Sans/Grotesque": 40,
+    "/Sans/Humanist": 20,
+    "/Sans/Superellipse": 20
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "BigShoulders-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 126440,
+     "upstream": "BigShoulders[opsz,wght].ttf"
+    }
+   ],
+   "strip": 18,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 49074,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "black-ops-one",
+   "name": "Black Ops One",
+   "designer": "James Grieshaber, Eben Sorkin",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/blackopsone",
+   "tags": {
+    "/Expressive/Active": 52,
+    "/Expressive/Awkward": 22,
+    "/Expressive/Business": 5,
+    "/Expressive/Futuristic": 10,
+    "/Expressive/Loud": 91,
+    "/Expressive/Rugged": 95,
+    "/Expressive/Sincere": 1,
+    "/Expressive/Stiff": 96,
+    "/Expressive/Vintage": 40,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 72,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 70,
+    "/Sans/Geometric": 50,
+    "/Theme/Stencil": 50
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "BlackOpsOne-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 56072,
+     "upstream": "BlackOpsOne-Regular.ttf"
+    }
+   ],
+   "strip": 19,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 69467,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "blaka",
+   "name": "Blaka",
+   "designer": "Mohamed Gaber",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/blaka",
+   "tags": {
+    "/Expressive/Artistic": 80,
+    "/Expressive/Awkward": 78,
+    "/Expressive/Excited": 53,
+    "/Expressive/Loud": 84,
+    "/Expressive/Rugged": 71,
+    "/Expressive/Sincere": 5,
+    "/Expressive/Stiff": 74,
+    "/Expressive/Vintage": 75,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 80,
+    "/Theme/Blackletter": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Blaka-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 22684,
+     "upstream": "Blaka-Regular.ttf"
+    }
+   ],
+   "strip": 20,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 28257,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "bodoni-moda",
+   "name": "Bodoni Moda",
+   "designer": "Owen Earl",
+   "category": "SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/bodonimoda",
+   "tags": {
+    "/Expressive/Calm": 50,
+    "/Expressive/Competent": 10,
+    "/Expressive/Rugged": 15,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 80,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 60,
+    "/Serif/Modern": 100,
+    "/Theme/Blackletter": 100
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "BodoniModa-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 74300,
+     "upstream": "BodoniModa[opsz,wght].ttf"
+    }
+   ],
+   "strip": 21,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 66627,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "bubblegum-sans",
+   "name": "Bubblegum Sans",
+   "designer": "Sudtipos",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/bubblegumsans",
+   "tags": {
+    "/Expressive/Active": 20,
+    "/Expressive/Awkward": 20,
+    "/Expressive/Cute": 55,
+    "/Expressive/Excited": 74,
+    "/Expressive/Happy": 70,
+    "/Expressive/Innovative": 5,
+    "/Expressive/Loud": 21,
+    "/Expressive/Playful": 82,
+    "/Expressive/Rugged": 50,
+    "/Expressive/Vintage": 60,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 90,
+    "/Script/Handwritten": 100,
+    "/Script/Informal": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "BubblegumSans-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 15956,
+     "upstream": "BubblegumSans-Regular.ttf"
+    }
+   ],
+   "strip": 22,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 19870,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "bungee",
+   "name": "Bungee",
+   "designer": "David Jonathan Ross",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/bungee",
+   "tags": {
+    "/Expressive/Active": 25,
+    "/Expressive/Awkward": 15,
+    "/Expressive/Business": 5,
+    "/Expressive/Cute": 10,
+    "/Expressive/Excited": 20,
+    "/Expressive/Futuristic": 20,
+    "/Expressive/Innovative": 60,
+    "/Expressive/Loud": 59,
+    "/Expressive/Playful": 32,
+    "/Expressive/Rugged": 75,
+    "/Expressive/Stiff": 65,
+    "/Expressive/Vintage": 50,
+    "/Quality/Concept": 90,
+    "/Quality/Drawing": 80,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Sans/Geometric": 70,
+    "/Sans/Humanist": 5,
+    "/Sans/Rounded": 60,
+    "/Seasonal/Hanukkah": 94,
+    "/Theme/Woodtype": 10
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Bungee-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 40472,
+     "upstream": "Bungee-Regular.ttf"
+    }
+   ],
+   "strip": 23,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 26706,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "bungee-shade",
+   "name": "Bungee Shade",
+   "designer": "David Jonathan Ross",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/bungeeshade",
+   "tags": {
+    "/Expressive/Active": 30,
+    "/Expressive/Awkward": 15,
+    "/Expressive/Business": 5,
+    "/Expressive/Cute": 10,
+    "/Expressive/Excited": 20,
+    "/Expressive/Futuristic": 30,
+    "/Expressive/Innovative": 60,
+    "/Expressive/Loud": 32,
+    "/Expressive/Playful": 34,
+    "/Expressive/Rugged": 75,
+    "/Expressive/Stiff": 65,
+    "/Expressive/Vintage": 50,
+    "/Quality/Concept": 90,
+    "/Quality/Drawing": 80,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Sans/Geometric": 70,
+    "/Sans/Humanist": 5,
+    "/Sans/Rounded": 60,
+    "/Theme/Woodtype": 10
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "BungeeShade-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 81672,
+     "upstream": "BungeeShade-Regular.ttf"
+    }
+   ],
+   "strip": 24,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 44736,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "butcherman",
+   "name": "Butcherman",
+   "designer": "Typomondo",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/butcherman",
+   "tags": {
+    "/Expressive/Awkward": 88,
+    "/Expressive/Innovative": 50,
+    "/Expressive/Loud": 37,
+    "/Expressive/Playful": 60,
+    "/Expressive/Rugged": 65,
+    "/Expressive/Sincere": 5,
+    "/Expressive/Vintage": 80,
+    "/Quality/Concept": 50,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 40,
+    "/Quality/Wordspace": 90,
+    "/Seasonal/Halloween": 100,
+    "/Theme/Blobby": 1,
+    "/Theme/Distressed": 10,
+    "/Theme/Wacky": 100
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Butcherman-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 36136,
+     "upstream": "Butcherman-Regular.ttf"
+    }
+   ],
+   "strip": 25,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 39151,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "bytesized",
+   "name": "Bytesized",
+   "designer": "Baltdev",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/bytesized",
+   "tags": {
+    "/Expressive/Awkward": 94,
+    "/Expressive/Futuristic": 10,
+    "/Expressive/Loud": 18,
+    "/Expressive/Playful": 20,
+    "/Expressive/Rugged": 30,
+    "/Expressive/Sincere": 5,
+    "/Expressive/Stiff": 55,
+    "/Expressive/Vintage": 51,
+    "/Monospace/Monospace": 100,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 100,
+    "/Theme/Pixel": 100,
+    "/Theme/Techno": 70
+   },
+   "native": 8,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Bytesized-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 4416,
+     "upstream": "Bytesized-Regular.ttf"
+    }
+   ],
+   "strip": 26
+  },
+  {
+   "id": "caveat",
+   "name": "Caveat",
+   "designer": "Impallari Type",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/caveat",
+   "tags": {
+    "/Expressive/Awkward": 51,
+    "/Expressive/Childlike": 86,
+    "/Expressive/Playful": 35,
+    "/Expressive/Rugged": 20,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 75,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 75,
+    "/Script/Handwritten": 100,
+    "/Script/Informal": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Caveat-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 173676,
+     "upstream": "Caveat[wght].ttf"
+    }
+   ],
+   "strip": 27,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 68597,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "chewy",
+   "name": "Chewy",
+   "designer": "Sideshow",
+   "category": "DISPLAY",
+   "license": "Apache-2.0",
+   "license_file": "LICENSE.txt",
+   "dir": "apache/chewy",
+   "tags": {
+    "/Expressive/Active": 10,
+    "/Expressive/Awkward": 25,
+    "/Expressive/Childlike": 5,
+    "/Expressive/Cute": 87,
+    "/Expressive/Excited": 20,
+    "/Expressive/Happy": 73,
+    "/Expressive/Loud": 62,
+    "/Expressive/Playful": 91,
+    "/Expressive/Rugged": 40,
+    "/Expressive/Sincere": 10,
+    "/Expressive/Vintage": 60,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 55,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 70,
+    "/Theme/Blobby": 70,
+    "/Theme/Brush": 80
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Chewy-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 21116,
+     "upstream": "Chewy-Regular.ttf"
+    }
+   ],
+   "strip": 28,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 21393,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "cinzel",
+   "name": "Cinzel",
+   "designer": "Natanael Gama",
+   "category": "SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/cinzel",
+   "tags": {
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Seasonal/Christmas": 86,
+    "/Serif/Old Style Garalde": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Cinzel-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 47828,
+     "upstream": "Cinzel[wght].ttf"
+    }
+   ],
+   "strip": 29,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 62081,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "comfortaa",
+   "name": "Comfortaa",
+   "designer": "Johan Aakerlund",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/comfortaa",
+   "tags": {
+    "/Expressive/Loud": 1,
+    "/Expressive/Playful": 15,
+    "/Expressive/Rugged": 20,
+    "/Expressive/Vintage": 20,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 50,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 90,
+    "/Sans/Geometric": 100,
+    "/Sans/Rounded": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Comfortaa-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 79968,
+     "upstream": "Comfortaa[wght].ttf"
+    }
+   ],
+   "strip": 30,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 68344,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "cookie",
+   "name": "Cookie",
+   "designer": "Ania Kruk",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/cookie",
+   "tags": {
+    "/Expressive/Artistic": 59,
+    "/Expressive/Childlike": 12,
+    "/Expressive/Cute": 40,
+    "/Expressive/Excited": 20,
+    "/Expressive/Fancy": 79,
+    "/Expressive/Happy": 44,
+    "/Expressive/Loud": 3,
+    "/Expressive/Sophisticated": 72,
+    "/Expressive/Vintage": 65,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 65,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 90,
+    "/Script/Formal": 100,
+    "/Script/Handwritten": 80,
+    "/Script/Upright Script": 40
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Cookie-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 16780,
+     "upstream": "Cookie-Regular.ttf"
+    }
+   ],
+   "strip": 31,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 20575,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "coral-pixels",
+   "name": "Coral Pixels",
+   "designer": "Tanukizamurai",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/coralpixels",
+   "tags": {
+    "/Expressive/Awkward": 96,
+    "/Expressive/Futuristic": 40,
+    "/Expressive/Innovative": 70,
+    "/Expressive/Loud": 1,
+    "/Expressive/Playful": 40,
+    "/Expressive/Rugged": 10,
+    "/Expressive/Vintage": 90,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 100,
+    "/Serif/Scotch": 80,
+    "/Theme/Pixel": 100
+   },
+   "native": 13,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "CoralPixels-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 87332,
+     "upstream": "CoralPixels-Regular.ttf"
+    }
+   ],
+   "strip": 32
+  },
+  {
+   "id": "cormorant-garamond",
+   "name": "Cormorant Garamond",
+   "designer": "Christian Thalmann",
+   "category": "SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/cormorantgaramond",
+   "tags": {
+    "/Expressive/Rugged": 12,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 75,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 60,
+    "/Serif/Old Style Garalde": 100
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "CormorantGaramond-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 209344,
+     "upstream": "CormorantGaramond[wght].ttf"
+    }
+   ],
+   "strip": 33,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 56510,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "courgette",
+   "name": "Courgette",
+   "designer": "Karolina Lach",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/courgette",
+   "tags": {
+    "/Expressive/Active": 74,
+    "/Expressive/Artistic": 48,
+    "/Expressive/Cute": 22,
+    "/Expressive/Excited": 66,
+    "/Expressive/Happy": 71,
+    "/Expressive/Loud": 3,
+    "/Expressive/Playful": 17,
+    "/Expressive/Rugged": 12,
+    "/Expressive/Sincere": 92,
+    "/Expressive/Vintage": 55,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 80,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 70,
+    "/Script/Handwritten": 10,
+    "/Script/Informal": 80,
+    "/Seasonal/Hanukkah": 98,
+    "/Seasonal/Valentine's Day": 85
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Courgette-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 37272,
+     "upstream": "Courgette-Regular.ttf"
+    }
+   ],
+   "strip": 34,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 40659,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "creepster",
+   "name": "Creepster",
+   "designer": "Sideshow",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/creepster",
+   "tags": {
+    "/Expressive/Active": 20,
+    "/Expressive/Awkward": 30,
+    "/Expressive/Excited": 69,
+    "/Expressive/Innovative": 20,
+    "/Expressive/Loud": 54,
+    "/Expressive/Playful": 47,
+    "/Expressive/Rugged": 87,
+    "/Expressive/Vintage": 85,
+    "/Quality/Concept": 90,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 90,
+    "/Seasonal/Halloween": 100,
+    "/Theme/Blobby": 5,
+    "/Theme/Distressed": 80,
+    "/Theme/Wacky": 20
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Creepster-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 29852,
+     "upstream": "Creepster-Regular.ttf"
+    }
+   ],
+   "strip": 35,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 21265,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "dancing-script",
+   "name": "Dancing Script",
+   "designer": "Impallari Type",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/dancingscript",
+   "tags": {
+    "/Expressive/Playful": 7,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 75,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Seasonal/Lunar New Year": 82,
+    "/Seasonal/Valentine's Day": 96
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "DancingScript-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 59976,
+     "upstream": "DancingScript[wght].ttf"
+    }
+   ],
+   "strip": 36,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 70916,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "datatype",
+   "name": "Datatype",
+   "designer": "Frank Tisellano",
+   "category": "MONOSPACE",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/datatype",
+   "tags": {
+    "/Monospace/Monospace": 100,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Sans/Neo Grotesque": 80,
+    "/Special use/Symbols": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Datatype-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 81828,
+     "upstream": "Datatype[wdth,wght].ttf"
+    }
+   ],
+   "strip": 37,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 42084,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "dotgothic16",
+   "name": "DotGothic16",
+   "designer": "Fontworks Inc.",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/dotgothic16",
+   "tags": {
+    "/Expressive/Awkward": 54,
+    "/Expressive/Excited": 10,
+    "/Expressive/Futuristic": 30,
+    "/Expressive/Innovative": 5,
+    "/Expressive/Rugged": 40,
+    "/Expressive/Stiff": 50,
+    "/Expressive/Vintage": 85,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 100,
+    "/Sans/Glyphic": 80,
+    "/Sans/Grotesque": 30,
+    "/Theme/Pixel": 100,
+    "/Theme/Techno": 90
+   },
+   "native": 16,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "DotGothic16-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 500320,
+     "upstream": "DotGothic16-Regular.ttf"
+    }
+   ],
+   "strip": 38
+  },
+  {
+   "id": "doto",
+   "name": "Doto",
+   "designer": "Óliver Lalan",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/doto",
+   "tags": {
+    "/Expressive/Awkward": 54,
+    "/Expressive/Playful": 65,
+    "/Monospace/Monospace": 100,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Theme/Pixel": 100
+   },
+   "native": 16,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Doto-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 8748,
+     "upstream": "Doto[ROND,wght].ttf"
+    }
+   ],
+   "strip": 39
+  },
+  {
+   "id": "eater",
+   "name": "Eater",
+   "designer": "Typomondo",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/eater",
+   "tags": {
+    "/Expressive/Awkward": 93,
+    "/Expressive/Excited": 95,
+    "/Expressive/Innovative": 30,
+    "/Expressive/Loud": 26,
+    "/Expressive/Playful": 97,
+    "/Expressive/Rugged": 58,
+    "/Expressive/Vintage": 30,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 45,
+    "/Quality/Spacing": 50,
+    "/Quality/Wordspace": 100,
+    "/Seasonal/Halloween": 100,
+    "/Theme/Wacky": 100
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Eater-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 46328,
+     "upstream": "Eater-Regular.ttf"
+    }
+   ],
+   "strip": 40,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 47484,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "eb-garamond",
+   "name": "EB Garamond",
+   "designer": "Georg Duffner, Octavio Pardo",
+   "category": "SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/ebgaramond",
+   "tags": {
+    "/Expressive/Rugged": 30,
+    "/Quality/Concept": 75,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 90,
+    "/Serif/Old Style Garalde": 100
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "EBGaramond-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 296976,
+     "upstream": "EBGaramond[wght].ttf"
+    }
+   ],
+   "strip": 41,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 61694,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "emilys-candy",
+   "name": "Emilys Candy",
+   "designer": "Neapolitan",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/emilyscandy",
+   "tags": {
+    "/Expressive/Awkward": 44,
+    "/Expressive/Cute": 77,
+    "/Expressive/Excited": 42,
+    "/Expressive/Happy": 72,
+    "/Expressive/Loud": 3,
+    "/Expressive/Playful": 53,
+    "/Expressive/Rugged": 12,
+    "/Expressive/Vintage": 45,
+    "/Quality/Concept": 65,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 80,
+    "/Seasonal/Halloween": 100,
+    "/Seasonal/Valentine's Day": 91,
+    "/Serif/Modern": 80,
+    "/Theme/Wacky": 80
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "EmilysCandy-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 87752,
+     "upstream": "EmilysCandy-Regular.ttf"
+    }
+   ],
+   "strip": 42,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 25546,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "ewert",
+   "name": "Ewert",
+   "designer": "Johan Kallas, Mihkel Virkus",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/ewert",
+   "tags": {
+    "/Expressive/Awkward": 90,
+    "/Expressive/Cute": 20,
+    "/Expressive/Playful": 40,
+    "/Expressive/Rugged": 65,
+    "/Expressive/Vintage": 90,
+    "/Quality/Concept": 40,
+    "/Quality/Drawing": 55,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 90,
+    "/Seasonal/Christmas": 88,
+    "/Theme/Shaded": 100,
+    "/Theme/Tuscan": 100,
+    "/Theme/Woodtype": 20
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Ewert-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 14924,
+     "upstream": "Ewert-Regular.ttf"
+    }
+   ],
+   "strip": 43,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 24369,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "faster-one",
+   "name": "Faster One",
+   "designer": "Eduardo Tunni",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/fasterone",
+   "tags": {
+    "/Expressive/Active": 94,
+    "/Expressive/Awkward": 72,
+    "/Expressive/Excited": 30,
+    "/Expressive/Innovative": 30,
+    "/Expressive/Loud": 34,
+    "/Expressive/Playful": 70,
+    "/Expressive/Rugged": 65,
+    "/Expressive/Stiff": 5,
+    "/Expressive/Vintage": 75,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "FasterOne-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 33496,
+     "upstream": "FasterOne-Regular.ttf"
+    }
+   ],
+   "strip": 44,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 44657,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "fira-code",
+   "name": "Fira Code",
+   "designer": "The Mozilla Foundation, Telefonica S.A., Nikita Prokopov",
+   "category": "MONOSPACE",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/firacode",
+   "tags": {
+    "/Expressive/Loud": 1,
+    "/Expressive/Vintage": 10,
+    "/Monospace/Monospace": 100,
+    "/Quality/Concept": 75,
+    "/Quality/Drawing": 75,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Sans/Humanist": 80
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "FiraCode-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 105976,
+     "upstream": "FiraCode[wght].ttf"
+    }
+   ],
+   "strip": 45,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 60265,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "fjalla-one",
+   "name": "Fjalla One",
+   "designer": "Sorkin Type, Irina Smirnova",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/fjallaone",
+   "tags": {
+    "/Expressive/Active": 30,
+    "/Expressive/Business": 20,
+    "/Expressive/Competent": 20,
+    "/Expressive/Excited": 20,
+    "/Expressive/Futuristic": 20,
+    "/Expressive/Happy": 5,
+    "/Expressive/Loud": 13,
+    "/Expressive/Rugged": 65,
+    "/Expressive/Sincere": 10,
+    "/Expressive/Stiff": 36,
+    "/Expressive/Vintage": 35,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 68,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 90,
+    "/Sans/Grotesque": 100,
+    "/Sans/Superellipse": 30,
+    "/Seasonal/Hanukkah": 50
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "FjallaOne-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 84520,
+     "upstream": "FjallaOne-Regular.ttf"
+    }
+   ],
+   "strip": 46,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 82021,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "flavors",
+   "name": "Flavors",
+   "designer": "Sideshow",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/flavors",
+   "tags": {
+    "/Expressive/Awkward": 94,
+    "/Expressive/Cute": 62,
+    "/Expressive/Excited": 86,
+    "/Expressive/Happy": 50,
+    "/Expressive/Innovative": 25,
+    "/Expressive/Loud": 18,
+    "/Expressive/Playful": 97,
+    "/Expressive/Rugged": 30,
+    "/Expressive/Vintage": 20,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 70,
+    "/Seasonal/Halloween": 100,
+    "/Seasonal/Holi": 90
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Flavors-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 68676,
+     "upstream": "Flavors-Regular.ttf"
+    }
+   ],
+   "strip": 47,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 26016,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "freckle-face",
+   "name": "Freckle Face",
+   "designer": "Astigmatic",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/freckleface",
+   "tags": {
+    "/Expressive/Active": 40,
+    "/Expressive/Awkward": 87,
+    "/Expressive/Cute": 50,
+    "/Expressive/Excited": 55,
+    "/Expressive/Happy": 71,
+    "/Expressive/Innovative": 30,
+    "/Expressive/Loud": 50,
+    "/Expressive/Playful": 95,
+    "/Expressive/Rugged": 75,
+    "/Expressive/Vintage": 56,
+    "/Quality/Concept": 40,
+    "/Quality/Drawing": 50,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 70,
+    "/Seasonal/Halloween": 90,
+    "/Seasonal/Holi": 58,
+    "/Theme/Distressed": 100,
+    "/Theme/Techno": 30,
+    "/Theme/Wacky": 70
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "FreckleFace-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 50296,
+     "upstream": "FreckleFace-Regular.ttf"
+    }
+   ],
+   "strip": 48,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 40053,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "fredericka-the-great",
+   "name": "Fredericka the Great",
+   "designer": "Tart Workshop",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/frederickathegreat",
+   "tags": {
+    "/Expressive/Artistic": 97,
+    "/Expressive/Awkward": 45,
+    "/Expressive/Happy": 20,
+    "/Expressive/Innovative": 48,
+    "/Expressive/Playful": 22,
+    "/Expressive/Rugged": 85,
+    "/Expressive/Vintage": 60,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 80,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 70,
+    "/Serif/Didone": 100,
+    "/Theme/Brush": 10,
+    "/Theme/Distressed": 80,
+    "/Theme/Wacky": 20
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "FrederickatheGreat-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 209616,
+     "upstream": "FrederickatheGreat-Regular.ttf"
+    }
+   ],
+   "strip": 49,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 27269,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "fredoka",
+   "name": "Fredoka",
+   "designer": "Milena Brandão, Hafontia",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/fredoka",
+   "tags": {
+    "/Expressive/Playful": 25,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 68,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 90,
+    "/Sans/Geometric": 100,
+    "/Sans/Rounded": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Fredoka-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 86324,
+     "upstream": "Fredoka[wdth,wght].ttf"
+    }
+   ],
+   "strip": 50,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 42110,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "gaegu",
+   "name": "Gaegu",
+   "designer": "JIKJI SOFT",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/gaegu",
+   "tags": {
+    "/Expressive/Awkward": 30,
+    "/Expressive/Childlike": 70,
+    "/Expressive/Cute": 60,
+    "/Expressive/Happy": 38,
+    "/Expressive/Playful": 44,
+    "/Expressive/Rugged": 12,
+    "/Expressive/Vintage": 45,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 20,
+    "/Sans/Rounded": 100,
+    "/Script/Handwritten": 100,
+    "/Script/Informal": 100,
+    "/Script/Upright Script": 100,
+    "/Theme/Brush": 80
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Gaegu-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 290568,
+     "upstream": "Gaegu-Regular.ttf"
+    },
+    {
+     "file": "Gaegu-Bold.woff2",
+     "weight": 700,
+     "style": "normal",
+     "bytes": 484372,
+     "upstream": "Gaegu-Bold.ttf"
+    }
+   ],
+   "strip": 51,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 14978,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "geist-pixel",
+   "name": "Geist Pixel",
+   "designer": "Andrés Briganti, Evil Rabbit, Guillermo Rauch",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/geistpixel",
+   "tags": {
+    "/Expressive/Artistic": 50,
+    "/Expressive/Awkward": 70,
+    "/Expressive/Excited": 10,
+    "/Expressive/Futuristic": 75,
+    "/Expressive/Innovative": 25,
+    "/Expressive/Loud": 35,
+    "/Expressive/Playful": 75,
+    "/Expressive/Rugged": 35,
+    "/Expressive/Sincere": 1,
+    "/Expressive/Stiff": 50,
+    "/Expressive/Vintage": 60,
+    "/Quality/Concept": 100,
+    "/Quality/Drawing": 100,
+    "/Quality/Spacing": 100,
+    "/Quality/Wordspace": 100,
+    "/Theme/Pixel": 100,
+    "/Theme/Techno": 50
+   },
+   "native": 16,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "GeistPixel-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 39176,
+     "upstream": "GeistPixel[ELSH].ttf"
+    }
+   ],
+   "strip": 52
+  },
+  {
+   "id": "germania-one",
+   "name": "Germania One",
+   "designer": "John Vargas Beltrán",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/germaniaone",
+   "tags": {
+    "/Expressive/Artistic": 77,
+    "/Expressive/Awkward": 45,
+    "/Expressive/Business": 5,
+    "/Expressive/Loud": 21,
+    "/Expressive/Playful": 11,
+    "/Expressive/Rugged": 60,
+    "/Expressive/Vintage": 78,
+    "/Quality/Concept": 50,
+    "/Quality/Drawing": 55,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 60,
+    "/Sans/Geometric": 10,
+    "/Theme/Blackletter": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "GermaniaOne-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 11640,
+     "upstream": "GermaniaOne-Regular.ttf"
+    }
+   ],
+   "strip": 53,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 19313,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "great-vibes",
+   "name": "Great Vibes",
+   "designer": "Robert Leuschke",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/greatvibes",
+   "tags": {
+    "/Expressive/Active": 16,
+    "/Expressive/Artistic": 99,
+    "/Expressive/Excited": 10,
+    "/Expressive/Fancy": 90,
+    "/Expressive/Happy": 28,
+    "/Expressive/Rugged": 5,
+    "/Expressive/Sophisticated": 73,
+    "/Expressive/Vintage": 88,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 75,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 100,
+    "/Script/Formal": 80,
+    "/Seasonal/Christmas": 93,
+    "/Seasonal/Diwali": 90,
+    "/Seasonal/Hanukkah": 80,
+    "/Seasonal/Holi": 84,
+    "/Seasonal/Lunar New Year": 90,
+    "/Seasonal/Valentine's Day": 97
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "GreatVibes-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 161912,
+     "upstream": "GreatVibes-Regular.ttf"
+    }
+   ],
+   "strip": 54,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 43516,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "grenze",
+   "name": "Grenze",
+   "designer": "Omnibus-Type",
+   "category": "SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/grenze",
+   "tags": {
+    "/Expressive/Awkward": 12,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 80,
+    "/Theme/Blackletter": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Grenze-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 63884,
+     "upstream": "Grenze[wght].ttf"
+    }
+   ],
+   "strip": 55,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 54333,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "grenze-gotisch",
+   "name": "Grenze Gotisch",
+   "designer": "Omnibus-Type",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/grenzegotisch",
+   "tags": {
+    "/Expressive/Awkward": 12,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 89,
+    "/Seasonal/Christmas": 89,
+    "/Seasonal/Halloween": 90,
+    "/Theme/Blackletter": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "GrenzeGotisch-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 81368,
+     "upstream": "GrenzeGotisch[wght].ttf"
+    }
+   ],
+   "strip": 56,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 56348,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "handjet",
+   "name": "Handjet",
+   "designer": "Rosetta, David Březina",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/handjet",
+   "tags": {
+    "/Expressive/Awkward": 50,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 65,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 100,
+    "/Theme/Pixel": 100,
+    "/Theme/Techno": 90
+   },
+   "native": 16,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Handjet-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 50088,
+     "upstream": "Handjet[ELGR,ELSH,wght].ttf"
+    }
+   ],
+   "strip": 57
+  },
+  {
+   "id": "henny-penny",
+   "name": "Henny Penny",
+   "designer": "Brownfox",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/hennypenny",
+   "tags": {
+    "/Expressive/Active": 30,
+    "/Expressive/Awkward": 96,
+    "/Expressive/Cute": 60,
+    "/Expressive/Excited": 97,
+    "/Expressive/Happy": 92,
+    "/Expressive/Loud": 6,
+    "/Expressive/Playful": 99,
+    "/Expressive/Rugged": 5,
+    "/Expressive/Sincere": 5,
+    "/Expressive/Vintage": 79,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 50,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 100,
+    "/Seasonal/Christmas": 94,
+    "/Seasonal/Halloween": 100,
+    "/Theme/Wacky": 60
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "HennyPenny-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 48612,
+     "upstream": "HennyPenny-Regular.ttf"
+    }
+   ],
+   "strip": 58,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 32254,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "ibm-plex-mono",
+   "name": "IBM Plex Mono",
+   "designer": "Mike Abbink, Bold Monday",
+   "category": "MONOSPACE",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/ibmplexmono",
+   "tags": {
+    "/Expressive/Business": 30,
+    "/Expressive/Calm": 75,
+    "/Expressive/Futuristic": 25,
+    "/Expressive/Loud": 1,
+    "/Expressive/Rugged": 40,
+    "/Expressive/Stiff": 20,
+    "/Expressive/Vintage": 5,
+    "/Monospace/Monospace": 100,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Sans/Neo Grotesque": 80
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "IBMPlexMono-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 39156,
+     "upstream": "IBMPlexMono-Regular.ttf"
+    },
+    {
+     "file": "IBMPlexMono-Bold.woff2",
+     "weight": 700,
+     "style": "normal",
+     "bytes": 40436,
+     "upstream": "IBMPlexMono-Bold.ttf"
+    }
+   ],
+   "strip": 59,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 59040,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "indie-flower",
+   "name": "Indie Flower",
+   "designer": "Kimberly Geswein",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/indieflower",
+   "tags": {
+    "/Expressive/Active": 5,
+    "/Expressive/Awkward": 75,
+    "/Expressive/Childlike": 72,
+    "/Expressive/Cute": 50,
+    "/Expressive/Excited": 30,
+    "/Expressive/Happy": 89,
+    "/Expressive/Playful": 78,
+    "/Expressive/Rugged": 2,
+    "/Expressive/Sincere": 20,
+    "/Expressive/Vintage": 30,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 60,
+    "/Script/Handwritten": 100,
+    "/Script/Informal": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "IndieFlower-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 43292,
+     "upstream": "IndieFlower-Regular.ttf"
+    }
+   ],
+   "strip": 60,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 31929,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "inter",
+   "name": "Inter",
+   "designer": "Rasmus Andersson",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/inter",
+   "tags": {
+    "/Expressive/Calm": 80,
+    "/Expressive/Competent": 91,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 80,
+    "/Sans/Geometric": 20,
+    "/Sans/Humanist": 10,
+    "/Sans/Neo Grotesque": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Inter-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 350548,
+     "upstream": "Inter[opsz,wght].ttf"
+    }
+   ],
+   "strip": 61,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 65897,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "irish-grover",
+   "name": "Irish Grover",
+   "designer": "Sideshow",
+   "category": "DISPLAY",
+   "license": "Apache-2.0",
+   "license_file": "LICENSE.txt",
+   "dir": "apache/irishgrover",
+   "tags": {
+    "/Expressive/Awkward": 91,
+    "/Expressive/Cute": 10,
+    "/Expressive/Excited": 82,
+    "/Expressive/Happy": 90,
+    "/Expressive/Loud": 18,
+    "/Expressive/Playful": 96,
+    "/Expressive/Rugged": 30,
+    "/Expressive/Sincere": 5,
+    "/Expressive/Vintage": 70,
+    "/Quality/Concept": 40,
+    "/Quality/Drawing": 35,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 70,
+    "/Seasonal/Halloween": 90,
+    "/Theme/Wacky": 100
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "IrishGrover-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 24752,
+     "upstream": "IrishGrover-Regular.ttf"
+    }
+   ],
+   "strip": 62,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 27035,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "jacquard-12",
+   "name": "Jacquard 12",
+   "designer": "Sarah Cadigan-Fried",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/jacquard12",
+   "tags": {
+    "/Expressive/Awkward": 80,
+    "/Expressive/Futuristic": 5,
+    "/Expressive/Loud": 3,
+    "/Expressive/Playful": 10,
+    "/Expressive/Rugged": 45,
+    "/Expressive/Sincere": 5,
+    "/Expressive/Stiff": 20,
+    "/Expressive/Vintage": 85,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 80,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 100,
+    "/Theme/Medieval": 100,
+    "/Theme/Pixel": 100
+   },
+   "native": 12,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Jacquard12-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 28996,
+     "upstream": "Jacquard12-Regular.ttf"
+    }
+   ],
+   "strip": 63
+  },
+  {
+   "id": "jacquarda-bastarda-9",
+   "name": "Jacquarda Bastarda 9",
+   "designer": "Sarah Cadigan-Fried",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/jacquardabastarda9",
+   "tags": {
+    "/Expressive/Awkward": 80,
+    "/Expressive/Futuristic": 5,
+    "/Expressive/Loud": 1,
+    "/Expressive/Playful": 10,
+    "/Expressive/Rugged": 45,
+    "/Expressive/Sincere": 5,
+    "/Expressive/Stiff": 20,
+    "/Expressive/Vintage": 85,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 80,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Theme/Pixel": 100
+   },
+   "native": 9,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "JacquardaBastarda9-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 21920,
+     "upstream": "JacquardaBastarda9-Regular.ttf"
+    }
+   ],
+   "strip": 64
+  },
+  {
+   "id": "jersey-10",
+   "name": "Jersey 10",
+   "designer": "Sarah Cadigan-Fried",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/jersey10",
+   "tags": {
+    "/Expressive/Awkward": 40,
+    "/Expressive/Futuristic": 5,
+    "/Expressive/Loud": 18,
+    "/Expressive/Rugged": 55,
+    "/Expressive/Sincere": 5,
+    "/Expressive/Stiff": 55,
+    "/Expressive/Vintage": 75,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 80,
+    "/Theme/Pixel": 100
+   },
+   "native": 10,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Jersey10-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 20468,
+     "upstream": "Jersey10-Regular.ttf"
+    }
+   ],
+   "strip": 65
+  },
+  {
+   "id": "jetbrains-mono",
+   "name": "JetBrains Mono",
+   "designer": "JetBrains, Philipp Nurullin, Konstantin Bulenkov",
+   "category": "MONOSPACE",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/jetbrainsmono",
+   "tags": {
+    "/Expressive/Loud": 1,
+    "/Expressive/Vintage": 30,
+    "/Monospace/Monospace": 100,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Sans/Geometric": 70
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "JetBrainsMono-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 71636,
+     "upstream": "JetBrainsMono[wght].ttf"
+    }
+   ],
+   "strip": 66,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 56087,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "jolly-lodger",
+   "name": "Jolly Lodger",
+   "designer": "Font Diner",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/jollylodger",
+   "tags": {
+    "/Expressive/Active": 10,
+    "/Expressive/Awkward": 75,
+    "/Expressive/Excited": 77,
+    "/Expressive/Loud": 18,
+    "/Expressive/Playful": 94,
+    "/Expressive/Rugged": 45,
+    "/Expressive/Sincere": 5,
+    "/Expressive/Vintage": 68,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 62,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 70,
+    "/Seasonal/Halloween": 100,
+    "/Theme/Wacky": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "JollyLodger-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 19688,
+     "upstream": "JollyLodger-Regular.ttf"
+    }
+   ],
+   "strip": 67,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 19283,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "kablammo",
+   "name": "Kablammo",
+   "designer": "Vectro Type Foundry, Travis Kochel, Lizy Gershenzon, Daria Cohen, Ethan Cohen",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/kablammo",
+   "tags": {
+    "/Expressive/Active": 84,
+    "/Expressive/Awkward": 94,
+    "/Expressive/Cute": 63,
+    "/Expressive/Excited": 94,
+    "/Expressive/Futuristic": 10,
+    "/Expressive/Happy": 84,
+    "/Expressive/Innovative": 95,
+    "/Expressive/Loud": 64,
+    "/Expressive/Playful": 99,
+    "/Expressive/Rugged": 30,
+    "/Expressive/Sincere": 5,
+    "/Expressive/Vintage": 50,
+    "/Quality/Concept": 100,
+    "/Quality/Drawing": 85,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 100,
+    "/Seasonal/Halloween": 90,
+    "/Seasonal/Holi": 81,
+    "/Theme/Blobby": 100,
+    "/Theme/Wacky": 100
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Kablammo-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 835500,
+     "upstream": "Kablammo[MORF].ttf"
+    }
+   ],
+   "strip": 68,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 35420,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "kaushan-script",
+   "name": "Kaushan Script",
+   "designer": "Impallari Type",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/kaushanscript",
+   "tags": {
+    "/Expressive/Active": 89,
+    "/Expressive/Artistic": 97,
+    "/Expressive/Awkward": 20,
+    "/Expressive/Cute": 20,
+    "/Expressive/Excited": 59,
+    "/Expressive/Happy": 61,
+    "/Expressive/Loud": 26,
+    "/Expressive/Playful": 52,
+    "/Expressive/Rugged": 6,
+    "/Expressive/Sincere": 20,
+    "/Expressive/Vintage": 60,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 72,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 70,
+    "/Script/Informal": 50,
+    "/Seasonal/Hanukkah": 92
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "KaushanScript-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 58060,
+     "upstream": "KaushanScript-Regular.ttf"
+    }
+   ],
+   "strip": 69,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 53983,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "kings",
+   "name": "Kings",
+   "designer": "Robert Leuschke",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/kings",
+   "tags": {
+    "/Expressive/Artistic": 96,
+    "/Expressive/Awkward": 65,
+    "/Expressive/Excited": 20,
+    "/Expressive/Fancy": 71,
+    "/Expressive/Rugged": 35,
+    "/Expressive/Sincere": 40,
+    "/Expressive/Sophisticated": 72,
+    "/Expressive/Vintage": 89,
+    "/Quality/Concept": 55,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 80,
+    "/Script/Formal": 80,
+    "/Script/Handwritten": 60,
+    "/Seasonal/Christmas": 98,
+    "/Theme/Medieval": 80
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Kings-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 86340,
+     "upstream": "Kings-Regular.ttf"
+    }
+   ],
+   "strip": 70,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 33431,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "league-gothic",
+   "name": "League Gothic",
+   "designer": "Tyler Finck, Caroline Hadilaksono, Micah Rich",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/leaguegothic",
+   "tags": {
+    "/Expressive/Active": 20,
+    "/Expressive/Business": 20,
+    "/Expressive/Calm": 20,
+    "/Expressive/Excited": 20,
+    "/Expressive/Futuristic": 5,
+    "/Expressive/Loud": 22,
+    "/Expressive/Rugged": 60,
+    "/Expressive/Stiff": 32,
+    "/Expressive/Vintage": 55,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 80,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 80,
+    "/Sans/Grotesque": 100,
+    "/Sans/Superellipse": 60
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "LeagueGothic-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 27320,
+     "upstream": "LeagueGothic[wdth].ttf"
+    }
+   ],
+   "strip": 71,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 20550,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "lexend",
+   "name": "Lexend",
+   "designer": "Bonnie Shaver-Troup, Thomas Jockin, Santiago Orozco, Héctor Gómez, Superunion",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/lexend",
+   "tags": {
+    "/Expressive/Rugged": 45,
+    "/Expressive/Vintage": 30,
+    "/Purpose/Easy Reading": 100,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 65,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 90,
+    "/Sans/Geometric": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Lexend-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 71972,
+     "upstream": "Lexend[wght].ttf"
+    }
+   ],
+   "strip": 72,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 66976,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "libre-baskerville",
+   "name": "Libre Baskerville",
+   "designer": "Impallari Type",
+   "category": "SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/librebaskerville",
+   "tags": {
+    "/Expressive/Loud": 3,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 80,
+    "/Serif/Transitional": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "LibreBaskerville-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 64156,
+     "upstream": "LibreBaskerville[wght].ttf"
+    }
+   ],
+   "strip": 73,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 74379,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "lilita-one",
+   "name": "Lilita One",
+   "designer": "Juan Montoreano",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/lilitaone",
+   "tags": {
+    "/Expressive/Cute": 20,
+    "/Expressive/Happy": 10,
+    "/Expressive/Loud": 52,
+    "/Expressive/Playful": 33,
+    "/Expressive/Rugged": 65,
+    "/Expressive/Vintage": 50,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 62,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 90,
+    "/Sans/Humanist": 100,
+    "/Seasonal/Kwanzaa": 55,
+    "/Theme/Blobby": 30,
+    "/Theme/Woodtype": 20
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "LilitaOne-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 11924,
+     "upstream": "LilitaOne-Regular.ttf"
+    }
+   ],
+   "strip": 74,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 20729,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "lobster",
+   "name": "Lobster",
+   "designer": "Impallari Type",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/lobster",
+   "tags": {
+    "/Expressive/Active": 20,
+    "/Expressive/Artistic": 75,
+    "/Expressive/Cute": 42,
+    "/Expressive/Excited": 20,
+    "/Expressive/Fancy": 92,
+    "/Expressive/Happy": 40,
+    "/Expressive/Loud": 50,
+    "/Expressive/Playful": 50,
+    "/Expressive/Rugged": 20,
+    "/Expressive/Sincere": 65,
+    "/Expressive/Vintage": 70,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 70,
+    "/Script/Informal": 40
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Lobster-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 103056,
+     "upstream": "Lobster-Regular.ttf"
+    }
+   ],
+   "strip": 75,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 38234,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "lora",
+   "name": "Lora",
+   "designer": "Cyreal",
+   "category": "SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/lora",
+   "tags": {
+    "/Expressive/Loud": 1,
+    "/Quality/Concept": 65,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 80,
+    "/Serif/Transitional": 60
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Lora-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 84712,
+     "upstream": "Lora[wght].ttf"
+    }
+   ],
+   "strip": 76,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 69066,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "luckiest-guy",
+   "name": "Luckiest Guy",
+   "designer": "Astigmatic",
+   "category": "DISPLAY",
+   "license": "Apache-2.0",
+   "license_file": "LICENSE.txt",
+   "dir": "apache/luckiestguy",
+   "tags": {
+    "/Expressive/Active": 35,
+    "/Expressive/Awkward": 12,
+    "/Expressive/Cute": 20,
+    "/Expressive/Excited": 86,
+    "/Expressive/Happy": 64,
+    "/Expressive/Innovative": 15,
+    "/Expressive/Loud": 84,
+    "/Expressive/Playful": 96,
+    "/Expressive/Rugged": 65,
+    "/Expressive/Sincere": 5,
+    "/Expressive/Vintage": 30,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 90,
+    "/Seasonal/Christmas": 67,
+    "/Seasonal/Holi": 77,
+    "/Seasonal/Lunar New Year": 73,
+    "/Seasonal/Valentine's Day": 66,
+    "/Theme/Wacky": 40,
+    "/Theme/Woodtype": 30
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "LuckiestGuy-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 26828,
+     "upstream": "LuckiestGuy-Regular.ttf"
+    }
+   ],
+   "strip": 77,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 37851,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "major-mono-display",
+   "name": "Major Mono Display",
+   "designer": "Emre Parlak",
+   "category": "MONOSPACE",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/majormonodisplay",
+   "tags": {
+    "/Expressive/Awkward": 88,
+    "/Expressive/Futuristic": 55,
+    "/Expressive/Innovative": 20,
+    "/Expressive/Playful": 16,
+    "/Expressive/Rugged": 20,
+    "/Expressive/Sincere": 5,
+    "/Expressive/Stiff": 10,
+    "/Expressive/Vintage": 25,
+    "/Monospace/Monospace": 100,
+    "/Quality/Concept": 55,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 100,
+    "/Sans/Glyphic": 100,
+    "/Theme/Art Deco": 80,
+    "/Theme/Techno": 80
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "MajorMonoDisplay-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 38288,
+     "upstream": "MajorMonoDisplay-Regular.ttf"
+    }
+   ],
+   "strip": 78,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 29390,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "manufacturing-consent",
+   "name": "Manufacturing Consent",
+   "designer": "Fredrick Brennan",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/manufacturingconsent",
+   "tags": {
+    "/Expressive/Artistic": 70,
+    "/Expressive/Awkward": 10,
+    "/Expressive/Fancy": 50,
+    "/Expressive/Loud": 24,
+    "/Expressive/Rugged": 50,
+    "/Expressive/Sincere": 12,
+    "/Expressive/Vintage": 80,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 100,
+    "/Script/Formal": 100,
+    "/Seasonal/Halloween": 70,
+    "/Theme/Blackletter": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "ManufacturingConsent-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 29364,
+     "upstream": "ManufacturingConsent-Regular.ttf"
+    }
+   ],
+   "strip": 79,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 33236,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "meddon",
+   "name": "Meddon",
+   "designer": "Vernon Adams",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/meddon",
+   "tags": {
+    "/Expressive/Active": 20,
+    "/Expressive/Artistic": 97,
+    "/Expressive/Awkward": 75,
+    "/Expressive/Excited": 30,
+    "/Expressive/Fancy": 73,
+    "/Expressive/Happy": 10,
+    "/Expressive/Playful": 12,
+    "/Expressive/Rugged": 5,
+    "/Expressive/Vintage": 75,
+    "/Quality/Concept": 50,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 100,
+    "/Script/Formal": 50,
+    "/Script/Handwritten": 100,
+    "/Seasonal/Christmas": 92,
+    "/Seasonal/Halloween": 85
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Meddon.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 67128,
+     "upstream": "Meddon.ttf"
+    }
+   ],
+   "strip": 80,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 59003,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "medievalsharp",
+   "name": "MedievalSharp",
+   "designer": "Wojciech Kalinowski",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/medievalsharp",
+   "tags": {
+    "/Expressive/Artistic": 49,
+    "/Expressive/Awkward": 45,
+    "/Expressive/Happy": 10,
+    "/Expressive/Rugged": 61,
+    "/Expressive/Vintage": 65,
+    "/Quality/Concept": 40,
+    "/Quality/Drawing": 68,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 70,
+    "/Theme/Blackletter": 20,
+    "/Theme/Medieval": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "MedievalSharp.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 54984,
+     "upstream": "MedievalSharp.ttf"
+    }
+   ],
+   "strip": 81,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 31340,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "merriweather",
+   "name": "Merriweather",
+   "designer": "Sorkin Type",
+   "category": "SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/merriweather",
+   "tags": {
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 80,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Serif/Humanist Venetian": 20,
+    "/Serif/Old Style Garalde": 40,
+    "/Serif/Transitional": 20
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Merriweather-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 2490356,
+     "upstream": "Merriweather[opsz,wdth,wght].ttf"
+    }
+   ],
+   "strip": 82,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 112548,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "metal-mania",
+   "name": "Metal Mania",
+   "designer": "Open Window",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/metalmania",
+   "tags": {
+    "/Expressive/Awkward": 13,
+    "/Expressive/Excited": 52,
+    "/Expressive/Loud": 18,
+    "/Expressive/Rugged": 85,
+    "/Expressive/Vintage": 75,
+    "/Quality/Concept": 50,
+    "/Quality/Drawing": 50,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 60,
+    "/Seasonal/Halloween": 90,
+    "/Theme/Distressed": 100,
+    "/Theme/Wacky": 10
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "MetalMania-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 84464,
+     "upstream": "MetalMania-Regular.ttf"
+    }
+   ],
+   "strip": 83,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 25652,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "metamorphous",
+   "name": "Metamorphous",
+   "designer": "James Grieshaber",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/metamorphous",
+   "tags": {
+    "/Expressive/Active": 10,
+    "/Expressive/Artistic": 93,
+    "/Expressive/Awkward": 78,
+    "/Expressive/Happy": 5,
+    "/Expressive/Innovative": 76,
+    "/Expressive/Playful": 12,
+    "/Expressive/Rugged": 30,
+    "/Expressive/Vintage": 75,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 75,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 60,
+    "/Theme/Medieval": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Metamorphous-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 36976,
+     "upstream": "Metamorphous-Regular.ttf"
+    }
+   ],
+   "strip": 84,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 41113,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "michroma",
+   "name": "Michroma",
+   "designer": "Vernon Adams",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/michroma",
+   "tags": {
+    "/Expressive/Active": 10,
+    "/Expressive/Business": 10,
+    "/Expressive/Calm": 48,
+    "/Expressive/Futuristic": 94,
+    "/Expressive/Loud": 3,
+    "/Expressive/Rugged": 78,
+    "/Expressive/Sincere": 20,
+    "/Expressive/Stiff": 61,
+    "/Expressive/Vintage": 55,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 70,
+    "/Sans/Superellipse": 100,
+    "/Theme/Techno": 60
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Michroma-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 26408,
+     "upstream": "Michroma-Regular.ttf"
+    }
+   ],
+   "strip": 85,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 38722,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "micro-5",
+   "name": "Micro 5",
+   "designer": "Sarah Cadigan-Fried",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/micro5",
+   "tags": {
+    "/Expressive/Awkward": 88,
+    "/Expressive/Futuristic": 40,
+    "/Expressive/Rugged": 15,
+    "/Expressive/Stiff": 50,
+    "/Expressive/Vintage": 80,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 75,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 70,
+    "/Theme/Pixel": 100
+   },
+   "native": 5,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Micro5-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 13052,
+     "upstream": "Micro5-Regular.ttf"
+    }
+   ],
+   "strip": 86
+  },
+  {
+   "id": "molle",
+   "name": "Molle",
+   "designer": "Elena Albertoni",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/molle",
+   "tags": {
+    "/Expressive/Artistic": 73,
+    "/Expressive/Business": 40,
+    "/Expressive/Cute": 85,
+    "/Expressive/Fancy": 12,
+    "/Expressive/Loud": 1,
+    "/Expressive/Rugged": 30,
+    "/Expressive/Sincere": 55,
+    "/Expressive/Vintage": 85,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 75,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 60,
+    "/Script/Informal": 50,
+    "/Seasonal/Christmas": 91,
+    "/Seasonal/Valentine's Day": 73,
+    "/Theme/Blobby": 50,
+    "/Theme/Brush": 50
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Molle-Regular.woff2",
+     "weight": 400,
+     "style": "italic",
+     "bytes": 27544,
+     "upstream": "Molle-Regular.ttf"
+    }
+   ],
+   "strip": 87,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 32796,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "monoton",
+   "name": "Monoton",
+   "designer": "Vernon Adams",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/monoton",
+   "tags": {
+    "/Expressive/Active": 24,
+    "/Expressive/Artistic": 93,
+    "/Expressive/Awkward": 60,
+    "/Expressive/Excited": 72,
+    "/Expressive/Futuristic": 10,
+    "/Expressive/Happy": 20,
+    "/Expressive/Innovative": 30,
+    "/Expressive/Playful": 15,
+    "/Expressive/Rugged": 61,
+    "/Expressive/Sincere": 10,
+    "/Expressive/Stiff": 20,
+    "/Expressive/Vintage": 90,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 80,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 90,
+    "/Sans/Geometric": 100,
+    "/Seasonal/Kwanzaa": 99,
+    "/Theme/Art Deco": 80,
+    "/Theme/Inline": 100,
+    "/Theme/Techno": 20
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Monoton-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 20160,
+     "upstream": "Monoton-Regular.ttf"
+    }
+   ],
+   "strip": 88,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 45594,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "montserrat",
+   "name": "Montserrat",
+   "designer": "Julieta Ulanovsky, Sol Matas, Juan Pablo del Peral, Jacques Le Bailly",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/montserrat",
+   "tags": {
+    "/Expressive/Vintage": 5,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 75,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 90,
+    "/Sans/Geometric": 100
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Montserrat-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 215904,
+     "upstream": "Montserrat[wght].ttf"
+    }
+   ],
+   "strip": 89,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 73149,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "mountains-of-christmas",
+   "name": "Mountains of Christmas",
+   "designer": "Tart Workshop",
+   "category": "DISPLAY",
+   "license": "Apache-2.0",
+   "license_file": "LICENSE.txt",
+   "dir": "apache/mountainsofchristmas",
+   "tags": {
+    "/Expressive/Active": 28,
+    "/Expressive/Awkward": 90,
+    "/Expressive/Excited": 95,
+    "/Expressive/Happy": 88,
+    "/Expressive/Playful": 98,
+    "/Expressive/Rugged": 20,
+    "/Expressive/Sincere": 10,
+    "/Expressive/Vintage": 75,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 65,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 90,
+    "/Seasonal/Christmas": 100,
+    "/Serif/Modern": 20,
+    "/Serif/Transitional": 20,
+    "/Theme/Distressed": 40,
+    "/Theme/Wacky": 100
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "MountainsofChristmas-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 59120,
+     "upstream": "MountainsofChristmas-Regular.ttf"
+    },
+    {
+     "file": "MountainsofChristmas-Bold.woff2",
+     "weight": 700,
+     "style": "normal",
+     "bytes": 58564,
+     "upstream": "MountainsofChristmas-Bold.ttf"
+    }
+   ],
+   "strip": 90,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 50891,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "mystery-quest",
+   "name": "Mystery Quest",
+   "designer": "Sideshow",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/mysteryquest",
+   "tags": {
+    "/Expressive/Active": 26,
+    "/Expressive/Awkward": 90,
+    "/Expressive/Cute": 70,
+    "/Expressive/Excited": 60,
+    "/Expressive/Happy": 60,
+    "/Expressive/Loud": 1,
+    "/Expressive/Playful": 98,
+    "/Expressive/Vintage": 65,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 50,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 70,
+    "/Seasonal/Halloween": 100,
+    "/Theme/Wacky": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "MysteryQuest-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 23200,
+     "upstream": "MysteryQuest-Regular.ttf"
+    }
+   ],
+   "strip": 91,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 25129,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "new-rocker",
+   "name": "New Rocker",
+   "designer": "Impallari Type",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/newrocker",
+   "tags": {
+    "/Expressive/Artistic": 58,
+    "/Expressive/Awkward": 80,
+    "/Expressive/Cute": 10,
+    "/Expressive/Loud": 19,
+    "/Expressive/Playful": 5,
+    "/Expressive/Rugged": 65,
+    "/Expressive/Sincere": 10,
+    "/Expressive/Stiff": 20,
+    "/Expressive/Vintage": 90,
+    "/Quality/Concept": 35,
+    "/Quality/Drawing": 50,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 90,
+    "/Seasonal/Halloween": 90,
+    "/Theme/Blackletter": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "NewRocker-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 44984,
+     "upstream": "NewRocker-Regular.ttf"
+    }
+   ],
+   "strip": 92,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 47011,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "nosifer",
+   "name": "Nosifer",
+   "designer": "Typomondo",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/nosifer",
+   "tags": {
+    "/Expressive/Awkward": 84,
+    "/Expressive/Excited": 10,
+    "/Expressive/Innovative": 15,
+    "/Expressive/Loud": 69,
+    "/Expressive/Playful": 55,
+    "/Expressive/Rugged": 55,
+    "/Expressive/Vintage": 60,
+    "/Quality/Concept": 40,
+    "/Quality/Drawing": 50,
+    "/Quality/Spacing": 50,
+    "/Quality/Wordspace": 70,
+    "/Seasonal/Halloween": 100,
+    "/Theme/Wacky": 100
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Nosifer-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 17896,
+     "upstream": "Nosifer-Regular.ttf"
+    }
+   ],
+   "strip": 93,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 35802,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "noto-emoji",
+   "name": "Noto Emoji",
+   "designer": "Google",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/notoemoji",
+   "tags": {
+    "/Expressive/Loud": 1,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 100,
+    "/Special use/Symbols": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": true,
+   "files": [
+    {
+     "file": "NotoEmoji-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 1052020,
+     "upstream": "NotoEmoji[wght].ttf"
+    }
+   ],
+   "strip": 94
+  },
+  {
+   "id": "noto-music",
+   "name": "Noto Music",
+   "designer": "Google",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/notomusic",
+   "tags": {
+    "/Expressive/Competent": 80,
+    "/Expressive/Loud": 1,
+    "/Expressive/Rugged": 40,
+    "/Expressive/Sincere": 75,
+    "/Expressive/Stiff": 10,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 100,
+    "/Special use/Symbols": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "NotoMusic-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 75016,
+     "upstream": "NotoMusic-Regular.ttf"
+    }
+   ],
+   "strip": 95,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 30209,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "noto-sans",
+   "name": "Noto Sans",
+   "designer": "Google",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/notosans",
+   "tags": {
+    "/Expressive/Stiff": 10,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 100,
+    "/Sans/Humanist": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "NotoSans-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 889780,
+     "upstream": "NotoSans[wdth,wght].ttf"
+    }
+   ],
+   "strip": 96,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 62006,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "noto-sans-symbols",
+   "name": "Noto Sans Symbols",
+   "designer": "Google",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/notosanssymbols",
+   "tags": {
+    "/Expressive/Rugged": 50,
+    "/Expressive/Stiff": 10,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 100,
+    "/Sans/Humanist": 100,
+    "/Special use/Symbols": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "NotoSansSymbols-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 170012,
+     "upstream": "NotoSansSymbols[wght].ttf"
+    }
+   ],
+   "strip": 97,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 54504,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "noto-sans-symbols-2",
+   "name": "Noto Sans Symbols 2",
+   "designer": "Google",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/notosanssymbols2",
+   "tags": {
+    "/Expressive/Business": 90,
+    "/Expressive/Calm": 90,
+    "/Expressive/Competent": 80,
+    "/Expressive/Loud": 1,
+    "/Expressive/Rugged": 50,
+    "/Expressive/Stiff": 10,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Special use/Symbols": 100
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "NotoSansSymbols2-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 395644,
+     "upstream": "NotoSansSymbols2-Regular.ttf"
+    }
+   ],
+   "strip": 98,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 29882,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "nunito",
+   "name": "Nunito",
+   "designer": "Vernon Adams, Cyreal, Jacques Le Bailly",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/nunito",
+   "tags": {
+    "/Expressive/Playful": 1,
+    "/Expressive/Rugged": 35,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 72,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 80,
+    "/Sans/Humanist": 20,
+    "/Sans/Neo Grotesque": 80,
+    "/Sans/Rounded": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Nunito-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 101204,
+     "upstream": "Nunito[wght].ttf"
+    }
+   ],
+   "strip": 99,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 64766,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "open-sans",
+   "name": "Open Sans",
+   "designer": "Steve Matteson",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/opensans",
+   "tags": {
+    "/Expressive/Stiff": 10,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 90,
+    "/Sans/Humanist": 80,
+    "/Sans/Neo Grotesque": 20,
+    "/Seasonal/Kwanzaa": 73
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "OpenSans-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 280196,
+     "upstream": "OpenSans[wdth,wght].ttf"
+    }
+   ],
+   "strip": 100,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 66571,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "orbitron",
+   "name": "Orbitron",
+   "designer": "Matt McInerney",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/orbitron",
+   "tags": {
+    "/Expressive/Awkward": 20,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 50,
+    "/Quality/Spacing": 50,
+    "/Quality/Wordspace": 80,
+    "/Theme/Techno": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Orbitron-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 16036,
+     "upstream": "Orbitron[wght].ttf"
+    }
+   ],
+   "strip": 101,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 30028,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "oswald",
+   "name": "Oswald",
+   "designer": "Vernon Adams, Kalapi Gajjar, Cyreal",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/oswald",
+   "tags": {
+    "/Expressive/Loud": 11,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 75,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 90,
+    "/Sans/Grotesque": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Oswald-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 71884,
+     "upstream": "Oswald[wght].ttf"
+    }
+   ],
+   "strip": 102,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 55452,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "pacifico",
+   "name": "Pacifico",
+   "designer": "Vernon Adams, Jacques Le Bailly, Botjo Nikoltchev, Ani Petrova",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/pacifico",
+   "tags": {
+    "/Expressive/Active": 10,
+    "/Expressive/Artistic": 61,
+    "/Expressive/Childlike": 40,
+    "/Expressive/Cute": 40,
+    "/Expressive/Excited": 20,
+    "/Expressive/Happy": 20,
+    "/Expressive/Loud": 50,
+    "/Expressive/Playful": 50,
+    "/Expressive/Rugged": 30,
+    "/Expressive/Sincere": 10,
+    "/Expressive/Vintage": 64,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 75,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 90,
+    "/Script/Handwritten": 50,
+    "/Script/Informal": 80,
+    "/Seasonal/Hanukkah": 68,
+    "/Seasonal/Lunar New Year": 75,
+    "/Seasonal/Valentine's Day": 65
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Pacifico-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 105208,
+     "upstream": "Pacifico-Regular.ttf"
+    }
+   ],
+   "strip": 103,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 48247,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "permanent-marker",
+   "name": "Permanent Marker",
+   "designer": "Font Diner",
+   "category": "HANDWRITING",
+   "license": "Apache-2.0",
+   "license_file": "LICENSE.txt",
+   "dir": "apache/permanentmarker",
+   "tags": {
+    "/Expressive/Active": 72,
+    "/Expressive/Artistic": 97,
+    "/Expressive/Awkward": 68,
+    "/Expressive/Childlike": 50,
+    "/Expressive/Excited": 68,
+    "/Expressive/Happy": 20,
+    "/Expressive/Loud": 26,
+    "/Expressive/Playful": 30,
+    "/Expressive/Rugged": 83,
+    "/Expressive/Sincere": 80,
+    "/Expressive/Vintage": 20,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 90,
+    "/Script/Handwritten": 100,
+    "/Script/Informal": 100,
+    "/Seasonal/Christmas": 80,
+    "/Seasonal/Holi": 60,
+    "/Theme/Brush": 100,
+    "/Theme/Distressed": 30
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "PermanentMarker-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 30824,
+     "upstream": "PermanentMarker-Regular.ttf"
+    }
+   ],
+   "strip": 104,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 28499,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "pinyon-script",
+   "name": "Pinyon Script",
+   "designer": "Nicole Fally",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/pinyonscript",
+   "tags": {
+    "/Expressive/Active": 16,
+    "/Expressive/Artistic": 100,
+    "/Expressive/Excited": 5,
+    "/Expressive/Fancy": 59,
+    "/Expressive/Happy": 5,
+    "/Expressive/Sophisticated": 91,
+    "/Expressive/Vintage": 90,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 80,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 90,
+    "/Script/Formal": 100,
+    "/Seasonal/Christmas": 95,
+    "/Seasonal/Lunar New Year": 93
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "PinyonScript-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 58020,
+     "upstream": "PinyonScript-Regular.ttf"
+    }
+   ],
+   "strip": 105,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 43390,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "pirata-one",
+   "name": "Pirata One",
+   "designer": "Rodrigo Fuenzalida, Nicolas Massi",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/pirataone",
+   "tags": {
+    "/Expressive/Active": 10,
+    "/Expressive/Artistic": 80,
+    "/Expressive/Awkward": 40,
+    "/Expressive/Happy": 5,
+    "/Expressive/Loud": 47,
+    "/Expressive/Rugged": 55,
+    "/Expressive/Stiff": 25,
+    "/Expressive/Vintage": 85,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 70,
+    "/Theme/Blackletter": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "PirataOne-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 13488,
+     "upstream": "PirataOne-Regular.ttf"
+    }
+   ],
+   "strip": 106,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 24858,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "pixelify-sans",
+   "name": "Pixelify Sans",
+   "designer": "Stefie Justprince",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/pixelifysans",
+   "tags": {
+    "/Expressive/Awkward": 60,
+    "/Expressive/Rugged": 55,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 100,
+    "/Theme/Pixel": 100,
+    "/Theme/Techno": 90
+   },
+   "native": 16,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "PixelifySans-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 23044,
+     "upstream": "PixelifySans[wght].ttf"
+    }
+   ],
+   "strip": 107
+  },
+  {
+   "id": "playfair-display",
+   "name": "Playfair Display",
+   "designer": "Claus Eggers Sørensen",
+   "category": "SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/playfairdisplay",
+   "tags": {
+    "/Expressive/Rugged": 15,
+    "/Expressive/Stiff": 5,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 80,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 100,
+    "/Serif/Didone": 100
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "PlayfairDisplay-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 106508,
+     "upstream": "PlayfairDisplay[wght].ttf"
+    }
+   ],
+   "strip": 108,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 67593,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "poppins",
+   "name": "Poppins",
+   "designer": "Indian Type Foundry, Jonny Pinhorn, Ninad Kale",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/poppins",
+   "tags": {
+    "/Expressive/Business": 60,
+    "/Expressive/Calm": 85,
+    "/Expressive/Competent": 40,
+    "/Expressive/Loud": 1,
+    "/Expressive/Rugged": 50,
+    "/Expressive/Sincere": 50,
+    "/Expressive/Vintage": 20,
+    "/Quality/Concept": 75,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 100,
+    "/Sans/Geometric": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Poppins-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 51580,
+     "upstream": "Poppins-Regular.ttf"
+    },
+    {
+     "file": "Poppins-Bold.woff2",
+     "weight": 700,
+     "style": "normal",
+     "bytes": 51004,
+     "upstream": "Poppins-Bold.ttf"
+    }
+   ],
+   "strip": 109,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 59578,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "press-start-2p",
+   "name": "Press Start 2P",
+   "designer": "CodeMan38",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/pressstart2p",
+   "tags": {
+    "/Expressive/Active": 20,
+    "/Expressive/Awkward": 78,
+    "/Expressive/Business": 20,
+    "/Expressive/Cute": 10,
+    "/Expressive/Excited": 20,
+    "/Expressive/Futuristic": 44,
+    "/Expressive/Innovative": 10,
+    "/Expressive/Loud": 19,
+    "/Expressive/Playful": 45,
+    "/Expressive/Rugged": 50,
+    "/Expressive/Stiff": 50,
+    "/Expressive/Vintage": 88,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 50,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 100,
+    "/Theme/Pixel": 100,
+    "/Theme/Techno": 90
+   },
+   "native": 8,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "PressStart2P-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 29820,
+     "upstream": "PressStart2P-Regular.ttf"
+    }
+   ],
+   "strip": 110
+  },
+  {
+   "id": "quicksand",
+   "name": "Quicksand",
+   "designer": "Andrew Paglinawan",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/quicksand",
+   "tags": {
+    "/Expressive/Playful": 20,
+    "/Expressive/Rugged": 40,
+    "/Expressive/Stiff": 5,
+    "/Expressive/Vintage": 35,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 65,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 80,
+    "/Sans/Geometric": 100,
+    "/Sans/Rounded": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Quicksand-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 52788,
+     "upstream": "Quicksand[wght].ttf"
+    }
+   ],
+   "strip": 111,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 61334,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "righteous",
+   "name": "Righteous",
+   "designer": "Astigmatic",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/righteous",
+   "tags": {
+    "/Expressive/Awkward": 20,
+    "/Expressive/Happy": 20,
+    "/Expressive/Innovative": 5,
+    "/Expressive/Loud": 18,
+    "/Expressive/Rugged": 66,
+    "/Expressive/Stiff": 30,
+    "/Expressive/Vintage": 60,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 40,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 60,
+    "/Sans/Geometric": 100,
+    "/Theme/Techno": 30
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Righteous-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 16800,
+     "upstream": "Righteous-Regular.ttf"
+    }
+   ],
+   "strip": 112,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 30929,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "roboto",
+   "name": "Roboto",
+   "designer": "Christian Robertson, ParaType, Font Bureau",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/roboto",
+   "tags": {
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 75,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 90,
+    "/Sans/Neo Grotesque": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Roboto-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 222560,
+     "upstream": "Roboto[wdth,wght].ttf"
+    }
+   ],
+   "strip": 113,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 66009,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "rubik",
+   "name": "Rubik",
+   "designer": "Hubert and Fischer, Meir Sadan, Cyreal, Daniel Grumer, Omaima Dajani",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/rubik",
+   "tags": {
+    "/Expressive/Vintage": 20,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 80,
+    "/Sans/Neo Grotesque": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Rubik-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 112348,
+     "upstream": "Rubik[wght].ttf"
+    }
+   ],
+   "strip": 114,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 63101,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "rubik-wet-paint",
+   "name": "Rubik Wet Paint",
+   "designer": "NaN, Luke Prowse",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/rubikwetpaint",
+   "tags": {
+    "/Expressive/Awkward": 88,
+    "/Expressive/Excited": 10,
+    "/Expressive/Innovative": 35,
+    "/Expressive/Loud": 54,
+    "/Expressive/Playful": 60,
+    "/Expressive/Rugged": 70,
+    "/Expressive/Vintage": 60,
+    "/Quality/Concept": 50,
+    "/Quality/Drawing": 55,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 100,
+    "/Seasonal/Halloween": 100,
+    "/Seasonal/Holi": 76,
+    "/Theme/Distressed": 80
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "RubikWetPaint-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 171792,
+     "upstream": "RubikWetPaint-Regular.ttf"
+    }
+   ],
+   "strip": 115,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 48469,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "russo-one",
+   "name": "Russo One",
+   "designer": "Jovanny Lemonad",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/russoone",
+   "tags": {
+    "/Expressive/Calm": 12,
+    "/Expressive/Futuristic": 60,
+    "/Expressive/Loud": 44,
+    "/Expressive/Rugged": 65,
+    "/Expressive/Stiff": 64,
+    "/Expressive/Vintage": 20,
+    "/Quality/Concept": 65,
+    "/Quality/Drawing": 65,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 80,
+    "/Sans/Geometric": 10,
+    "/Sans/Superellipse": 60,
+    "/Theme/Techno": 40
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "RussoOne-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 13500,
+     "upstream": "RussoOne-Regular.ttf"
+    }
+   ],
+   "strip": 116,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 27210,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "rye",
+   "name": "Rye",
+   "designer": "Nicole Fally",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/rye",
+   "tags": {
+    "/Expressive/Active": 5,
+    "/Expressive/Artistic": 82,
+    "/Expressive/Awkward": 59,
+    "/Expressive/Cute": 5,
+    "/Expressive/Excited": 20,
+    "/Expressive/Happy": 10,
+    "/Expressive/Innovative": 35,
+    "/Expressive/Loud": 11,
+    "/Expressive/Playful": 20,
+    "/Expressive/Rugged": 75,
+    "/Expressive/Stiff": 5,
+    "/Expressive/Vintage": 90,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 80,
+    "/Theme/Inline": 20,
+    "/Theme/Tuscan": 100,
+    "/Theme/Woodtype": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Rye-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 47256,
+     "upstream": "Rye-Regular.ttf"
+    }
+   ],
+   "strip": 117,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 30453,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "sacramento",
+   "name": "Sacramento",
+   "designer": "Astigmatic",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/sacramento",
+   "tags": {
+    "/Expressive/Active": 15,
+    "/Expressive/Artistic": 62,
+    "/Expressive/Cute": 40,
+    "/Expressive/Excited": 10,
+    "/Expressive/Fancy": 36,
+    "/Expressive/Happy": 20,
+    "/Expressive/Playful": 25,
+    "/Expressive/Rugged": 22,
+    "/Expressive/Sophisticated": 25,
+    "/Expressive/Vintage": 78,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 35,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 90,
+    "/Script/Informal": 90
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Sacramento-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 32104,
+     "upstream": "Sacramento-Regular.ttf"
+    }
+   ],
+   "strip": 118,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 35446,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "saira-condensed",
+   "name": "Saira Condensed",
+   "designer": "Omnibus-Type",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/sairacondensed",
+   "tags": {
+    "/Expressive/Active": 20,
+    "/Expressive/Business": 20,
+    "/Expressive/Calm": 69,
+    "/Expressive/Competent": 20,
+    "/Expressive/Futuristic": 68,
+    "/Expressive/Loud": 1,
+    "/Expressive/Rugged": 52,
+    "/Expressive/Stiff": 55,
+    "/Expressive/Vintage": 20,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 90,
+    "/Sans/Superellipse": 80
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "SairaCondensed-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 34968,
+     "upstream": "SairaCondensed-Regular.ttf"
+    },
+    {
+     "file": "SairaCondensed-Bold.woff2",
+     "weight": 700,
+     "style": "normal",
+     "bytes": 34912,
+     "upstream": "SairaCondensed-Bold.ttf"
+    }
+   ],
+   "strip": 119,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 54391,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "sancreek",
+   "name": "Sancreek",
+   "designer": "Vernon Adams",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/sancreek",
+   "tags": {
+    "/Expressive/Artistic": 50,
+    "/Expressive/Awkward": 50,
+    "/Expressive/Cute": 5,
+    "/Expressive/Excited": 8,
+    "/Expressive/Innovative": 35,
+    "/Expressive/Loud": 50,
+    "/Expressive/Playful": 30,
+    "/Expressive/Rugged": 75,
+    "/Expressive/Sincere": 20,
+    "/Expressive/Stiff": 5,
+    "/Expressive/Vintage": 90,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 65,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 80,
+    "/Seasonal/Halloween": 75,
+    "/Theme/Tuscan": 100,
+    "/Theme/Woodtype": 90
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Sancreek-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 43296,
+     "upstream": "Sancreek-Regular.ttf"
+    }
+   ],
+   "strip": 120,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 37326,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "satisfy",
+   "name": "Satisfy",
+   "designer": "Sideshow",
+   "category": "HANDWRITING",
+   "license": "Apache-2.0",
+   "license_file": "LICENSE.txt",
+   "dir": "apache/satisfy",
+   "tags": {
+    "/Expressive/Artistic": 49,
+    "/Expressive/Childlike": 6,
+    "/Expressive/Cute": 30,
+    "/Expressive/Excited": 12,
+    "/Expressive/Happy": 20,
+    "/Expressive/Loud": 1,
+    "/Expressive/Playful": 15,
+    "/Expressive/Rugged": 45,
+    "/Expressive/Sincere": 10,
+    "/Expressive/Vintage": 82,
+    "/Quality/Concept": 40,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 70,
+    "/Script/Handwritten": 40,
+    "/Script/Informal": 70
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Satisfy-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 23852,
+     "upstream": "Satisfy-Regular.ttf"
+    }
+   ],
+   "strip": 121,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 24826,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "shadows-into-light",
+   "name": "Shadows Into Light",
+   "designer": "Kimberly Geswein",
+   "category": "HANDWRITING",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/shadowsintolight",
+   "tags": {
+    "/Expressive/Active": 10,
+    "/Expressive/Artistic": 11,
+    "/Expressive/Awkward": 44,
+    "/Expressive/Childlike": 20,
+    "/Expressive/Excited": 79,
+    "/Expressive/Happy": 20,
+    "/Expressive/Playful": 22,
+    "/Expressive/Rugged": 50,
+    "/Expressive/Sincere": 26,
+    "/Expressive/Vintage": 35,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 50,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 30,
+    "/Script/Handwritten": 100,
+    "/Script/Informal": 100,
+    "/Seasonal/Halloween": 90
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "ShadowsIntoLight.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 23472,
+     "upstream": "ShadowsIntoLight.ttf"
+    }
+   ],
+   "strip": 122,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 31371,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "share-tech-mono",
+   "name": "Share Tech Mono",
+   "designer": "Carrois Apostrophe",
+   "category": "MONOSPACE",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/sharetechmono",
+   "tags": {
+    "/Expressive/Calm": 60,
+    "/Expressive/Futuristic": 60,
+    "/Expressive/Loud": 1,
+    "/Expressive/Rugged": 50,
+    "/Expressive/Sincere": 45,
+    "/Expressive/Stiff": 52,
+    "/Expressive/Vintage": 30,
+    "/Monospace/Monospace": 100,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 50,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Sans/Neo Grotesque": 70,
+    "/Sans/Superellipse": 70,
+    "/Theme/Techno": 50
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "ShareTechMono-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 16568,
+     "upstream": "ShareTechMono-Regular.ttf"
+    }
+   ],
+   "strip": 123,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 17914,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "silkscreen",
+   "name": "Silkscreen",
+   "designer": "Jason Kottke",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/silkscreen",
+   "tags": {
+    "/Expressive/Awkward": 65,
+    "/Expressive/Futuristic": 88,
+    "/Expressive/Innovative": 5,
+    "/Expressive/Loud": 18,
+    "/Expressive/Playful": 14,
+    "/Expressive/Rugged": 65,
+    "/Expressive/Sincere": 10,
+    "/Expressive/Stiff": 52,
+    "/Expressive/Vintage": 75,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 65,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 50,
+    "/Theme/Pixel": 100,
+    "/Theme/Techno": 80
+   },
+   "native": 8,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Silkscreen-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 9000,
+     "upstream": "Silkscreen-Regular.ttf"
+    },
+    {
+     "file": "Silkscreen-Bold.woff2",
+     "weight": 700,
+     "style": "normal",
+     "bytes": 8108,
+     "upstream": "Silkscreen-Bold.ttf"
+    }
+   ],
+   "strip": 124
+  },
+  {
+   "id": "sixtyfour",
+   "name": "Sixtyfour",
+   "designer": "Jens Kutílek",
+   "category": "MONOSPACE",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/sixtyfour",
+   "tags": {
+    "/Expressive/Awkward": 68,
+    "/Expressive/Excited": 10,
+    "/Expressive/Futuristic": 62,
+    "/Expressive/Innovative": 10,
+    "/Expressive/Loud": 18,
+    "/Expressive/Playful": 15,
+    "/Expressive/Rugged": 70,
+    "/Expressive/Sincere": 30,
+    "/Expressive/Stiff": 42,
+    "/Expressive/Vintage": 80,
+    "/Monospace/Monospace": 100,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 65,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Theme/Pixel": 90
+   },
+   "native": 16,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Sixtyfour-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 9056,
+     "upstream": "Sixtyfour[BLED,SCAN].ttf"
+    }
+   ],
+   "strip": 125
+  },
+  {
+   "id": "smokum",
+   "name": "Smokum",
+   "designer": "Astigmatic",
+   "category": "DISPLAY",
+   "license": "Apache-2.0",
+   "license_file": "LICENSE.txt",
+   "dir": "apache/smokum",
+   "tags": {
+    "/Expressive/Awkward": 50,
+    "/Expressive/Happy": 10,
+    "/Expressive/Loud": 18,
+    "/Expressive/Rugged": 80,
+    "/Expressive/Sincere": 20,
+    "/Expressive/Stiff": 32,
+    "/Expressive/Vintage": 92,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 100,
+    "/Theme/Tuscan": 80,
+    "/Theme/Woodtype": 60
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Smokum-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 22668,
+     "upstream": "Smokum-Regular.ttf"
+    }
+   ],
+   "strip": 126,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 26710,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "sniglet",
+   "name": "Sniglet",
+   "designer": "Multiple Designers",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/sniglet",
+   "tags": {
+    "/Expressive/Calm": 22,
+    "/Expressive/Childlike": 12,
+    "/Expressive/Cute": 77,
+    "/Expressive/Excited": 55,
+    "/Expressive/Happy": 70,
+    "/Expressive/Loud": 3,
+    "/Expressive/Playful": 22,
+    "/Expressive/Rugged": 35,
+    "/Expressive/Sincere": 30,
+    "/Expressive/Vintage": 5,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 90,
+    "/Sans/Geometric": 20,
+    "/Sans/Humanist": 20,
+    "/Sans/Rounded": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Sniglet-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 27112,
+     "upstream": "Sniglet-Regular.ttf"
+    }
+   ],
+   "strip": 127,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 23621,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "source-code-pro",
+   "name": "Source Code Pro",
+   "designer": "Paul D. Hunt",
+   "category": "MONOSPACE",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/sourcecodepro",
+   "tags": {
+    "/Expressive/Vintage": 20,
+    "/Monospace/Monospace": 100,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Sans/Humanist": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "SourceCodePro-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 89580,
+     "upstream": "SourceCodePro[wght].ttf"
+    }
+   ],
+   "strip": 128,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 58577,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "space-mono",
+   "name": "Space Mono",
+   "designer": "Colophon Foundry",
+   "category": "MONOSPACE",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/spacemono",
+   "tags": {
+    "/Expressive/Awkward": 12,
+    "/Expressive/Business": 40,
+    "/Expressive/Calm": 64,
+    "/Expressive/Futuristic": 63,
+    "/Expressive/Loud": 1,
+    "/Expressive/Rugged": 50,
+    "/Expressive/Sincere": 50,
+    "/Expressive/Stiff": 30,
+    "/Expressive/Vintage": 20,
+    "/Monospace/Monospace": 100,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 75,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Sans/Grotesque": 80,
+    "/Sans/Neo Grotesque": 100,
+    "/Theme/Techno": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "SpaceMono-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 34936,
+     "upstream": "SpaceMono-Regular.ttf"
+    },
+    {
+     "file": "SpaceMono-Bold.woff2",
+     "weight": 700,
+     "style": "normal",
+     "bytes": 35404,
+     "upstream": "SpaceMono-Bold.ttf"
+    }
+   ],
+   "strip": 129,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 58586,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "special-elite",
+   "name": "Special Elite",
+   "designer": "Astigmatic",
+   "category": "DISPLAY",
+   "license": "Apache-2.0",
+   "license_file": "LICENSE.txt",
+   "dir": "apache/specialelite",
+   "tags": {
+    "/Expressive/Awkward": 70,
+    "/Expressive/Innovative": 30,
+    "/Expressive/Loud": 3,
+    "/Expressive/Rugged": 90,
+    "/Expressive/Sincere": 15,
+    "/Expressive/Vintage": 90,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 80,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Slab/Clarendon": 100,
+    "/Theme/Distressed": 100,
+    "/Theme/Techno": 40
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "SpecialElite-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 65476,
+     "upstream": "SpecialElite-Regular.ttf"
+    }
+   ],
+   "strip": 130,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 38155,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "stardos-stencil",
+   "name": "Stardos Stencil",
+   "designer": "Vernon Adams",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/stardosstencil",
+   "tags": {
+    "/Expressive/Business": 10,
+    "/Expressive/Competent": 15,
+    "/Expressive/Loud": 1,
+    "/Expressive/Rugged": 70,
+    "/Expressive/Vintage": 80,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 75,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 80,
+    "/Serif/Scotch": 50,
+    "/Theme/Stencil": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "StardosStencil-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 17756,
+     "upstream": "StardosStencil-Regular.ttf"
+    },
+    {
+     "file": "StardosStencil-Bold.woff2",
+     "weight": 700,
+     "style": "normal",
+     "bytes": 17076,
+     "upstream": "StardosStencil-Bold.ttf"
+    }
+   ],
+   "strip": 131,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 47009,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "teko",
+   "name": "Teko",
+   "designer": "Indian Type Foundry",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/teko",
+   "tags": {
+    "/Expressive/Loud": 4,
+    "/Expressive/Vintage": 25,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Sans/Geometric": 10,
+    "/Sans/Superellipse": 40
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Teko-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 86248,
+     "upstream": "Teko[wght].ttf"
+    }
+   ],
+   "strip": 132,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 41907,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "tiny5",
+   "name": "Tiny5",
+   "designer": "Stefan Schmidt",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/tiny5",
+   "tags": {
+    "/Expressive/Awkward": 80,
+    "/Expressive/Futuristic": 40,
+    "/Expressive/Loud": 18,
+    "/Expressive/Rugged": 55,
+    "/Expressive/Sincere": 10,
+    "/Expressive/Stiff": 50,
+    "/Expressive/Vintage": 75,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Theme/Pixel": 100
+   },
+   "native": 5,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Tiny5-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 29804,
+     "upstream": "Tiny5-Regular.ttf"
+    }
+   ],
+   "strip": 133
+  },
+  {
+   "id": "titan-one",
+   "name": "Titan One",
+   "designer": "Rodrigo Fuenzalida",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/titanone",
+   "tags": {
+    "/Expressive/Awkward": 5,
+    "/Expressive/Cute": 40,
+    "/Expressive/Happy": 20,
+    "/Expressive/Innovative": 5,
+    "/Expressive/Loud": 87,
+    "/Expressive/Playful": 35,
+    "/Expressive/Rugged": 70,
+    "/Expressive/Stiff": 20,
+    "/Expressive/Vintage": 44,
+    "/Quality/Concept": 75,
+    "/Quality/Drawing": 60,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 90,
+    "/Sans/Humanist": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "TitanOne-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 18236,
+     "upstream": "TitanOne-Regular.ttf"
+    }
+   ],
+   "strip": 134,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 29713,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "ultra",
+   "name": "Ultra",
+   "designer": "Astigmatic",
+   "category": "SERIF",
+   "license": "Apache-2.0",
+   "license_file": "LICENSE.txt",
+   "dir": "apache/ultra",
+   "tags": {
+    "/Expressive/Active": 20,
+    "/Expressive/Business": 5,
+    "/Expressive/Cute": 10,
+    "/Expressive/Happy": 20,
+    "/Expressive/Loud": 90,
+    "/Expressive/Playful": 17,
+    "/Expressive/Rugged": 70,
+    "/Expressive/Sincere": 10,
+    "/Expressive/Stiff": 10,
+    "/Expressive/Vintage": 75,
+    "/Quality/Concept": 80,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 70,
+    "/Quality/Wordspace": 80,
+    "/Serif/Fat Face": 100,
+    "/Slab/Clarendon": 90
+   },
+   "native": null,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Ultra-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 19320,
+     "upstream": "Ultra-Regular.ttf"
+    }
+   ],
+   "strip": 135,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 39638,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "unifrakturcook",
+   "name": "UnifrakturCook",
+   "designer": "j. \\'mach\\' wust",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/unifrakturcook",
+   "tags": {
+    "/Expressive/Artistic": 90,
+    "/Expressive/Loud": 54,
+    "/Expressive/Rugged": 70,
+    "/Expressive/Sincere": 50,
+    "/Expressive/Vintage": 85,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 50,
+    "/Quality/Wordspace": 80,
+    "/Theme/Blackletter": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "UnifrakturCook-Bold.woff2",
+     "weight": 700,
+     "style": "normal",
+     "bytes": 22712,
+     "upstream": "UnifrakturCook-Bold.ttf"
+    }
+   ],
+   "strip": 136,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 26154,
+    "weights": [
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "unifrakturmaguntia",
+   "name": "UnifrakturMaguntia",
+   "designer": "j. \\'mach\\' wust",
+   "category": "DISPLAY",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/unifrakturmaguntia",
+   "tags": {
+    "/Expressive/Artistic": 100,
+    "/Expressive/Awkward": 20,
+    "/Expressive/Loud": 8,
+    "/Expressive/Rugged": 60,
+    "/Expressive/Sincere": 60,
+    "/Expressive/Vintage": 88,
+    "/Quality/Concept": 75,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 60,
+    "/Quality/Wordspace": 80,
+    "/Theme/Blackletter": 100
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "UnifrakturMaguntia-Book.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 35708,
+     "upstream": "UnifrakturMaguntia-Book.ttf"
+    }
+   ],
+   "strip": 137,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 24922,
+    "weights": [
+     400
+    ],
+    "hinting": "own"
+   }
+  },
+  {
+   "id": "vt323",
+   "name": "VT323",
+   "designer": "Peter Hull",
+   "category": "MONOSPACE",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/vt323",
+   "tags": {
+    "/Expressive/Awkward": 50,
+    "/Expressive/Futuristic": 30,
+    "/Expressive/Innovative": 5,
+    "/Expressive/Loud": 3,
+    "/Expressive/Rugged": 30,
+    "/Expressive/Sincere": 10,
+    "/Expressive/Stiff": 50,
+    "/Expressive/Vintage": 75,
+    "/Monospace/Monospace": 100,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 50,
+    "/Theme/Pixel": 100,
+    "/Theme/Techno": 90
+   },
+   "native": 16,
+   "small": false,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "VT323-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 32056,
+     "upstream": "VT323-Regular.ttf"
+    }
+   ],
+   "strip": 138
+  },
+  {
+   "id": "work-sans",
+   "name": "Work Sans",
+   "designer": "Wei Huang",
+   "category": "SANS_SERIF",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/worksans",
+   "tags": {
+    "/Expressive/Stiff": 10,
+    "/Expressive/Vintage": 40,
+    "/Quality/Concept": 70,
+    "/Quality/Drawing": 70,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 80,
+    "/Sans/Grotesque": 50,
+    "/Sans/Neo Grotesque": 60
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "WorkSans-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 130960,
+     "upstream": "WorkSans[wght].ttf"
+    }
+   ],
+   "strip": 139,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 64009,
+    "weights": [
+     400,
+     700
+    ],
+    "hinting": "auto"
+   }
+  },
+  {
+   "id": "workbench",
+   "name": "Workbench",
+   "designer": "Jens Kutílek",
+   "category": "MONOSPACE",
+   "license": "OFL-1.1",
+   "license_file": "OFL.txt",
+   "dir": "ofl/workbench",
+   "tags": {
+    "/Expressive/Awkward": 40,
+    "/Expressive/Futuristic": 50,
+    "/Expressive/Innovative": 20,
+    "/Expressive/Loud": 6,
+    "/Expressive/Playful": 20,
+    "/Expressive/Rugged": 60,
+    "/Expressive/Sincere": 5,
+    "/Expressive/Stiff": 33,
+    "/Expressive/Vintage": 53,
+    "/Monospace/Monospace": 100,
+    "/Quality/Concept": 60,
+    "/Quality/Drawing": 80,
+    "/Quality/Spacing": 90,
+    "/Quality/Wordspace": 100,
+    "/Theme/Pixel": 90
+   },
+   "native": 16,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Workbench-VF.woff2",
+     "weight": "variable",
+     "style": "normal",
+     "bytes": 5336,
+     "upstream": "Workbench[BLED,SCAN].ttf"
+    }
+   ],
+   "strip": 140
+  },
+  {
+   "id": "yellowtail",
+   "name": "Yellowtail",
+   "designer": "Astigmatic",
+   "category": "HANDWRITING",
+   "license": "Apache-2.0",
+   "license_file": "LICENSE.txt",
+   "dir": "apache/yellowtail",
+   "tags": {
+    "/Expressive/Artistic": 52,
+    "/Expressive/Cute": 30,
+    "/Expressive/Excited": 21,
+    "/Expressive/Happy": 42,
+    "/Expressive/Playful": 18,
+    "/Expressive/Rugged": 50,
+    "/Expressive/Sincere": 45,
+    "/Expressive/Vintage": 88,
+    "/Quality/Concept": 50,
+    "/Quality/Drawing": 50,
+    "/Quality/Spacing": 80,
+    "/Quality/Wordspace": 90,
+    "/Script/Handwritten": 70,
+    "/Script/Informal": 30
+   },
+   "native": null,
+   "small": true,
+   "big": true,
+   "hidden": false,
+   "files": [
+    {
+     "file": "Yellowtail-Regular.woff2",
+     "weight": 400,
+     "style": "normal",
+     "bytes": 23768,
+     "upstream": "Yellowtail-Regular.ttf"
+    }
+   ],
+   "strip": 141,
+   "hinted": {
+    "file": "hinted.bin",
+    "bytes": 39815,
+    "weights": [
+     400
+    ],
+    "hinting": "auto"
+   }
+  }
+ ],
+ "hinted": {
+  "freetype": "2.14.3",
+  "sizes": [
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19
+  ],
+  "chars": 331
+ }
+}

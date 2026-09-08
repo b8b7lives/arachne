@@ -1,6 +1,24 @@
 {
   "builds": [
     {
+      "id": "2026-09-07-text-fonts-map-data",
+      "date": "2026-09-07",
+      "line": "text on the map with 142 free fonts, and a map data mode that skips the build",
+      "notes": [
+        "You can put text on your map, with or without a picture behind it. Turn on text on the map in Source, type a line, and drag it into place on the preview. Under 20 blocks tall the letters are drawn crisp, one solid map color with hard edges, which is what reads at sign size. From 20 blocks up they are drawn smooth and dithered like the picture. Letter style overrides that either way, and its third choice, hinted, is for 8 to 19 blocks. The text tool needs Safari 17 or newer, the same floor as loading a picture.",
+        "A text line can carry an outline, a shadow, an underline, and on smooth letters a two color gradient. It can be turned a quarter or half turn, mirrored, flipped, or stacked one letter per row. An ink slider on crisp letters counts more or less of a letter's soft edge as a block, useful on thin fonts at small sizes. Undo and redo sit in the head with the usual keys, and the arrow keys nudge the selected line a block at a time. Text saves with your settings and never rides along in a shared palette link.",
+        "The text tool comes with 142 free font families, listed with samples, designers and licenses on a new page at /arachne/fonts/. Every font is hosted here rather than loaded from Google Fonts, so using one sends no request off the site.",
+        "A new select at the top of Source, make, chooses between a build schematic and map.dat files. In map.dat mode Arachne writes the map data files only, always zipped, and nothing is placed, so every map color is available in all four shades. More on where the files go and how to give yourself the map is on the FAQ page.",
+        "Map data files for 26.1 and later worlds came up blank in game. They now go where those versions look for them.",
+        "Settings read more plainly. Every setting sits on one row with its help text, and dropdown options are one term each with the explanation in the tooltip. The About panel links GitHub, Modrinth, CurseForge, Ko-fi and Discord, and the what's new panel is gone since the release notes are in the top nav."
+      ],
+      "links": [
+        { "text": "the fonts page, every family with samples", "href": "https://b8b7.live/arachne/fonts/" },
+        { "text": "FAQ", "href": "https://b8b7.live/arachne/faq/" },
+        { "text": "release notes", "href": "https://b8b7.live/arachne/changelog/" }
+      ]
+    },
+    {
       "id": "2026-09-04-faq-header-water",
       "date": "2026-09-04",
       "line": "a questions and answers page, page links in the header, and water leaves the palette",

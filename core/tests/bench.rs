@@ -744,7 +744,7 @@ fn height_cap_sweep_holds_every_level_between_staircased_and_flat() {
             "{pname}: probe too flat to stress the cap ({peak})"
         );
 
-        let (same, r0) = apply_height_cap(&grid, &d, &all, None, peak);
+        let (same, r0) = apply_height_cap(&grid, &d, &all, None, peak, None);
         assert_eq!(
             same.cells, grid.cells,
             "{pname}: cap at the peak is a no-op"
@@ -755,7 +755,7 @@ fn height_cap_sweep_holds_every_level_between_staircased_and_flat() {
         let mut last_err = base_err;
         let ladder: Vec<u32> = (0..=peak).rev().collect();
         for h in ladder {
-            let (capped, report) = apply_height_cap(&grid, &d, &all, None, h);
+            let (capped, report) = apply_height_cap(&grid, &d, &all, None, h, None);
             assert_eq!(report.infeasible_columns, 0, "{pname} H={h}");
             assert!(
                 natural_peak(&capped, None) <= h,
@@ -828,7 +828,7 @@ fn height_cap_table() {
             "H", "dE", "vs base", "edits", "cols"
         );
         for h in (0..=peak).rev() {
-            let (capped, r) = apply_height_cap(&grid, &d, &all, None, h);
+            let (capped, r) = apply_height_cap(&grid, &d, &all, None, h, None);
             let err = compare(&img, &grid_to_linear(&capped, &palette), view).scielab_mean;
             println!(
                 "  {:>4} {:>8.3} {:>+7.1}% {:>7} {:>7}",

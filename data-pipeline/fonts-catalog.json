@@ -1,0 +1,1021 @@
+{
+ "source": {
+  "repo": "google/fonts",
+  "commit": "5e35378e6bda803962ee6fd257e444a7d459660d"
+ },
+ "note": "Curated list for build-fonts.py: which families ship, hand-set native pixel size, and the operator's small/big review (minecraft#87). Edit here, then rerun the script.",
+ "faces": [
+  {
+   "id": "abril-fatface",
+   "name": "Abril Fatface",
+   "dir": "ofl/abrilfatface",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "alfa-slab-one",
+   "name": "Alfa Slab One",
+   "dir": "ofl/alfaslabone",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "almendra",
+   "name": "Almendra",
+   "dir": "ofl/almendra",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "almendra-display",
+   "name": "Almendra Display",
+   "dir": "ofl/almendradisplay",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "amatic-sc",
+   "name": "Amatic SC",
+   "dir": "ofl/amaticsc",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "anton",
+   "name": "Anton",
+   "dir": "ofl/anton",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "archivo-narrow",
+   "name": "Archivo Narrow",
+   "dir": "ofl/archivonarrow",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "are-you-serious",
+   "name": "Are You Serious",
+   "dir": "ofl/areyouserious",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "astloch",
+   "name": "Astloch",
+   "dir": "ofl/astloch",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "atkinson-hyperlegible-next",
+   "name": "Atkinson Hyperlegible Next",
+   "dir": "ofl/atkinsonhyperlegiblenext",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "audiowide",
+   "name": "Audiowide",
+   "dir": "ofl/audiowide",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "ballet",
+   "name": "Ballet",
+   "dir": "ofl/ballet",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "baloo-2",
+   "name": "Baloo 2",
+   "dir": "ofl/baloo2",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "bangers",
+   "name": "Bangers",
+   "dir": "ofl/bangers",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "barlow-condensed",
+   "name": "Barlow Condensed",
+   "dir": "ofl/barlowcondensed",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "bebas-neue",
+   "name": "Bebas Neue",
+   "dir": "ofl/bebasneue",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "bellefair",
+   "name": "Bellefair",
+   "dir": "ofl/bellefair",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "berkshire-swash",
+   "name": "Berkshire Swash",
+   "dir": "ofl/berkshireswash",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "big-shoulders",
+   "name": "Big Shoulders",
+   "dir": "ofl/bigshoulders",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "black-ops-one",
+   "name": "Black Ops One",
+   "dir": "ofl/blackopsone",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "blaka",
+   "name": "Blaka",
+   "dir": "ofl/blaka",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "bodoni-moda",
+   "name": "Bodoni Moda",
+   "dir": "ofl/bodonimoda",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "bubblegum-sans",
+   "name": "Bubblegum Sans",
+   "dir": "ofl/bubblegumsans",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "bungee",
+   "name": "Bungee",
+   "dir": "ofl/bungee",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "bungee-shade",
+   "name": "Bungee Shade",
+   "dir": "ofl/bungeeshade",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "butcherman",
+   "name": "Butcherman",
+   "dir": "ofl/butcherman",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "bytesized",
+   "name": "Bytesized",
+   "dir": "ofl/bytesized",
+   "small": false,
+   "big": true,
+   "native": 8
+  },
+  {
+   "id": "caveat",
+   "name": "Caveat",
+   "dir": "ofl/caveat",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "chewy",
+   "name": "Chewy",
+   "dir": "apache/chewy",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "cinzel",
+   "name": "Cinzel",
+   "dir": "ofl/cinzel",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "comfortaa",
+   "name": "Comfortaa",
+   "dir": "ofl/comfortaa",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "cookie",
+   "name": "Cookie",
+   "dir": "ofl/cookie",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "coral-pixels",
+   "name": "Coral Pixels",
+   "dir": "ofl/coralpixels",
+   "small": true,
+   "big": true,
+   "native": 13
+  },
+  {
+   "id": "cormorant-garamond",
+   "name": "Cormorant Garamond",
+   "dir": "ofl/cormorantgaramond",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "courgette",
+   "name": "Courgette",
+   "dir": "ofl/courgette",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "creepster",
+   "name": "Creepster",
+   "dir": "ofl/creepster",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "dancing-script",
+   "name": "Dancing Script",
+   "dir": "ofl/dancingscript",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "datatype",
+   "name": "Datatype",
+   "dir": "ofl/datatype",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "dotgothic16",
+   "name": "DotGothic16",
+   "dir": "ofl/dotgothic16",
+   "small": true,
+   "big": true,
+   "native": 16
+  },
+  {
+   "id": "doto",
+   "name": "Doto",
+   "dir": "ofl/doto",
+   "small": false,
+   "big": true,
+   "native": 16
+  },
+  {
+   "id": "eater",
+   "name": "Eater",
+   "dir": "ofl/eater",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "eb-garamond",
+   "name": "EB Garamond",
+   "dir": "ofl/ebgaramond",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "emilys-candy",
+   "name": "Emilys Candy",
+   "dir": "ofl/emilyscandy",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "ewert",
+   "name": "Ewert",
+   "dir": "ofl/ewert",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "faster-one",
+   "name": "Faster One",
+   "dir": "ofl/fasterone",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "fira-code",
+   "name": "Fira Code",
+   "dir": "ofl/firacode",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "fjalla-one",
+   "name": "Fjalla One",
+   "dir": "ofl/fjallaone",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "flavors",
+   "name": "Flavors",
+   "dir": "ofl/flavors",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "freckle-face",
+   "name": "Freckle Face",
+   "dir": "ofl/freckleface",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "fredericka-the-great",
+   "name": "Fredericka the Great",
+   "dir": "ofl/frederickathegreat",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "fredoka",
+   "name": "Fredoka",
+   "dir": "ofl/fredoka",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "gaegu",
+   "name": "Gaegu",
+   "dir": "ofl/gaegu",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "geist-pixel",
+   "name": "Geist Pixel",
+   "dir": "ofl/geistpixel",
+   "small": false,
+   "big": true,
+   "native": 16
+  },
+  {
+   "id": "germania-one",
+   "name": "Germania One",
+   "dir": "ofl/germaniaone",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "great-vibes",
+   "name": "Great Vibes",
+   "dir": "ofl/greatvibes",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "grenze",
+   "name": "Grenze",
+   "dir": "ofl/grenze",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "grenze-gotisch",
+   "name": "Grenze Gotisch",
+   "dir": "ofl/grenzegotisch",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "handjet",
+   "name": "Handjet",
+   "dir": "ofl/handjet",
+   "small": true,
+   "big": true,
+   "native": 16
+  },
+  {
+   "id": "henny-penny",
+   "name": "Henny Penny",
+   "dir": "ofl/hennypenny",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "ibm-plex-mono",
+   "name": "IBM Plex Mono",
+   "dir": "ofl/ibmplexmono",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "indie-flower",
+   "name": "Indie Flower",
+   "dir": "ofl/indieflower",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "inter",
+   "name": "Inter",
+   "dir": "ofl/inter",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "irish-grover",
+   "name": "Irish Grover",
+   "dir": "apache/irishgrover",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "jacquard-12",
+   "name": "Jacquard 12",
+   "dir": "ofl/jacquard12",
+   "small": false,
+   "big": true,
+   "native": 12
+  },
+  {
+   "id": "jacquarda-bastarda-9",
+   "name": "Jacquarda Bastarda 9",
+   "dir": "ofl/jacquardabastarda9",
+   "small": false,
+   "big": true,
+   "native": 9
+  },
+  {
+   "id": "jersey-10",
+   "name": "Jersey 10",
+   "dir": "ofl/jersey10",
+   "small": true,
+   "big": true,
+   "native": 10
+  },
+  {
+   "id": "jetbrains-mono",
+   "name": "JetBrains Mono",
+   "dir": "ofl/jetbrainsmono",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "jolly-lodger",
+   "name": "Jolly Lodger",
+   "dir": "ofl/jollylodger",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "kablammo",
+   "name": "Kablammo",
+   "dir": "ofl/kablammo",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "kaushan-script",
+   "name": "Kaushan Script",
+   "dir": "ofl/kaushanscript",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "kings",
+   "name": "Kings",
+   "dir": "ofl/kings",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "league-gothic",
+   "name": "League Gothic",
+   "dir": "ofl/leaguegothic",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "lexend",
+   "name": "Lexend",
+   "dir": "ofl/lexend",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "libre-baskerville",
+   "name": "Libre Baskerville",
+   "dir": "ofl/librebaskerville",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "lilita-one",
+   "name": "Lilita One",
+   "dir": "ofl/lilitaone",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "lobster",
+   "name": "Lobster",
+   "dir": "ofl/lobster",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "lora",
+   "name": "Lora",
+   "dir": "ofl/lora",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "luckiest-guy",
+   "name": "Luckiest Guy",
+   "dir": "apache/luckiestguy",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "major-mono-display",
+   "name": "Major Mono Display",
+   "dir": "ofl/majormonodisplay",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "manufacturing-consent",
+   "name": "Manufacturing Consent",
+   "dir": "ofl/manufacturingconsent",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "meddon",
+   "name": "Meddon",
+   "dir": "ofl/meddon",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "medievalsharp",
+   "name": "MedievalSharp",
+   "dir": "ofl/medievalsharp",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "merriweather",
+   "name": "Merriweather",
+   "dir": "ofl/merriweather",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "metal-mania",
+   "name": "Metal Mania",
+   "dir": "ofl/metalmania",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "metamorphous",
+   "name": "Metamorphous",
+   "dir": "ofl/metamorphous",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "michroma",
+   "name": "Michroma",
+   "dir": "ofl/michroma",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "micro-5",
+   "name": "Micro 5",
+   "dir": "ofl/micro5",
+   "small": true,
+   "big": true,
+   "native": 5
+  },
+  {
+   "id": "molle",
+   "name": "Molle",
+   "dir": "ofl/molle",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "monoton",
+   "name": "Monoton",
+   "dir": "ofl/monoton",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "montserrat",
+   "name": "Montserrat",
+   "dir": "ofl/montserrat",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "mountains-of-christmas",
+   "name": "Mountains of Christmas",
+   "dir": "apache/mountainsofchristmas",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "mystery-quest",
+   "name": "Mystery Quest",
+   "dir": "ofl/mysteryquest",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "new-rocker",
+   "name": "New Rocker",
+   "dir": "ofl/newrocker",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "nosifer",
+   "name": "Nosifer",
+   "dir": "ofl/nosifer",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "noto-emoji",
+   "name": "Noto Emoji",
+   "dir": "ofl/notoemoji",
+   "small": true,
+   "big": true,
+   "hidden": true
+  },
+  {
+   "id": "noto-music",
+   "name": "Noto Music",
+   "dir": "ofl/notomusic",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "noto-sans",
+   "name": "Noto Sans",
+   "dir": "ofl/notosans",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "noto-sans-symbols",
+   "name": "Noto Sans Symbols",
+   "dir": "ofl/notosanssymbols",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "noto-sans-symbols-2",
+   "name": "Noto Sans Symbols 2",
+   "dir": "ofl/notosanssymbols2",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "nunito",
+   "name": "Nunito",
+   "dir": "ofl/nunito",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "open-sans",
+   "name": "Open Sans",
+   "dir": "ofl/opensans",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "orbitron",
+   "name": "Orbitron",
+   "dir": "ofl/orbitron",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "oswald",
+   "name": "Oswald",
+   "dir": "ofl/oswald",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "pacifico",
+   "name": "Pacifico",
+   "dir": "ofl/pacifico",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "permanent-marker",
+   "name": "Permanent Marker",
+   "dir": "apache/permanentmarker",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "pinyon-script",
+   "name": "Pinyon Script",
+   "dir": "ofl/pinyonscript",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "pirata-one",
+   "name": "Pirata One",
+   "dir": "ofl/pirataone",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "pixelify-sans",
+   "name": "Pixelify Sans",
+   "dir": "ofl/pixelifysans",
+   "small": false,
+   "big": true,
+   "native": 16
+  },
+  {
+   "id": "playfair-display",
+   "name": "Playfair Display",
+   "dir": "ofl/playfairdisplay",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "poppins",
+   "name": "Poppins",
+   "dir": "ofl/poppins",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "press-start-2p",
+   "name": "Press Start 2P",
+   "dir": "ofl/pressstart2p",
+   "small": false,
+   "big": true,
+   "native": 8
+  },
+  {
+   "id": "quicksand",
+   "name": "Quicksand",
+   "dir": "ofl/quicksand",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "righteous",
+   "name": "Righteous",
+   "dir": "ofl/righteous",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "roboto",
+   "name": "Roboto",
+   "dir": "ofl/roboto",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "rubik",
+   "name": "Rubik",
+   "dir": "ofl/rubik",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "rubik-wet-paint",
+   "name": "Rubik Wet Paint",
+   "dir": "ofl/rubikwetpaint",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "russo-one",
+   "name": "Russo One",
+   "dir": "ofl/russoone",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "rye",
+   "name": "Rye",
+   "dir": "ofl/rye",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "sacramento",
+   "name": "Sacramento",
+   "dir": "ofl/sacramento",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "saira-condensed",
+   "name": "Saira Condensed",
+   "dir": "ofl/sairacondensed",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "sancreek",
+   "name": "Sancreek",
+   "dir": "ofl/sancreek",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "satisfy",
+   "name": "Satisfy",
+   "dir": "apache/satisfy",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "shadows-into-light",
+   "name": "Shadows Into Light",
+   "dir": "ofl/shadowsintolight",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "share-tech-mono",
+   "name": "Share Tech Mono",
+   "dir": "ofl/sharetechmono",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "silkscreen",
+   "name": "Silkscreen",
+   "dir": "ofl/silkscreen",
+   "small": true,
+   "big": true,
+   "native": 8
+  },
+  {
+   "id": "sixtyfour",
+   "name": "Sixtyfour",
+   "dir": "ofl/sixtyfour",
+   "small": true,
+   "big": true,
+   "native": 16
+  },
+  {
+   "id": "smokum",
+   "name": "Smokum",
+   "dir": "apache/smokum",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "sniglet",
+   "name": "Sniglet",
+   "dir": "ofl/sniglet",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "source-code-pro",
+   "name": "Source Code Pro",
+   "dir": "ofl/sourcecodepro",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "space-mono",
+   "name": "Space Mono",
+   "dir": "ofl/spacemono",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "special-elite",
+   "name": "Special Elite",
+   "dir": "apache/specialelite",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "stardos-stencil",
+   "name": "Stardos Stencil",
+   "dir": "ofl/stardosstencil",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "teko",
+   "name": "Teko",
+   "dir": "ofl/teko",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "tiny5",
+   "name": "Tiny5",
+   "dir": "ofl/tiny5",
+   "small": false,
+   "big": true,
+   "native": 5
+  },
+  {
+   "id": "titan-one",
+   "name": "Titan One",
+   "dir": "ofl/titanone",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "ultra",
+   "name": "Ultra",
+   "dir": "apache/ultra",
+   "small": false,
+   "big": true
+  },
+  {
+   "id": "unifrakturcook",
+   "name": "UnifrakturCook",
+   "dir": "ofl/unifrakturcook",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "unifrakturmaguntia",
+   "name": "UnifrakturMaguntia",
+   "dir": "ofl/unifrakturmaguntia",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "vt323",
+   "name": "VT323",
+   "dir": "ofl/vt323",
+   "small": false,
+   "big": true,
+   "native": 16
+  },
+  {
+   "id": "work-sans",
+   "name": "Work Sans",
+   "dir": "ofl/worksans",
+   "small": true,
+   "big": true
+  },
+  {
+   "id": "workbench",
+   "name": "Workbench",
+   "dir": "ofl/workbench",
+   "small": true,
+   "big": true,
+   "native": 16
+  },
+  {
+   "id": "yellowtail",
+   "name": "Yellowtail",
+   "dir": "apache/yellowtail",
+   "small": true,
+   "big": true
+  }
+ ]
+}

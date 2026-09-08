@@ -162,6 +162,80 @@ table.blocks td:first-child {
   width: 32px;
   padding-right: 0;
 }
+
+.font-group {
+  border-top: 1px solid var(--edge);
+  padding: 1.2rem 0 0.6rem;
+}
+.font-group h2 .count {
+  color: var(--dimmer);
+  font-size: var(--t-small);
+  margin-left: 0.4rem;
+}
+table.fonts {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: var(--t-small);
+}
+table.fonts thead th:nth-child(1) {
+  width: 24%;
+}
+table.fonts thead th:nth-child(2) {
+  width: 32%;
+}
+table.fonts thead th:nth-child(3) {
+  width: 10%;
+}
+table.fonts thead th:nth-child(4) {
+  width: 22%;
+}
+table.fonts thead th:nth-child(5) {
+  width: 12%;
+}
+table.fonts td,
+table.fonts tbody th {
+  overflow-wrap: anywhere;
+}
+table.fonts th,
+table.fonts td {
+  text-align: left;
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--edge);
+  vertical-align: top;
+}
+table.fonts thead th {
+  color: var(--dimmer);
+  font-weight: 400;
+}
+table.fonts tbody th {
+  font-weight: 600;
+}
+table.fonts th .note {
+  display: block;
+  color: var(--dimmer);
+  font-weight: 400;
+}
+table.fonts .face-text {
+  display: block;
+  color: var(--dim);
+  font-weight: 400;
+  font-size: var(--t-small);
+}
+table.fonts tr.sample td {
+  padding-top: 0;
+  border-bottom-width: 1px;
+}
+table.fonts tr:has(+ tr.sample) th,
+table.fonts tr:has(+ tr.sample) td {
+  border-bottom: 0;
+}
+.toc-fonts a {
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  font-size: var(--t-small);
+}
 .tile {
   display: block;
   width: 32px;
@@ -275,6 +349,23 @@ table.blocks td:first-child {
   }
   table.blocks th:nth-child(5),
   table.blocks td:nth-child(5) {
+    display: none;
+  }
+  table.fonts thead th:nth-child(1) {
+    width: 34%;
+  }
+  table.fonts thead th:nth-child(2) {
+    width: 30%;
+  }
+  table.fonts thead th:nth-child(3) {
+    width: 18%;
+  }
+  table.fonts thead th:nth-child(5) {
+    width: 18%;
+  }
+  table.fonts th:nth-child(4),
+  table.fonts td:nth-child(4),
+  table.fonts .face-name {
     display: none;
   }
   .since {

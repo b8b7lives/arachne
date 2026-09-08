@@ -7,7 +7,7 @@
   "author": "b8b7",
   "scripts": {
     "wasm": "wasm-pack build ../wasm --target web --out-dir ../web/src/wasm-pkg --no-pack",
-    "data": "mkdir -p public && cp ../data/blocks-26.2.json ../data/mapartcraft-presets-26.2.json public/",
+    "data": "mkdir -p public/fonts/catalog && cp ../data/blocks-26.2.json ../data/mapartcraft-presets-26.2.json public/ && cp -r ../data/fonts/. public/fonts/catalog/ && cp ../data/fonts.json ../data/fonts-coverage.json ../data/fonts-names.webp ../data/fonts-samples.webp public/fonts/catalog/",
     "predev": "npm run data && npm run pages && (node -e \"process.exit(require('fs').existsSync('src/wasm-pkg')?0:1)\" || npm run wasm)",
     "dev": "vite",
     "prebuild": "npm run wasm && npm run data && npm run feed && npm run pages",

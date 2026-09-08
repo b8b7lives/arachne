@@ -99,15 +99,18 @@ pub fn refine(
     start: &Grid,
     cfg: &DbsConfig,
 ) -> (Grid, DbsReport) {
-    refine_with_progress(img, palette, edge, start, cfg, &mut |_| {})
+    refine_with_progress(img, palette, edge, start, cfg, None, &mut |_| {})
 }
 
+/// `pinned` cells keep their starting color; the search never proposes a
+/// swap for them. Same shape as the grid, row-major.
 pub fn refine_with_progress(
     img: &LinImage,
     palette: &Palette,
     edge: Option<&Palette>,
     start: &Grid,
     cfg: &DbsConfig,
+    pinned: Option<&[bool]>,
     progress: &mut dyn FnMut(f32),
 ) -> (Grid, DbsReport) {
     let (w, h) = (img.width, img.height);
@@ -118,7 +121,9 @@ pub fn refine_with_progress(
         entries.extend(e.entries.iter().copied());
     }
     let frozen: Vec<bool> = (0..w * h)
-        .map(|i| edge.is_some() && edge_forced(&start.cells, w, i))
+        .map(|i| {
+            (edge.is_some() && edge_forced(&start.cells, w, i)) || pinned.is_some_and(|m| m[i])
+        })
         .collect();
 
     let kernels = opponent_kernels(cfg.view, cfg.filter_radius);
@@ -354,6 +359,47 @@ mod tests {
         assert!(
             edges.iter().any(|&i| loose.cells[i] != start.cells[i]),
             "without the edge palette DBS would move an edge cell, so the guard is load bearing"
+        );
+    }
+
+    #[test]
+    fn pinned_cells_keep_their_starting_color() {
+        let (_, p) = setup();
+        let img = ramp_with_a_hole(48);
+        let start = quantize(
+            &img,
+            &p,
+            &Dither::Diffusion {
+                kernel: FLOYD_STEINBERG,
+                serpentine: true,
+            },
+            None,
+        );
+        let w = start.width;
+        let pinned: Vec<bool> = (0..start.cells.len())
+            .map(|i| (i % w + i / w) % 3 == 0)
+            .collect();
+        let (g, _) = refine_with_progress(
+            &img,
+            &p,
+            None,
+            &start,
+            &DbsConfig::default(),
+            Some(&pinned),
+            &mut |_| {},
+        );
+        for (i, &pin) in pinned.iter().enumerate() {
+            if pin {
+                assert_eq!(g.cells[i], start.cells[i], "pinned cell {i} moved");
+            }
+        }
+        let (loose, _) = refine(&img, &p, None, &start, &DbsConfig::default());
+        assert!(
+            pinned
+                .iter()
+                .enumerate()
+                .any(|(i, &pin)| pin && loose.cells[i] != start.cells[i]),
+            "without pinning DBS would move one of these cells, so the flag is load bearing"
         );
     }
 

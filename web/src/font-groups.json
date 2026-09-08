@@ -1,0 +1,30 @@
+{
+  "order": [
+    "pixel",
+    "blackletter",
+    "halloween",
+    "winter",
+    "script",
+    "mono",
+    "symbols",
+    "serif",
+    "sans",
+    "display"
+  ],
+  "groups": {
+    "pixel": { "label": "pixel", "tags": ["/Theme/Pixel"], "min": 70 },
+    "blackletter": {
+      "label": "blackletter and medieval",
+      "tags": ["/Theme/Blackletter", "/Theme/Medieval"],
+      "min": 70
+    },
+    "halloween": { "label": "spooky", "tags": ["/Seasonal/Halloween"], "min": 70 },
+    "winter": { "label": "winter", "tags": ["/Seasonal/Christmas"], "min": 70 },
+    "script": { "label": "script and handwriting", "tags": ["/Script/"], "min": 1 },
+    "mono": { "label": "monospace", "tags": ["/Monospace/"], "min": 1 },
+    "symbols": { "label": "symbols", "tags": ["/Special use/Symbols"], "min": 1 },
+    "serif": { "label": "serif", "tags": ["/Serif/", "/Slab/"], "min": 1 },
+    "sans": { "label": "sans", "tags": ["/Sans/"], "min": 1 },
+    "display": { "label": "display", "tags": [], "min": 0 }
+  }
+}

@@ -27,6 +27,13 @@
   --dim: #9aa3b2;
   --dimmer: #848c9d;
   --edge: #30343e;
+  --edge-soft: #272b34;
+  --panel-head: #23272f;
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-6: 1.5rem;
   --edge-control: #656d82;
   --accent: #7aa2f7;
   --warn: #e0af68;
@@ -35,7 +42,7 @@
   --font-ui: "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   --t-title: 1.35rem;
-  --t-head: 1.05rem;
+  --t-head: 1.2rem;
   --t-body: 0.95rem;
   --t-small: 0.82rem;
   --tile-size: var(--tile-pref, 32px);

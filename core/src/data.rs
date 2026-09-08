@@ -199,6 +199,8 @@ mod tests {
             .collect();
         assert_eq!(empty, vec![12], "only water's color has no block");
         assert_eq!(d.buildable_colors().count(), 60);
+        assert_eq!(d.colors.len(), 61);
+        assert!(d.colors.iter().any(|c| c.id == 12));
     }
 
     #[test]

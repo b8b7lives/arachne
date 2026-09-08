@@ -322,14 +322,18 @@ pub fn quantize(
     dither: &Dither,
     transparency: Option<Transparency>,
 ) -> Grid {
-    quantize_with_progress(img, palette, dither, transparency, &mut |_| {})
+    quantize_with_progress(img, palette, dither, transparency, None, &mut |_| {})
 }
 
+/// `nearest_only` marks cells that take the nearest palette color and take no
+/// part in dithering: no threshold shift, no mixing plan, and in diffusion
+/// neither receiving nor emitting error. One flag per cell, row-major.
 pub fn quantize_with_progress(
     img: &LinImage,
     palette: &Palette,
     dither: &Dither,
     transparency: Option<Transparency>,
+    nearest_only: Option<&[bool]>,
     progress: &mut dyn FnMut(f32),
 ) -> Grid {
     let (w, h) = (img.width, img.height);
@@ -341,6 +345,7 @@ pub fn quantize_with_progress(
         Some(t) if forced_at(x, z) => t.edge,
         _ => palette,
     };
+    let pinned = |x: usize, z: usize| nearest_only.is_some_and(|m| m[z * w + x]);
 
     match dither {
         Dither::None => {
@@ -364,6 +369,11 @@ pub fn quantize_with_progress(
                 for x in 0..w {
                     let p = img.pixel(x, z);
                     if transparent_at(p) {
+                        continue;
+                    }
+                    if pinned(x, z) {
+                        let e = pal(x, z).nearest([p[0], p[1], p[2]]);
+                        cells[z * w + x] = Some((e.color_id, e.tone));
                         continue;
                     }
                     let lab = linear_to_oklab([p[0], p[1], p[2]]);
@@ -405,6 +415,11 @@ pub fn quantize_with_progress(
                         continue;
                     }
                     let lin = [p[0], p[1], p[2]];
+                    if pinned(x, z) {
+                        let e = pal(x, z).nearest(lin);
+                        cells[z * w + x] = Some((e.color_id, e.tone));
+                        continue;
+                    }
                     let key = lin.map(|c| (c.clamp(0.0, 1.0) * 16383.0).round() as u16);
                     let q = pal(x, z);
                     let store = if forced_at(x, z) {
@@ -439,8 +454,13 @@ pub fn quantize_with_progress(
                     if transparent_at([0.0, 0.0, 0.0, a]) {
                         continue;
                     }
-                    let old = buf[z * w + x];
                     let src = img.pixel(x, z);
+                    if pinned(x, z) {
+                        let e = pal(x, z).nearest([src[0], src[1], src[2]]);
+                        cells[z * w + x] = Some((e.color_id, e.tone));
+                        continue;
+                    }
+                    let old = buf[z * w + x];
                     let clamped = [0, 1, 2].map(|i| {
                         (src[i] + (old[i] - src[i]).clamp(-DRIFT_LIMIT, DRIFT_LIMIT))
                             .clamp(0.0, 1.0)
@@ -506,6 +526,61 @@ mod tests {
     fn flat_image(w: usize, h: usize, rgba: [u8; 4]) -> LinImage {
         let data: Vec<u8> = std::iter::repeat_n(rgba, w * h).flatten().collect();
         LinImage::from_srgb_rgba(w, h, &data)
+    }
+
+    #[test]
+    fn nearest_only_cells_take_the_undithered_color_in_every_mode() {
+        let json = std::fs::read_to_string(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../data/blocks-26.2.json"
+        ))
+        .unwrap();
+        let d = BlockData::from_json(&json).unwrap();
+        let ids: Vec<u8> = d.colors.iter().map(|c| c.id).collect();
+        let p = Palette::build(&d, &ids, &[Tone::Dark, Tone::Normal, Tone::Light]);
+        let (w, h) = (40usize, 40usize);
+        let mut data = Vec::with_capacity(w * h * 4);
+        for z in 0..h {
+            for x in 0..w {
+                let r = (60 + x * 4) as u8;
+                let g = (200 - z * 3) as u8;
+                data.extend_from_slice(&[r, g, 140, 255]);
+            }
+        }
+        let img = LinImage::from_srgb_rgba(w, h, &data);
+        let plain = quantize(&img, &p, &Dither::None, None);
+        let modes = [
+            Dither::Ordered(bayer4()),
+            Dither::Yliluoma {
+                matrix: bayer4(),
+                candidates: 16,
+                levels: None,
+            },
+            Dither::Diffusion {
+                kernel: FLOYD_STEINBERG,
+                serpentine: true,
+            },
+        ];
+        let all = vec![true; w * h];
+        let some: Vec<bool> = (0..w * h).map(|i| (i % w + i / w) % 5 == 0).collect();
+        for dm in &modes {
+            let g = quantize_with_progress(&img, &p, dm, None, Some(&all), &mut |_| {});
+            assert_eq!(
+                g.cells, plain.cells,
+                "a fully pinned grid is the no dither grid"
+            );
+            let g = quantize_with_progress(&img, &p, dm, None, Some(&some), &mut |_| {});
+            for (i, &pin) in some.iter().enumerate() {
+                if pin {
+                    assert_eq!(g.cells[i], plain.cells[i], "pinned cell {i} was dithered");
+                }
+            }
+            let loose = quantize(&img, &p, dm, None);
+            assert!(
+                (0..w * h).any(|i| some[i] && loose.cells[i] != plain.cells[i]),
+                "without pinning this mode would dither one of these cells, so the flag is load bearing"
+            );
+        }
     }
 
     #[test]

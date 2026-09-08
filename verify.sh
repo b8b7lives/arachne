@@ -31,8 +31,23 @@ echo "audit: ok"
 (cd "$ROOT/web" && npx tsc --noEmit) >"$LOG" 2>&1 || fail tsc
 echo "tsc: ok"
 
+for d in "$ROOT"/data/fonts/*/; do
+  [ -f "$d/OFL.txt" ] || [ -f "$d/LICENSE.txt" ] || [ -f "$d/UFL.txt" ] || { echo "no license file in $d" >"$LOG"; fail fonts; }
+done
+echo "fonts: $(ls -d "$ROOT"/data/fonts/*/ | wc -l) families with a license file"
+
+(cd "$ROOT/web" && node -e '
+const fs = require("fs");
+const m = JSON.parse(fs.readFileSync("../data/fonts.json", "utf8"));
+const need = m.faces.filter((f) => !f.hidden && !f.native);
+const missing = need.filter((f) => !f.hinted || !fs.existsSync(`../data/fonts/${f.id}/${f.hinted.file}`)).map((f) => f.id);
+if (missing.length) { console.error(`no hinted sheet for ${missing.join(", ")}`); process.exit(1); }
+console.log(`${need.length} families with a hinted sheet`);
+') >"$LOG" 2>&1 || fail hinted
+echo "hinted: $(cat "$LOG")"
+
 (cd "$ROOT/web" && node tools/feed.js && node tools/pages.js) >"$LOG" 2>&1 || fail pages
-echo "pages: $(grep -o 'colors ([^)]*)' "$LOG"), $(grep -o 'changelog ([^)]*)' "$LOG"), $(grep -o 'faq ([^)]*)' "$LOG")"
+echo "pages: $(grep -o 'colors ([^)]*)' "$LOG"), $(grep -o 'changelog ([^)]*)' "$LOG"), $(grep -o 'faq ([^)]*)' "$LOG"), $(grep -o 'fonts ([^)]*)' "$LOG")"
 
 (cd "$ROOT/web" && node tools/e2e.js) >"$LOG" 2>&1 || fail e2e
 echo "e2e: $(grep -c '^ok ' "$LOG") checks ok"
@@ -40,7 +55,7 @@ echo "e2e: $(grep -c '^ok ' "$LOG") checks ok"
 (cd "$ROOT/web" && node tools/mobile-survey.js --only phone-390 --assert --max-phone-height 25000 --out .shots/survey) >"$LOG" 2>&1 || fail mobile
 echo "mobile: $(grep -o 'height=[0-9]*px' "$LOG") at 390"
 
-(cd "$ROOT/web" && npm run build) >"$LOG" 2>&1 || fail build
+(cd "$ROOT/web" && FORCE_COLOR=0 npm run build) >"$LOG" 2>&1 || fail build
 echo "build: $(grep -o 'dist/sw\.js[^│]*│[^│]*' "$LOG" | head -1 | tr -s ' ') and $(grep -c '^dist/' "$LOG") files"
 
 echo PASS

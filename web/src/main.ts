@@ -15,6 +15,16 @@ import {
   savePresets,
   saveWorkspace,
 } from "./store";
+import {
+  hasText,
+  initText,
+  markSelection,
+  type PaletteEntry,
+  rasterizeText,
+  setTextItems,
+  textItems,
+  textOn,
+} from "./text";
 import type {
   Adjust,
   AuditDto,
@@ -32,6 +42,7 @@ import type {
   SharedPalette,
   SolverConfig,
   SupportTotals,
+  TextItem,
   TierMeta,
   ToolMeta,
   ViewModel,
@@ -124,6 +135,7 @@ function rpc<T>(msg: Record<string, unknown>, transfer: Transferable[] = []): Pr
 }
 
 let colors: MapColor[] = [];
+let colorsAll: MapColor[] = [];
 let blocks: CandidateBlock[] = [];
 let atlasCols = 32;
 let atlasTile = 16;
@@ -147,6 +159,43 @@ let previewZoom = 1;
 let previewHidden = false;
 let previewInline = false;
 const COLLAPSIBLE = ["loadout-panel", "io-panel", "solver-panel", "summary-panel"];
+const collapsedSubs = new Set<string>();
+
+function seedClosedSubs() {
+  for (const sub of document.querySelectorAll<HTMLElement>(".subsection[id][data-closed]")) {
+    collapsedSubs.add(sub.id);
+  }
+}
+
+function syncSubsections() {
+  for (const sub of document.querySelectorAll<HTMLElement>(".subsection[id]")) {
+    const closed = collapsedSubs.has(sub.id);
+    sub.classList.toggle("collapsed", closed);
+    sub
+      .querySelector<HTMLElement>(":scope > .sub-head > .fold")
+      ?.setAttribute("aria-expanded", String(!closed));
+  }
+}
+
+function wireSubsections() {
+  for (const sub of document.querySelectorAll<HTMLElement>(".subsection[id]")) {
+    const head = sub.querySelector<HTMLElement>(":scope > .sub-head");
+    if (!head) continue;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "fold";
+    btn.setAttribute("aria-label", "hide or show these settings");
+    btn.textContent = "▾";
+    btn.onclick = () => {
+      if (collapsedSubs.has(sub.id)) collapsedSubs.delete(sub.id);
+      else collapsedSubs.add(sub.id);
+      syncSubsections();
+      persist();
+    };
+    head.prepend(btn);
+  }
+  syncSubsections();
+}
 const collapsedSections = new Set<string>();
 let blockIndex: BlockIndex | null = null;
 declare const __BUILD_ID__: string;
@@ -244,6 +293,7 @@ const FIELDS: [string, "value" | "checked"][] = [
   ["support-block", "value"],
   ["grid-overlay", "checked"],
   ["build-mode", "value"],
+  ["make-mode", "value"],
   ["first-map-id", "value"],
   ["schem-format", "value"],
   ["mapdat-on", "checked"],
@@ -346,6 +396,9 @@ function persist() {
     previewInline,
     dismissedStale,
     collapsed: [...collapsedSections].sort(),
+    collapsedSubs: [...collapsedSubs].sort(),
+    text: textItems(),
+    textOn: textOn(),
   });
 }
 
@@ -622,10 +675,8 @@ function syncPresetSelects() {
     if (state) {
       state.textContent =
         enabled.size === 0
-          ? "No palette selected. Try a preset or create your own."
-          : match?.builtin
-            ? `This is the ${match.name} preset. Try another or make your own.`
-            : "";
+          ? "no colors are on, so nothing can be built. Pick a preset or turn some on"
+          : "";
       state.hidden = !state.textContent;
     }
     const meta = document.getElementById("palette-meta");
@@ -868,7 +919,7 @@ function syncVersionNote() {
   const newest = versions[versions.length - 1];
   $("version-note").textContent =
     v === newest
-      ? `${shown} map colors, everything this data knows`
+      ? `all ${shown} map colors`
       : `${shown} of ${colors.length} map colors, and only blocks ${v} shipped with`;
 }
 
@@ -996,6 +1047,8 @@ interface SettingsFile {
   tools?: OwnedTool[];
   toggles?: Record<string, boolean>;
   fields?: Record<string, string | boolean>;
+  text?: TextItem[];
+  textOn?: boolean;
 }
 
 function snapshot(): SettingsFile {
@@ -1006,6 +1059,8 @@ function snapshot(): SettingsFile {
     tools: structuredClone(loadout),
     toggles: { ...toggles },
     fields: fieldValues(),
+    text: textItems(),
+    textOn: textOn(),
   };
 }
 
@@ -1030,10 +1085,13 @@ function applySettingsFile(doc: SettingsFile) {
   const ids = Array.isArray(doc.enabled) ? doc.enabled.slice(0, 256) : [];
   for (const id of ids) if (colors.some((c) => c.id === id)) enabled.add(id);
   applyPicks(doc.picks, doc.deliberate);
+  if (Array.isArray(doc.text)) {
+    setTextItems(doc.text, typeof doc.textOn === "boolean" ? doc.textOn : true);
+  }
   dismissedStale = "";
   renderLoadout();
   syncCropControls();
-  syncMapdatControls();
+  syncMode();
   syncAdjustControls();
   honorAlphaUser = null;
   syncBackgroundControls();
@@ -1066,7 +1124,8 @@ const SHARE_LINK = /#p=([A-Za-z0-9_-]{7,})\s*$/;
 const BARE_CODE = /^1[A-Za-z0-9_-]{6,63}$/;
 
 function sharePalette(quiet = false): SharedPalette | null {
-  const ids = usableIds();
+  // a shared palette is a build palette: colors no block makes stay out of it
+  const ids = usableIds().filter((id) => colors.some((c) => c.id === id));
   if (!ids.length) {
     if (!quiet) {
       ioResult(
@@ -1236,7 +1295,7 @@ function versionIndex(v: string): number {
 }
 
 function colorExists(cid: number): boolean {
-  const c = colors.find((x) => x.id === cid);
+  const c = colorsAll.find((x) => x.id === cid) ?? colors.find((x) => x.id === cid);
   if (!c?.since) return true;
   return versionIndex(c.since) <= versionIndex(gameVersion());
 }
@@ -1522,12 +1581,6 @@ const BLOCK_FILTER_KEYS = TOGGLE_DEFS.map(([k]) => k).filter(
   (k) => !LOADOUT_FILTER_KEYS.includes(k),
 );
 
-const LOADOUT_FILTER_HINTS: Record<string, string> = {
-  unrecoverable: "On: unrecoverable blocks stay offered and are priced as spent. Off: hide them.",
-  class_match_only:
-    "Off: every block stays offered. On: a pickaxe-only palette really is pickaxe-only.",
-};
-
 const LOADOUT_FILTER_LABELS: Record<string, string> = {
   unrecoverable: "Show blocks I can't recover",
   class_match_only: "Show only blocks my tools are made for",
@@ -1540,7 +1593,7 @@ function helpLines(text: string): string[] {
     .filter(Boolean);
 }
 
-function toggleRow(key: string, shortHint?: string, plainLabel?: string): HTMLElement {
+function toggleRow(key: string, plainLabel?: string): HTMLElement {
   const { word, gloss, long: help } = term(key);
   const row = document.createElement("div");
   row.className = "toggle-row";
@@ -1554,15 +1607,18 @@ function toggleRow(key: string, shortHint?: string, plainLabel?: string): HTMLEl
     syncFilterChip();
     refreshSolver();
   };
-  label.append(cb, ` ${plainLabel ?? `${word}: ${gloss}`}`);
+  if (plainLabel) {
+    label.append(cb, ` ${plainLabel}`);
+  } else {
+    const name = document.createElement("b");
+    name.textContent = word;
+    const desc = document.createElement("span");
+    desc.className = "dim";
+    desc.textContent = gloss;
+    label.append(cb, " ", name, " ", desc);
+  }
   label.title = helpLines(help).join("\n");
   row.append(label);
-  for (const line of helpLines(shortHint ?? help)) {
-    const hint = document.createElement("p");
-    hint.className = "toggle-help";
-    hint.textContent = line;
-    row.append(hint);
-  }
   return row;
 }
 
@@ -1570,7 +1626,7 @@ function renderLoadoutFilters() {
   const div = $("loadout-filters");
   div.innerHTML = "";
   for (const key of LOADOUT_FILTER_KEYS) {
-    div.append(toggleRow(key, LOADOUT_FILTER_HINTS[key], LOADOUT_FILTER_LABELS[key]));
+    div.append(toggleRow(key, LOADOUT_FILTER_LABELS[key]));
   }
 }
 
@@ -1664,11 +1720,23 @@ function tileTitle(r: RankedDto): string {
 }
 
 function usable(cid: number): boolean {
-  return enabled.has(cid) && colorExists(cid) && (rankedByColor.get(cid)?.length ?? 0) > 0;
+  if (!enabled.has(cid) || !colorExists(cid)) return false;
+  return mapdataMode() || (rankedByColor.get(cid)?.length ?? 0) > 0;
 }
 
 function usableIds(): number[] {
   return [...enabled].filter(usable).sort((a, b) => a - b);
+}
+
+function paletteEntries(): PaletteEntry[] {
+  const tones = tonesFor() as ("dark" | "normal" | "light" | "unobtainable")[];
+  const ids = new Set(usableIds());
+  const out: PaletteEntry[] = [];
+  for (const c of activeColors()) {
+    if (!ids.has(c.id)) continue;
+    for (const tone of tones) out.push({ name: c.name, tone, rgb: c.tones[tone] });
+  }
+  return out;
 }
 
 function chosen(cid: number): RankedDto | undefined {
@@ -1679,6 +1747,12 @@ function chosen(cid: number): RankedDto | undefined {
 }
 
 function swatchGradient(c: MapColor): string {
+  if (mapdataMode()) {
+    const [u, d, n, l] = [c.tones.unobtainable, c.tones.dark, c.tones.normal, c.tones.light].map(
+      (t) => `rgb(${t.join(",")})`,
+    );
+    return `linear-gradient(to bottom, ${u} 0 25%, ${d} 25% 50%, ${n} 50% 75%, ${l} 75% 100%)`;
+  }
   if (($("height-mode") as HTMLSelectElement).value === "flat") {
     return `rgb(${c.tones.normal.join(",")})`;
   }
@@ -1712,7 +1786,7 @@ function flagsInline(r: RankedDto): string {
 
 function sortedColors(): MapColor[] {
   const mode = ($("palette-sort") as HTMLSelectElement | null)?.value ?? "map";
-  const arr = [...colors];
+  const arr = [...activeColors()];
   const cost = (c: MapColor) => chosen(c.id)?.recovery_ticks ?? Number.MAX_SAFE_INTEGER;
   const count = (c: MapColor) => genResult?.materials[String(c.id)] ?? 0;
   const delta = (c: MapColor) => marginalDeltas?.get(c.id) ?? -1;
@@ -1875,7 +1949,7 @@ function renderFillerNotice() {
     : 0;
   const stepped = ($("height-mode") as HTMLSelectElement).value === "stepped";
   const subject = blocks ? `${countText(blocks)} blocks` : `${needy.length} of your colors`;
-  if (el.hidden) ($("filler-section") as HTMLDetailsElement).open = true;
+  if (el.hidden && collapsedSubs.delete("filler-section")) syncSubsections();
   el.hidden = false;
   el.className = stepped ? "note warn-orange" : "note";
   el.replaceChildren(
@@ -1922,11 +1996,11 @@ function renderPalette() {
   if (sizeCtl) sizeCtl.hidden = view === "list";
   if (view === "list") renderPaletteTable(div);
   else renderPaletteTiles(div);
-  const off = colors.length - enabled.size;
+  const total = activeColors().length;
+  const on = activeColors().filter((c) => enabled.has(c.id)).length;
+  const off = total - on;
   $("color-meta").textContent =
-    off === 0
-      ? `all ${colors.length} colors in play`
-      : `${enabled.size} of ${colors.length} colors, ${off} turned off`;
+    off === 0 ? `all ${total} colors in play` : `${on} of ${total} colors, ${off} turned off`;
   renderPickDrift();
   renderFillerNotice();
   syncPresetSelects();
@@ -1986,7 +2060,11 @@ const COLUMNS: Column[] = [
 ];
 
 function activeColumns(): Column[] {
-  return COLUMNS.filter((c) => !c.imageOnly || genResult);
+  return COLUMNS.filter(
+    (c) =>
+      (!c.imageOnly || genResult) &&
+      (!mapdataMode() || c.key === "color" || c.key === "count" || c.key === "impact"),
+  );
 }
 
 function cell(...kids: (Node | string)[]): HTMLElement {
@@ -2147,8 +2225,10 @@ function renderPaletteTiles(root: HTMLElement) {
     label.textContent = c.name;
     label.title = `map color ${c.id}, vanilla ${c.constant}`;
     row.append(label);
-    row.append(noneTile(c, false));
-    row.append(candidateStrip(c, cur, false, false));
+    if (!mapdataMode()) {
+      row.append(noneTile(c, false));
+      row.append(candidateStrip(c, cur, false, false));
+    }
 
     const badges = document.createElement("span");
     badges.className = "row-badges";
@@ -2399,13 +2479,6 @@ function syncFillerUi() {
     `${FILLER_MODE_SHORT[mode] ?? mode} · ${e ? e.b.display_name : id}${late}`;
 }
 
-interface ChangelogBuild {
-  id: string;
-  date: string;
-  line: string;
-  notes: string[];
-}
-
 interface Partner {
   id: string;
   name: string;
@@ -2462,48 +2535,6 @@ async function initCommunities() {
   }
 }
 
-async function initWhatsNew() {
-  try {
-    const res = await fetch(`${import.meta.env.BASE_URL}changelog.json`);
-    if (!res.ok) return;
-    const log = (await res.json()) as { builds: ChangelogBuild[] };
-    if (!log.builds?.length) return;
-    const panel = $("whatsnew-panel");
-    const renderPanel = () => {
-      panel.replaceChildren(
-        ...log.builds.slice(0, 3).map((b) => {
-          const d = document.createElement("div");
-          const h = document.createElement("p");
-          h.className = "whatsnew-head";
-          h.textContent = `${b.date}: ${b.line}`;
-          const ul = document.createElement("ul");
-          for (const n of Array.isArray(b.notes) ? b.notes : []) {
-            const li = document.createElement("li");
-            li.textContent = n;
-            ul.append(li);
-          }
-          d.append(h, ul);
-          return d;
-        }),
-      );
-      const tip = document.createElement("p");
-      tip.className = "whatsnew-tip";
-      tip.textContent =
-        "Arachne acting strangely after an update? A hard refresh" +
-        " clears the old version: Ctrl+Shift+R, or Cmd+Shift+R on a Mac.";
-      panel.append(tip);
-    };
-    const link = $("whatsnew-link") as HTMLButtonElement;
-    link.onclick = () => {
-      if (panel.hidden) renderPanel();
-      panel.hidden = !panel.hidden;
-      link.setAttribute("aria-expanded", String(!panel.hidden));
-    };
-  } catch {
-    void 0;
-  }
-}
-
 function syncMaterialsScope() {
   const sel = $("materials-basis") as HTMLSelectElement;
   const n = tileMaterials?.length ?? 0;
@@ -2536,6 +2567,10 @@ function wearText(t: OwnedTool, breaks: number): string {
 function renderSummary() {
   const div = $("summary");
   if (!genResult) return;
+  if (mapdataMode()) {
+    div.replaceChildren();
+    return;
+  }
   const unbuildable = unbuildableColors();
   let teardown = 0,
     instamined = 0,
@@ -2875,20 +2910,16 @@ function wireCollapsibles() {
   for (const id of COLLAPSIBLE) {
     const h2 = document.querySelector(`#${id} > h2`);
     if (!h2) continue;
-    const tools = document.createElement("span");
-    tools.className = "section-tools";
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "mini";
-    tools.append(btn);
-    h2.append(tools);
+    btn.className = "fold";
+    btn.setAttribute("aria-label", "hide or show this section");
+    btn.textContent = "▾";
+    h2.prepend(btn);
     const sync = () => {
       const on = collapsedSections.has(id);
       $(id).classList.toggle("collapsed", on);
-      btn.textContent = on ? "show" : "hide";
-      btn.title = on
-        ? "expand this section"
-        : "collapse this section; the heading keeps its counts";
+      btn.setAttribute("aria-expanded", String(!on));
     };
     btn.onclick = () => {
       if (collapsedSections.has(id)) collapsedSections.delete(id);
@@ -2908,11 +2939,29 @@ function setPreviewHidden(hidden: boolean) {
   if (!hidden) applyPreviewScale();
 }
 
+function clearPreview() {
+  lastPreview = null;
+  genResult = null;
+  marginalDeltas = null;
+  marginalTotal = 0;
+  tileMaterials = null;
+  supportTotals = null;
+  supportTotalsSig = null;
+  elCanvas.getContext("2d")!.clearRect(0, 0, elCanvas.width, elCanvas.height);
+  for (const id of ["export-download", "export-share", "view-build", "view-build-export"]) {
+    ($(id) as HTMLButtonElement).disabled = true;
+  }
+  renderPalette();
+  status("choose a picture or add text");
+  updatePreviewMeta();
+}
+
 function paintPreview(img: ImageData) {
   lastPreview = img;
   elCanvas.width = img.width;
   elCanvas.height = img.height;
   elCanvas.getContext("2d")!.putImageData(img, 0, 0);
+  markSelection();
   applyPreviewScale();
 }
 
@@ -2961,6 +3010,7 @@ async function popOutPreview() {
   if (lastPreview) paintPreview(lastPreview);
   $("preview-away").hidden = false;
   ($("preview-popout") as HTMLButtonElement).hidden = true;
+  syncPreviewHint();
   syncZoomControls();
   pipWindow.addEventListener("pagehide", reclaimPreview);
   pipWindow.addEventListener("resize", () => applyPreviewScale());
@@ -2972,17 +3022,38 @@ function reclaimPreview() {
   pipWindow = null;
   $("preview-slot").append(elWrap);
   $("preview-away").hidden = true;
+  syncPreviewHint();
   ($("preview-popout") as HTMLButtonElement).hidden = false;
   syncZoomControls();
   if (lastPreview) paintPreview(lastPreview);
   w.close();
 }
 
+let previewHintDefault: string | null = null;
+
+function syncPreviewHint() {
+  const hint = $("preview-hint");
+  if (hasText()) {
+    if (previewHintDefault === null) previewHintDefault = hint.textContent;
+    hint.textContent = pipWindow
+      ? "bring the preview back to move the text"
+      : source
+        ? "drag the text on the preview to move it"
+        : "drag the text on the preview to move it. Drop or paste a picture anywhere to put one behind it";
+  } else if (previewHintDefault !== null) {
+    hint.textContent = previewHintDefault;
+    previewHintDefault = null;
+  }
+}
+
 function updatePreviewMeta() {
   const meta = $("preview-meta");
-  $("preview-empty").hidden = Boolean(source);
+  $("preview-empty").hidden = Boolean(source) || hasText();
+  elCanvas.classList.toggle("has-text", hasText());
+  syncPreviewHint();
   if (!source) {
-    meta.textContent = "";
+    meta.textContent = genResult && hasText() ? `${genResult.width}×${genResult.height}` : "";
+    meta.className = "dim";
     return;
   }
   const { width: w, height: h } = source.bmp;
@@ -3077,17 +3148,19 @@ function syncBackgroundControls() {
   const mode = ($("bg-mode") as HTMLSelectElement).value;
   const honored = honor.checked;
   $("alpha-threshold-row").hidden = mode !== "off" || !honored;
-  const why = sourceHasAlpha
-    ? "your picture has see-through parts"
-    : "padding leaves see-through bars";
+  const why = !source
+    ? "an empty map is transparent everywhere"
+    : sourceHasAlpha
+      ? "your picture has transparent areas"
+      : "padding leaves transparent bars";
   $("bg-note").textContent =
     mode !== "off"
       ? mode === "smooth"
         ? "filled with the closest color a map can make, so it stays one flat block"
         : "filled with your color, dithered like the rest of the picture"
       : honored
-        ? `${why}, so they place no blocks`
-        : `${why}, and with transparency off they match like solid pixels and mostly come out dark. Turn it on or pick a fill`;
+        ? `${why}, and those pixels place no blocks`
+        : `${why}, and with this off they are matched as solid pixels and mostly come out dark. Turn it on or pick a fill`;
 }
 
 function adjustOpts(): Adjust | undefined {
@@ -3430,8 +3503,18 @@ function renderCapNote() {
     el.textContent = `${who} staircases up to ${peak} tall on its own`;
     return;
   }
+  if (heightCap.infeasible_columns > 0) {
+    const n = heightCap.infeasible_columns;
+    const cols = n === 1 ? "1 column" : `${n} columns`;
+    const did = heightCap.edited_cells ? `recolored ${heightCap.edited_cells} blocks, but ` : "";
+    const why = hasText()
+      ? "Crisp text is pinned and cannot be reshaded, so raise the cap, move the text, or draw it smooth"
+      : "Some blocks there cannot change shade, so raise the cap";
+    el.textContent = `${did}${cols} cannot fit under ${cap}. ${why}`;
+    return;
+  }
   if (cap >= peak || heightCap.edited_cells === 0) {
-    el.textContent = `already fits: ${who} staircases ${peak} tall`;
+    el.textContent = `already fits, ${who} staircases ${peak} tall`;
     return;
   }
   const pct = heightCap.de_base > 0 ? (heightCap.de_capped / heightCap.de_base - 1) * 100 : 0;
@@ -3441,10 +3524,10 @@ function renderCapNote() {
       : `picture error up about ${pct.toFixed(pct < 10 ? 1 : 0)}%`;
   const flatHint =
     cap === 0
-      ? ". A cap of 0 is a flat build; the flat height mode makes a better flat version"
+      ? ". A cap of 0 is a flat build, and the flat height mode makes a better flat version"
       : "";
   const scope = heightCap.per_panel ? "every panel " : "";
-  el.textContent = `recolored ${heightCap.edited_cells} blocks to fit ${scope}under ${cap}; ${cost}${flatHint}`;
+  el.textContent = `recolored ${heightCap.edited_cells} blocks to fit ${scope}under ${cap}. ${cost}${flatHint}`;
 }
 
 function syncHeightControls() {
@@ -3456,6 +3539,12 @@ function syncHeightControls() {
 
 async function applyHeightCap(repaint: boolean) {
   if (!genResult) return;
+  if (mapdataMode()) {
+    heightCap = null;
+    supportTotalsSig = null;
+    renderCapNote();
+    return;
+  }
   const capRaw = ($("cliff-cap") as HTMLInputElement).value;
   const opts: HeightCapOpts = {
     max_height: maxHeightValue(),
@@ -3490,13 +3579,19 @@ let generating = false;
 let queued = false;
 
 function scheduleGenerate() {
-  if (!source) return;
+  if (!source && !hasText()) return;
   clearTimeout(genTimer);
   genTimer = setTimeout(() => void generate(), 250);
 }
 
+function blankRgba(): { data: Uint8ClampedArray; width: number; height: number } {
+  const width = maps("maps-w") * 128;
+  const height = maps("maps-h") * 128;
+  return { data: new Uint8ClampedArray(width * height * 4), width, height };
+}
+
 async function generate() {
-  if (!source) return;
+  if (!source && !hasText()) return;
   if (generating) {
     queued = true;
     return;
@@ -3504,7 +3599,8 @@ async function generate() {
   generating = true;
   showProgress(0);
   try {
-    const src = fittedRgba();
+    const src = source ? fittedRgba() : blankRgba();
+    const raster = await rasterizeText(maps("maps-w") * 128, maps("maps-h") * 128);
     const hadAlpha = sourceHasAlpha;
     sourceHasAlpha = false;
     for (let i = 3; i < src.data.length; i += 4) {
@@ -3525,14 +3621,17 @@ async function generate() {
       dither: ($("dither") as HTMLSelectElement).value,
       serpentine: true,
       refine: ($("dbs-refine") as HTMLInputElement).checked,
+      edge_tones: mapdataMode() ? tonesFor() : undefined,
       transparency_threshold: honorAlpha
         ? Math.min(99, Math.max(1, num("alpha-threshold", 50))) / 100
         : undefined,
     };
     const buf = src.data.buffer as ArrayBuffer;
+    const overlay = raster ? (raster.overlay.buffer as ArrayBuffer) : undefined;
+    const nearest = raster ? (raster.nearest.buffer as ArrayBuffer) : undefined;
     genResult = await rpc<GenerateResult>(
-      { cmd: "generate", rgba: buf, width: src.width, height: src.height, opts },
-      [buf],
+      { cmd: "generate", rgba: buf, width: src.width, height: src.height, overlay, nearest, opts },
+      [buf, ...(overlay ? [overlay] : []), ...(nearest ? [nearest] : [])],
     );
     generateSeq += 1;
     await applyHeightCap(false);
@@ -3542,7 +3641,7 @@ async function generate() {
     ($("export-share") as HTMLButtonElement).disabled = false;
     ($("view-build") as HTMLButtonElement).disabled = false;
     ($("view-build-export") as HTMLButtonElement).disabled = false;
-    status(source.name);
+    status(source ? source.name : "text on an empty map");
     updatePreviewMeta();
     await refreshSolver();
     const marginal = await rpc<MarginalErrors>({
@@ -3578,10 +3677,33 @@ async function generate() {
   }
 }
 
+// A map data file needs no block, so it may use the game's whole table in
+// all four shades; a build is limited to what blocks can make (#83).
+function mapdataMode(): boolean {
+  return ($("make-mode") as HTMLSelectElement).value === "mapdata";
+}
+
+function activeColors(): MapColor[] {
+  return mapdataMode() ? colorsAll : colors;
+}
+
 function tonesFor(): string[] {
+  if (mapdataMode()) return ["dark", "normal", "light", "unobtainable"];
   return ($("height-mode") as HTMLSelectElement).value === "flat"
     ? ["normal"]
     : ["dark", "normal", "light"];
+}
+
+function syncMode() {
+  const on = mapdataMode();
+  document.body.classList.toggle("mode-mapdata", on);
+  if (on) {
+    ($("mapdat-on") as HTMLInputElement).checked = true;
+    for (const c of colorsAll) {
+      if (!colors.some((b) => b.id === c.id) && !deliberate.has(c.id)) enabled.add(c.id);
+    }
+  }
+  syncMapdatControls();
 }
 
 async function loadFile(f: File) {
@@ -3770,36 +3892,39 @@ interface ExportFile {
 
 async function buildExport(): Promise<ExportFile | null> {
   if (!genResult) return null;
-  const opts = exportOpts();
-  if (!opts) return null;
   const name = exportName();
   const entries: ZipEntry[] = [];
   const skipped: string[] = [];
-  const ext = opts.format === "nbt" ? "nbt" : "litematic";
-  if (buildMode() !== "one_piece") {
-    const panels = (genResult.width / 128) * (genResult.height / 128);
-    const names = Array.from({ length: panels }, (_, i) => `${name}_${panelTag(i)}`);
-    const framed = await rpc<ArrayBuffer>({ cmd: "schem_split", opts: { ...opts, names } });
-    unframe(framed).forEach((bytes, i) => {
-      if (bytes.length) entries.push({ name: `${names[i]}.${ext}`, bytes });
-      else skipped.push(panelTag(i));
-    });
-  } else {
-    const buf = await rpc<ArrayBuffer>({ cmd: "schem", opts: { ...opts, name } });
-    entries.push({ name: `${name}.${ext}`, bytes: new Uint8Array(buf) });
+  // a map file places nothing, so it needs no block selection, schematic or sheet
+  if (!mapdataMode()) {
+    const opts = exportOpts();
+    if (!opts) return null;
+    const ext = opts.format === "nbt" ? "nbt" : "litematic";
+    if (buildMode() !== "one_piece") {
+      const panels = (genResult.width / 128) * (genResult.height / 128);
+      const names = Array.from({ length: panels }, (_, i) => `${name}_${panelTag(i)}`);
+      const framed = await rpc<ArrayBuffer>({ cmd: "schem_split", opts: { ...opts, names } });
+      unframe(framed).forEach((bytes, i) => {
+        if (bytes.length) entries.push({ name: `${names[i]}.${ext}`, bytes });
+        else skipped.push(panelTag(i));
+      });
+    } else {
+      const buf = await rpc<ArrayBuffer>({ cmd: "schem", opts: { ...opts, name } });
+      entries.push({ name: `${name}.${ext}`, bytes: new Uint8Array(buf) });
+    }
   }
-  if (checked("mapdat-on")) {
+  if (mapdataMode() || checked("mapdat-on")) {
     const tw = genResult.width / 128,
       th = genResult.height / 128;
     const base = firstMapId();
     for (let tz = 0; tz < th; tz++) {
       for (let tx = 0; tx < tw; tx++) {
         const buf = await rpc<ArrayBuffer>({ cmd: "mapdat", tx, tz, version: gameVersion() });
-        entries.push({ name: `map_${base + tz * tw + tx}.dat`, bytes: new Uint8Array(buf) });
+        entries.push({ name: mapdatName(base + tz * tw + tx), bytes: new Uint8Array(buf) });
       }
     }
   }
-  if (checked("sheet-on")) {
+  if (checked("sheet-on") && !mapdataMode()) {
     entries.push({
       name: `${name}.txt`,
       bytes: new TextEncoder().encode(await buildSheet(name)),
@@ -3813,7 +3938,7 @@ async function buildExport(): Promise<ExportFile | null> {
       : skipped.length === 1
         ? `Panel ${skipped[0]} has no blocks to place, so it has no schematic file.`
         : `Panels ${skipped.join(", ")} have no blocks to place, so they have no schematic files.`;
-  if (entries.length === 1) {
+  if (entries.length === 1 && !entries[0].name.includes("/")) {
     const only = entries[0];
     const type = only.name.endsWith(".txt") ? "text/plain" : "application/octet-stream";
     return { name: only.name, bytes: only.bytes.slice().buffer as ArrayBuffer, type, count: 1 };
@@ -3877,11 +4002,25 @@ function schemFormat(): "litematic" | "nbt" {
   return ($("schem-format") as HTMLSelectElement).value === "nbt" ? "nbt" : "litematic";
 }
 
+// 26.1 snapshot 6 moved saved data into namespace folders: maps live at
+// data/minecraft/maps/<id>.dat and the old data/map_<id>.dat is never read.
+function mapdatNamespaced(): boolean {
+  const since = versionIndex("26.1");
+  return since >= 0 && versionIndex(gameVersion()) >= since;
+}
+
+function mapdatName(id: number): string {
+  return mapdatNamespaced() ? `minecraft/maps/${id}.dat` : `map_${id}.dat`;
+}
+
 function syncMapdatControls() {
   const on = checked("mapdat-on");
   $("mapdat-note").hidden = !on;
+  const namespaced = mapdatNamespaced();
+  $("mapdat-where-new").hidden = !namespaced;
+  $("mapdat-where-old").hidden = namespaced;
   const id = String(firstMapId());
-  for (const el of ["mapdat-example", "mapdat-example-old"]) {
+  for (const el of ["mapdat-example", "mapdat-example-old", "mapdat-example-old-cmd"]) {
     const node = document.getElementById(el);
     if (node) node.textContent = id;
   }
@@ -3894,6 +4033,7 @@ async function boot() {
   const [init, atlasMeta] = await Promise.all([
     rpc<{
       colors: MapColor[];
+      colorsAll: MapColor[];
       blocks: CandidateBlock[];
       dataVersion: number;
       versions: string[];
@@ -3905,6 +4045,7 @@ async function boot() {
     ),
   ]);
   colors = init.colors;
+  colorsAll = init.colorsAll;
   versions = init.versions ?? [];
   dataVersion = init.dataVersion;
   const stamp = $("build-id");
@@ -3938,12 +4079,28 @@ async function boot() {
 
   touchDefaults();
   factoryFields = fieldValues();
+  initText({
+    onChange: () => {
+      persist();
+      updatePreviewMeta();
+      if (!source && !hasText()) clearPreview();
+      else scheduleGenerate();
+    },
+    onDragEnd: () => scheduleGenerate(),
+    outSize: () => [maps("maps-w") * 128, maps("maps-h") * 128],
+    preview: () => elCanvas,
+    lastPreview: () => lastPreview,
+    palette: paletteEntries,
+    popped: () => pipWindow !== null,
+  });
   const saved = loadWorkspace();
   if (saved) {
     applyFields(saved.fields);
     const sm = $("support-mode") as HTMLSelectElement;
     if (!sm.value) sm.value = "important";
-    for (const [k, v] of Object.entries(saved.toggles ?? {})) if (k in toggles) toggles[k] = v;
+    for (const [k, v] of Object.entries(saved.toggles ?? {})) {
+      if (k in toggles) toggles[k] = Boolean(v);
+    }
     const restored = sanitizeTools(saved.tools);
     if (restored.length) loadout = restored;
     for (const id of saved.enabled ?? []) if (colors.some((c) => c.id === id)) enabled.add(id);
@@ -3955,11 +4112,17 @@ async function boot() {
     for (const id of saved.collapsed ?? []) {
       if (COLLAPSIBLE.includes(id)) collapsedSections.add(id);
     }
+    if (saved.collapsedSubs) for (const id of saved.collapsedSubs) collapsedSubs.add(id);
+    else seedClosedSubs();
+    if (Array.isArray(saved.text)) setTextItems(saved.text, saved.textOn !== false);
   } else {
     for (const c of colors) enabled.add(c.id);
+    seedClosedSubs();
   }
 
   wireCollapsibles();
+  wireSubsections();
+  syncMode();
   renderLoadout();
   renderToggles();
   syncHasteNote();
@@ -3978,7 +4141,6 @@ async function boot() {
   const restored = saved ? " · your saved palette restored" : "";
   const nostore = persistenceAvailable ? "" : " · settings can't be saved in this browser";
   status(`ready: Minecraft 26.2, ${blocks.length} blocks${restored}${nostore}`);
-  void initWhatsNew();
   void initCommunities();
   await refreshSolver();
 
@@ -4009,8 +4171,12 @@ async function boot() {
     if (f) void loadFile(f);
   };
   elWrap.onclick = () => {
-    if (!pipWindow) $("file").click();
+    if (!pipWindow && !source && !hasText()) $("file").click();
   };
+  if (hasText()) {
+    updatePreviewMeta();
+    scheduleGenerate();
+  }
   const popout = $("preview-popout") as HTMLButtonElement;
   popout.hidden = false;
   popout.title = window.documentPictureInPicture
@@ -4196,6 +4362,7 @@ async function boot() {
   $("game-version").onchange = () => {
     persist();
     syncFillerUi();
+    syncMapdatControls();
     refreshSolver();
   };
   $("height-mode").onchange = () => {
@@ -4260,6 +4427,12 @@ async function boot() {
       closeFillerDrop();
       syncFillerUi();
     }
+  };
+  $("make-mode").onchange = () => {
+    syncMode();
+    persist();
+    renderPalette();
+    scheduleGenerate();
   };
   $("mapdat-on").onchange = $("first-map-id").onchange = () => {
     syncMapdatControls();
@@ -4358,9 +4531,13 @@ async function boot() {
   );
 
   $("reset-default").onclick = () => {
-    if (!confirm("Reset palette, loadout and settings to defaults? Saved presets are kept."))
+    if (!confirm("Reset palette, loadout, text and settings to defaults? Saved presets are kept."))
       return;
     clearWorkspace();
+    setTextItems([], true);
+    collapsedSubs.clear();
+    seedClosedSubs();
+    syncSubsections();
     applyFields(factoryFields);
     loadout = structuredClone(DEFAULT_LOADOUT);
     for (const [key, dflt] of TOGGLE_DEFS) setToggle(key, dflt);
@@ -4371,12 +4548,14 @@ async function boot() {
     previewZoom = 1;
     dismissedStale = "";
     renderLoadout();
-    syncMapdatControls();
+    syncMode();
     syncFillerUi();
     syncCropControls();
     if (source) {
       suggestRatio();
       updatePreviewMeta();
+    } else {
+      clearPreview();
     }
     applyPreviewScale();
     void refreshSolver();

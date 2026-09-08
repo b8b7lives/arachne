@@ -2,7 +2,7 @@ declare const __BUILD_ID__: string;
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 const CACHE = `arachne-${__BUILD_ID__}`;
-const HASHED = /\/assets\/[^/]+\.(js|css|wasm)$|\.(png|webp|svg|woff2)$|\?v=/;
+const HASHED = /\/assets\/[^/]+\.(js|css|wasm)$|\.(png|webp|svg|woff2|bin)$|\?v=/;
 const DATA = /\.json$/;
 
 sw.addEventListener("install", () => sw.skipWaiting());

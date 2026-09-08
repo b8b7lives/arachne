@@ -127,6 +127,78 @@ export interface Adjust {
   tint: number;
 }
 
+export type TextKind = "auto" | "crisp" | "smooth" | "hinted";
+export type TextAlign = "left" | "center" | "right";
+
+export interface TextItem {
+  id: string;
+  text: string;
+  font: string;
+  size: number;
+  bold: boolean;
+  kind: TextKind;
+  color: string;
+  outline: boolean;
+  outlineColor: string;
+  shadow: boolean;
+  shadowColor: string;
+  shadowX: number;
+  shadowY: number;
+  align: TextAlign;
+  ax: number;
+  ay: number;
+  lineHeight: number;
+  tracking: number;
+  ink: number;
+  underline: boolean;
+  gradient: boolean;
+  gradientColor: string;
+  gradientDir: GradientDir;
+  rotate: TextTurn;
+  mirror: boolean;
+  flip: boolean;
+  stacked: boolean;
+}
+
+export type GradientDir = "down" | "across";
+export type TextTurn = 0 | 90 | 180 | 270;
+
+export interface CatalogFace {
+  id: string;
+  name: string;
+  designer: string;
+  category: string;
+  license: string;
+  license_file: string;
+  dir: string;
+  tags: Record<string, number>;
+  native: number | null;
+  small: boolean;
+  big: boolean;
+  hidden: boolean;
+  files: { file: string; weight: number | "variable"; style: string; bytes: number }[];
+  hinted?: { file: string; bytes: number; weights: number[]; hinting: "own" | "auto" };
+  strip: number;
+}
+
+export interface FontCoverage {
+  contract: number;
+  faces: Record<string, string>;
+}
+
+export interface FontStrip {
+  file: string;
+  w: number;
+  h: number;
+}
+
+export interface FontCatalog {
+  contract: number;
+  source: { repo: string; commit: string };
+  strips: { names: FontStrip; samples: FontStrip };
+  faces: CatalogFace[];
+}
+
 export interface GenerateOpts {
   maps_w: number;
   maps_h: number;
@@ -138,6 +210,7 @@ export interface GenerateOpts {
   adjust?: Adjust;
   background?: { mode: "off" | "smooth" | "dithered"; rgb: [number, number, number] };
   refine?: boolean;
+  edge_tones?: string[];
 }
 
 export interface ExportOpts {
@@ -217,6 +290,8 @@ export type WorkerRequest =
       rgba: ArrayBuffer;
       width: number;
       height: number;
+      overlay?: ArrayBuffer;
+      nearest?: ArrayBuffer;
       opts: GenerateOpts;
     }
   | { id: number; cmd: "preview" }

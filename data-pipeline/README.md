@@ -36,6 +36,59 @@ keep these inputs.
 | `build-atlas.py` | jar, blocks json | `web/public/atlas.webp` (lossless, exact), `atlas.json` |
 | `build-versions.py` | Mojang version manifest (network), upstream coloursJSON | `data/versions.json` |
 | `build-mapartcraft-presets.py` | upstream coloursJSON | `data/mapartcraft-presets-<v>.json` |
+| `build-fonts.py` | `fonts-catalog.json`, google/fonts at its pinned commit (network) | `data/fonts/<id>/` (WOFF2 files + license), `data/fonts.json` |
+| `build-hinted.py` | `data/fonts.json`, the mirrored WOFF2 files | `data/fonts/<id>/hinted.bin`, the `hinted` entries in `data/fonts.json` |
+
+## Fonts
+
+`fonts-catalog.json` is the curated list for the text layer
+(minecraft#87): which families ship, a hand-set native pixel size for
+pixel faces, and the operator's small/big review. `build-fonts.py`
+downloads each family's upright font files and license file from
+google/fonts at the pinned commit, compresses each font file whole into
+WOFF2 (no subsetting, no instancing, so every file is the designer's
+unmodified font under its own name), and writes the manifest with
+Google's tags and scores verbatim. Downloads cache under
+`.fonts-cache/` (gitignored). `npm run data` copies the result to
+`web/public/fonts/catalog/`; `verify.sh` refuses a family without a
+license file.
+
+Run `build-hinted.py` after `build-fonts.py`: it reads the manifest and
+the mirrored files and adds the `hinted` entries back into the
+manifest, which `build-fonts.py` does not carry over. It renders the
+one-bit glyph sheets for the hinted letter style (minecraft#87): every
+picker family except the pixel faces, sizes 8 to 19 px, the real 400
+and 700 weights only (variable fonts through their `wght` axis with
+`opsz` set to the size where the font has it, static families through
+the files they ship), Latin-1 printable plus Latin Extended-A plus a
+dozen typographic marks, each face trimmed to its cmap. Rendering is
+FreeType's monochrome target with its default hinter selection: the
+font's own instructions where it has any, the auto-hinter where it
+has none. Kerning pairs come from GPOS pair positioning (formats 1 and
+2 under the `kern` feature, at the default instance) and the legacy
+`kern` table; contextual kerning is not read. The sheets are pinned
+to one FreeType build, the one inside the pinned Pillow wheel:
+freetype-py opens the library in its own package first, so that open
+is redirected and the version asserted, and any other FreeType refuses
+to build. A rebuild on the pinned versions reproduces the committed
+files byte for byte, so `git status` after a run is the drift check
+across builds; within a run, a spaced test line assembled from each
+band must equal Pillow's whole-line render of the same text or the
+build fails. `verify.sh` refuses a picker family without its sheet.
+
+`hinted.bin` is gzip; inside, little-endian: magic `AHNT`, u8 format
+(1), u8 u8 u8 FreeType version, u16 unitsPerEm, u8 weight count, u8
+size count, u8 flags (bit 0 set when the font's own instructions
+hinted it); then u16 per weight, u8 per size; then one band per weight
+and size in that order: i8 ascent, i8 descent, u16 glyph count, and
+per glyph u16 code point, u8 advance, i8 bearing x, i8 bearing y (top
+above the baseline), u8 width, u8 rows, then the rows packed one bit
+per pixel, most significant bit first, each row padded to a byte; then
+the kerning as classes, the way the font stores it: u16 left class
+count, u16 right class count, u16 left entries, u16 right entries, per
+left entry u16 code point and u16 class, per right entry the same,
+then the matrix of i16 font units, left class major. The reader is
+`web/src/hinted.ts`.
 
 Run `build-blocks.py` before `build-atlas.py`: atlas tile indices
 follow the block list, so regenerating one without the other desyncs

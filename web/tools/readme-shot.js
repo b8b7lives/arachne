@@ -19,11 +19,6 @@ await withBrowser({ width: 1440, height: 1100 }, async (s) => {
     };
     tick();
   })`);
-  await s.evaluate(`(() => {
-    const hide = [...document.querySelectorAll("#whatsnew-notice button")]
-      .find((b) => b.textContent === "hide");
-    if (hide) hide.click();
-  })()`);
   await s.evaluate(`(async () => {
     const bytes = Uint8Array.from(atob("${b64}"), (c) => c.charCodeAt(0));
     const dt = new DataTransfer();

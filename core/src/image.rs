@@ -116,6 +116,36 @@ fn area_resample<F: Fn(usize, usize) -> [f32; 4]>(
 }
 
 impl LinImage {
+    /// Draws an sRGB RGBA overlay of the same size over this image with
+    /// straight-alpha "over" compositing in linear light. Fully transparent
+    /// overlay pixels leave the image untouched; an opaque overlay pixel
+    /// replaces the color and makes the cell opaque even where the image had
+    /// a hole.
+    pub fn composite_overlay(&mut self, overlay: &[u8]) {
+        assert_eq!(
+            overlay.len(),
+            self.width * self.height * 4,
+            "overlay buffer size"
+        );
+        for (p, o) in self.pixels.iter_mut().zip(overlay.chunks_exact(4)) {
+            let a = f32::from(o[3]) / 255.0;
+            if a <= 0.0 {
+                continue;
+            }
+            let oc = [
+                srgb_channel_to_linear(o[0]),
+                srgb_channel_to_linear(o[1]),
+                srgb_channel_to_linear(o[2]),
+            ];
+            let pa = p[3].clamp(0.0, 1.0);
+            let out_a = a + pa * (1.0 - a);
+            for c in 0..3 {
+                p[c] = (oc[c] * a + p[c] * pa * (1.0 - a)) / out_a;
+            }
+            p[3] = out_a;
+        }
+    }
+
     pub fn composite_over(&mut self, bg: [f32; 3]) {
         for p in self.pixels.iter_mut() {
             let a = p[3].clamp(0.0, 1.0);
@@ -164,6 +194,31 @@ mod tests {
             (p[3] - 0.5).abs() < 1e-6,
             "alpha should still average: {p:?}"
         );
+    }
+
+    #[test]
+    fn overlay_replaces_where_opaque_and_leaves_the_rest() {
+        let base: Vec<u8> = std::iter::repeat_n([100u8, 100, 100, 255], 4)
+            .flatten()
+            .collect();
+        let mut img = LinImage::from_srgb_rgba(2, 2, &base);
+        img.pixels[3] = [0.0, 0.0, 0.0, 0.0];
+        let overlay = [
+            255u8, 0, 0, 255, // opaque red over gray
+            0, 0, 0, 0, // untouched
+            0, 0, 255, 128, // half blue over gray
+            0, 255, 0, 255, // opaque green over a hole
+        ];
+        img.composite_overlay(&overlay);
+        assert_eq!(img.pixels[0], [1.0, 0.0, 0.0, 1.0]);
+        let gray = srgb_channel_to_linear(100);
+        assert_eq!(img.pixels[1], [gray, gray, gray, 1.0]);
+        assert!(
+            img.pixels[2][2] > gray && img.pixels[2][0] < gray,
+            "half blue tints the gray"
+        );
+        assert!((img.pixels[2][3] - 1.0).abs() < 1e-6);
+        assert_eq!(img.pixels[3], [0.0, 1.0, 0.0, 1.0], "text fills a hole");
     }
 
     #[test]

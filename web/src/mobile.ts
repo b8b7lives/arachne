@@ -28,9 +28,7 @@ function targets(): HTMLElement[] {
   return [...document.querySelectorAll<HTMLElement>("main [title], #about-panel [title]")]
     .filter((el) => el.offsetParent !== null)
     .filter(
-      (el) =>
-        !el.closest("#palette, h2, .section-tools, table") &&
-        !el.matches("a, .tile, .mini, #preview-wrap"),
+      (el) => !el.closest("#palette, h2, table") && !el.matches("a, .tile, .mini, #preview-wrap"),
     )
     .filter(
       (el) =>
@@ -39,7 +37,7 @@ function targets(): HTMLElement[] {
     )
     .filter((el) => !(el.tagName !== "LABEL" && el.closest("label[title]")))
     .filter((el) => {
-      const box = el.closest("label, .field, .field-inline") ?? el;
+      const box = el.closest("label, .ctl") ?? el;
       if (seen.has(box)) return false;
       seen.add(box);
       return true;
@@ -155,7 +153,7 @@ function touchHints(): void {
     skip.id = "skip-hint";
     skip.textContent =
       "Every color and a full netherite kit are already in place. If you only want the build, use Download at the bottom.";
-    file.closest(".row")?.after(skip);
+    file.closest(".ctl-group, .row")?.after(skip);
   }
   const hint = $("preview-hint");
   if (hint) hint.textContent = "tap the picture area to choose a photo";

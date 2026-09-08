@@ -52,6 +52,8 @@ struct GenerateOpts {
     background: Option<BackgroundOpt>,
     #[serde(default)]
     refine: Option<bool>,
+    #[serde(default)]
+    edge_tones: Option<Vec<Tone>>,
 }
 
 #[derive(Deserialize)]
@@ -241,6 +243,7 @@ pub struct Session {
     grid: Option<Grid>,
     base_grid: Option<Grid>,
     threshold: Option<f32>,
+    pinned: Option<Vec<bool>>,
 }
 
 #[derive(Deserialize)]
@@ -293,11 +296,17 @@ impl Session {
             grid: None,
             base_grid: None,
             threshold: None,
+            pinned: None,
         })
     }
 
     pub fn colors(&self) -> Result<String, String> {
         json(&self.data.buildable_colors().collect::<Vec<_>>())
+    }
+
+    /// The game's whole table, for map data files, which need no block.
+    pub fn colors_all(&self) -> Result<String, String> {
+        json(&self.data.colors)
     }
 
     pub fn blocks(&self) -> Result<String, String> {
@@ -320,11 +329,19 @@ impl Session {
         json(&self.data.meta.tiers)
     }
 
+    /// `overlay` is an optional sRGB RGBA buffer at map resolution drawn over
+    /// the picture after adjustments and background fill (text items).
+    /// `nearest_only` is an optional one-byte-per-cell flag buffer at map
+    /// resolution; nonzero cells take the nearest color and skip dithering
+    /// and refinement (crisp text).
+    #[allow(clippy::too_many_arguments)]
     pub fn generate(
         &mut self,
         rgba: &[u8],
         width: usize,
         height: usize,
+        overlay: Option<Box<[u8]>>,
+        nearest_only: Option<Box<[u8]>>,
         opts_json: &str,
         on_progress: Option<js_sys::Function>,
     ) -> Result<String, String> {
@@ -333,6 +350,18 @@ impl Session {
         if out_w == 0 || out_h == 0 {
             return Err("maps_w/maps_h must be >= 1".to_string());
         }
+        if let Some(o) = &overlay {
+            if o.len() != out_w * out_h * 4 {
+                return Err("overlay buffer does not match the map size".to_string());
+            }
+        }
+        let pinned: Option<Vec<bool>> = match &nearest_only {
+            Some(m) if m.len() != out_w * out_h => {
+                return Err("nearest_only buffer does not match the map size".to_string());
+            }
+            Some(m) => Some(m.iter().map(|&b| b != 0).collect()),
+            None => None,
+        };
         let mut img = LinImage::resize_area_from_srgb(rgba, width, height, out_w, out_h);
         apply_adjust(&mut img, &opts.adjust);
         let palette = Palette::build(&self.data, &opts.enabled_color_ids, &opts.tones);
@@ -352,8 +381,12 @@ impl Session {
             }
             _ => false,
         };
+        if let Some(o) = &overlay {
+            img.composite_overlay(o);
+        }
         let dither = dither_of(&opts.dither, opts.serpentine.unwrap_or(true))?;
-        let edge = Palette::build(&self.data, &opts.enabled_color_ids, &[Tone::Light]);
+        let edge_tones = opts.edge_tones.clone().unwrap_or_else(|| vec![Tone::Light]);
+        let edge = Palette::build(&self.data, &opts.enabled_color_ids, &edge_tones);
         let transparency = opts
             .transparency_threshold
             .filter(|_| !filled)
@@ -368,9 +401,16 @@ impl Session {
             }
         };
         let split = if will_refine { 0.35 } else { 1.0 };
-        let grid = quantize_with_progress(&img, &palette, &dither, transparency, &mut |f| {
-            report(f * split);
-        });
+        let grid = quantize_with_progress(
+            &img,
+            &palette,
+            &dither,
+            transparency,
+            pinned.as_deref(),
+            &mut |f| {
+                report(f * split);
+            },
+        );
         let grid = if will_refine {
             let edge_pal = transparency.map(|t| t.edge);
             refine_with_progress(
@@ -379,6 +419,7 @@ impl Session {
                 edge_pal,
                 &grid,
                 &DbsConfig::default(),
+                pinned.as_deref(),
                 &mut |f| {
                     report(split + f * (1.0 - split));
                 },
@@ -401,6 +442,7 @@ impl Session {
         self.base_grid = Some(grid.clone());
         self.grid = Some(grid);
         self.threshold = opts.transparency_threshold;
+        self.pinned = pinned;
         json(&result)
     }
 
@@ -481,10 +523,18 @@ impl Session {
                 if palette.entries.is_empty() {
                     return Err("no enabled colors".to_string());
                 }
+                let frozen = self.pinned.as_deref();
                 let (capped, report) = if per_panel {
-                    apply_height_cap_panels(base, &self.data, &opts.tones, opts.cliff_cap, h)
+                    apply_height_cap_panels(
+                        base,
+                        &self.data,
+                        &opts.tones,
+                        opts.cliff_cap,
+                        h,
+                        frozen,
+                    )
                 } else {
-                    apply_height_cap(base, &self.data, &opts.tones, opts.cliff_cap, h)
+                    apply_height_cap(base, &self.data, &opts.tones, opts.cliff_cap, h, frozen)
                 };
                 result.edited_cells = report.edited_cells;
                 result.edited_columns = report.edited_columns;
@@ -917,7 +967,7 @@ mod tests {
             "enabled_color_ids":[8,29,28,25,18],
             "tones":["dark","normal","light"],
             "dither":"floyd_steinberg"}"#;
-        let res = s.generate(&rgba, 256, 256, opts, None).unwrap();
+        let res = s.generate(&rgba, 256, 256, None, None, opts, None).unwrap();
         let v: serde_json::Value = serde_json::from_str(&res).unwrap();
         assert_eq!(v["width"], 128);
         let total: u64 = v["materials"]
@@ -1024,7 +1074,7 @@ mod tests {
             "enabled_color_ids":[8,29,28,25,18],
             "tones":["dark","normal","light"],
             "dither":"floyd_steinberg","transparency_threshold":0.5}"#;
-        s.generate(&rgba, w, h, opts, None).unwrap();
+        s.generate(&rgba, w, h, None, None, opts, None).unwrap();
         let cfg = r#"{}"#;
         let mut selection = serde_json::Map::new();
         for cid in [8u8, 29, 28, 25, 18] {
@@ -1062,7 +1112,7 @@ mod tests {
             "enabled_color_ids":[8,29,28,25,18],
             "tones":["dark","normal","light"],
             "dither":"floyd_steinberg"}"#;
-        s.generate(&rgba, 256, 256, opts, None).unwrap();
+        s.generate(&rgba, 256, 256, None, None, opts, None).unwrap();
         let uncapped = s.preview_rgba().unwrap();
 
         let probe = r#"{"max_height":null,"cliff_cap":null,
@@ -1090,6 +1140,39 @@ mod tests {
     }
 
     #[test]
+    fn height_cap_leaves_pinned_cells_alone() {
+        let mut s = session();
+        let rgba: Vec<u8> = (0..256u32 * 256)
+            .flat_map(|i| {
+                let v = ((i / 256) % 256) as u8;
+                [v, v, v, 255]
+            })
+            .collect();
+        let band = 100usize..110;
+        let mask: Vec<u8> = (0..128 * 128)
+            .map(|i| u8::from(band.contains(&(i / 128))))
+            .collect();
+        let opts = r#"{"maps_w":1,"maps_h":1,
+            "enabled_color_ids":[8,29,28,25,18],
+            "tones":["dark","normal","light"],
+            "dither":"floyd_steinberg"}"#;
+        s.generate(&rgba, 256, 256, None, Some(mask.into()), opts, None)
+            .unwrap();
+        let uncapped = s.preview_rgba().unwrap();
+        let capped = r#"{"max_height":1,"cliff_cap":null,
+              "enabled_color_ids":[8,29,28,25,18],"tones":["dark","normal","light"]}"#;
+        let v: serde_json::Value =
+            serde_json::from_str(&s.set_height_cap(capped).unwrap()).unwrap();
+        assert!(v["edited_cells"].as_u64().unwrap() > 0);
+        let after = s.preview_rgba().unwrap();
+        for z in band {
+            let (a, b) = (z * 128 * 4, (z + 1) * 128 * 4);
+            assert_eq!(uncapped[a..b], after[a..b], "row {z} is pinned");
+        }
+        assert_ne!(uncapped, after, "rows outside the band were capped");
+    }
+
+    #[test]
     fn audit_dto_shape() {
         let s = session();
         let a: serde_json::Value =
@@ -1109,6 +1192,8 @@ mod tests {
             &rgba,
             4,
             4,
+            None,
+            None,
             r#"{"maps_w":1,"maps_h":1,"enabled_color_ids":[8],"tones":["normal"],"dither":"none"}"#,
             None,
         )

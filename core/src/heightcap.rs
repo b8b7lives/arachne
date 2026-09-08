@@ -58,18 +58,22 @@ pub fn natural_peak(grid: &Grid, cliff_cap: Option<u32>) -> u32 {
     peak as u32
 }
 
+/// `frozen` marks cells whose tone must survive the cap (crisp text); a
+/// column that cannot fit without editing them is reported infeasible.
 pub fn apply_height_cap(
     grid: &Grid,
     data: &BlockData,
     allowed_tones: &[Tone],
     cliff_cap: Option<u32>,
     max_height: u32,
+    frozen: Option<&[bool]>,
 ) -> (Grid, CapReport) {
     let (w, h) = (grid.width, grid.height);
     let mut out = grid.clone();
     let mut report = CapReport::default();
     let mut cache: HashMap<u8, [OkLab; 3]> = HashMap::new();
     let allowed = |t: Tone| allowed_tones.contains(&t);
+    let locked = |x: usize, z: usize| frozen.is_some_and(|m| m[z * w + x]);
 
     for x in 0..w {
         let mut z0 = 0usize;
@@ -98,10 +102,11 @@ pub fn apply_height_cap(
             let costs: Vec<[Option<f32>; 3]> = run
                 .iter()
                 .skip(skip)
-                .map(|(cid, t0)| {
+                .enumerate()
+                .map(|(i, (cid, t0))| {
                     let mut row = [None, None, None];
-                    if *t0 == Tone::Unobtainable {
-                        row[1] = Some(0.0);
+                    if *t0 == Tone::Unobtainable || locked(x, z0 + skip + i) {
+                        row[class_index(*t0)] = Some(0.0);
                         return row;
                     }
                     let labs = tone_oklabs(data, *cid, &mut cache);
@@ -123,7 +128,10 @@ pub fn apply_height_cap(
                     for (i, class) in classes.iter().enumerate() {
                         let z = z0 + skip + i;
                         let (cid, t0) = grid.cell(x, z).unwrap();
-                        if t0 != Tone::Unobtainable && class_index(t0) != class_index(*class) {
+                        if t0 != Tone::Unobtainable
+                            && !locked(x, z)
+                            && class_index(t0) != class_index(*class)
+                        {
                             out.cells[z * w + x] = Some((cid, *class));
                             edits += 1;
                         }
@@ -160,6 +168,7 @@ pub fn apply_height_cap_panels(
     allowed_tones: &[Tone],
     cliff_cap: Option<u32>,
     max_height: u32,
+    frozen: Option<&[bool]>,
 ) -> (Grid, CapReport) {
     let mut out = grid.clone();
     let mut report = CapReport::default();
@@ -168,7 +177,20 @@ pub fn apply_height_cap_panels(
         if natural_peak(&win, cliff_cap) <= max_height {
             continue;
         }
-        let (capped, r) = apply_height_cap(&win, data, allowed_tones, cliff_cap, max_height);
+        let win_frozen: Option<Vec<bool>> = frozen.map(|m| {
+            (0..win.height)
+                .flat_map(|z| (0..win.width).map(move |x| (z, x)))
+                .map(|(z, x)| m[(z0 + z) * grid.width + x0 + x])
+                .collect()
+        });
+        let (capped, r) = apply_height_cap(
+            &win,
+            data,
+            allowed_tones,
+            cliff_cap,
+            max_height,
+            win_frozen.as_deref(),
+        );
         for z in 0..win.height {
             for x in 0..win.width {
                 out.cells[(z0 + z) * grid.width + x0 + x] = capped.cells[z * win.width + x];
@@ -215,7 +237,7 @@ mod tests {
     #[test]
     fn a_fitting_grid_is_untouched() {
         let g = column_grid(&[Tone::Light, Tone::Dark, Tone::Normal]);
-        let (out, report) = apply_height_cap(&g, &data(), &ALL, None, 4);
+        let (out, report) = apply_height_cap(&g, &data(), &ALL, None, 4, None);
         assert_eq!(out.cells, g.cells);
         assert_eq!(report, CapReport::default());
     }
@@ -225,7 +247,7 @@ mod tests {
         let g = column_grid(&[Tone::Light; 9]);
         let d = data();
         assert_eq!(peak(&g, None), 9);
-        let (out, report) = apply_height_cap(&g, &d, &ALL, None, 3);
+        let (out, report) = apply_height_cap(&g, &d, &ALL, None, 3, None);
         assert!(peak(&out, None) <= 3, "greedy on edited tones fits the cap");
         assert!(report.edited_cells > 0);
         assert_eq!(report.edited_columns, 1);
@@ -239,7 +261,7 @@ mod tests {
     fn restricted_tones_can_make_a_column_infeasible() {
         let g = column_grid(&[Tone::Light; 6]);
         let d = data();
-        let (out, report) = apply_height_cap(&g, &d, &[Tone::Light], None, 2);
+        let (out, report) = apply_height_cap(&g, &d, &[Tone::Light], None, 2, None);
         assert_eq!(report.infeasible_columns, 1);
         assert_eq!(report.edited_cells, 0);
         assert_eq!(out.cells, g.cells, "infeasible columns are left alone");
@@ -255,7 +277,7 @@ mod tests {
             cells,
         };
         let d = data();
-        let (out, report) = apply_height_cap(&g, &d, &ALL, None, 3);
+        let (out, report) = apply_height_cap(&g, &d, &ALL, None, 3, None);
         assert!(report.edited_cells > 0);
         assert_eq!(
             out.cells[5], None,
@@ -289,15 +311,35 @@ mod tests {
                 })
                 .collect(),
         };
-        let (out, _) = apply_height_cap(&g, &data(), &ALL, None, 2);
+        let (out, _) = apply_height_cap(&g, &data(), &ALL, None, 2, None);
         assert_eq!(out.cell(0, 3), Some((8, Tone::Unobtainable)));
+    }
+
+    #[test]
+    fn frozen_cells_keep_their_tone_under_the_cap() {
+        let g = column_grid(&[Tone::Light; 9]);
+        let d = data();
+        let mut frozen = vec![false; 9];
+        frozen[4] = true;
+        let (out, report) = apply_height_cap(&g, &d, &ALL, None, 3, Some(&frozen));
+        assert_eq!(
+            out.cell(0, 4),
+            Some((8, Tone::Light)),
+            "frozen tone survives"
+        );
+        assert_eq!(report.edited_columns + report.infeasible_columns, 1);
+        if report.infeasible_columns == 0 {
+            assert!(peak(&out, None) <= 3);
+        }
+        let (loose, _) = apply_height_cap(&g, &d, &ALL, None, 3, None);
+        assert_ne!(loose.cells, out.cells, "the mask changes the outcome");
     }
 
     #[test]
     fn the_cap_composes_with_the_cliff_cap() {
         let g = column_grid(&[Tone::Light; 10]);
         let d = data();
-        let (out, report) = apply_height_cap(&g, &d, &ALL, Some(1), 4);
+        let (out, report) = apply_height_cap(&g, &d, &ALL, Some(1), 4, None);
         assert!(peak(&out, Some(1)) <= 4);
         assert!(report.edited_cells > 0);
     }
@@ -330,19 +372,19 @@ mod tests {
         let d = data();
         let dark64 = [[Tone::Dark; 64].as_slice(), [Tone::Normal; 64].as_slice()].concat();
         let grid = two_panel_column(&dark64, &dark64);
-        let (same, r) = apply_height_cap_panels(&grid, &d, &ALL, None, 100);
+        let (same, r) = apply_height_cap_panels(&grid, &d, &ALL, None, 100, None);
         assert_eq!(
             r.edited_cells, 0,
             "each panel is 64 tall, nothing to recolor"
         );
         assert_eq!(same.cells, grid.cells);
-        let (_, global) = apply_height_cap(&grid, &d, &ALL, None, 100);
+        let (_, global) = apply_height_cap(&grid, &d, &ALL, None, 100, None);
         assert!(
             global.edited_cells > 0,
             "the one-piece cap would have recolored"
         );
 
-        let (capped, r) = apply_height_cap_panels(&grid, &d, &ALL, None, 10);
+        let (capped, r) = apply_height_cap_panels(&grid, &d, &ALL, None, 10, None);
         assert!(r.edited_cells > 0);
         assert!(natural_peak_panels(&capped, None) <= 10);
         let untouched = capped.cells[64..128] == grid.cells[64..128]

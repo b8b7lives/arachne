@@ -95,7 +95,7 @@
       "id": "share",
       "q": "Can I share a palette with a friend?",
       "a": [
-        "Yes. {copy a link to this palette} in [Import / export](../#io-panel) makes a short link carrying the colors you have on and the block you picked for each, and the build sheet in every download carries the same link, so a build can be remade or continued later from the sheet alone. A settings file carries everything else on the page, your loadout and picture settings included."
+        "Yes. {copy a link to this palette} in [Import / export](../#io-panel) makes a short link carrying the colors you have on and the block you picked for each, and the build sheet in every download carries the same link, so a build can be remade or continued later from the sheet alone. A settings file carries everything else on the page, your loadout, picture settings and text lines included, and a file saved before text existed leaves the text you have as it is. The link never carries text, so applying one leaves your text alone too."
       ]
     },
     {
@@ -109,21 +109,30 @@
       "id": "build-modes",
       "q": "What do separate panels, continued panels and one piece mean?",
       "a": [
-        "They decide how a build bigger than one map is cut and what {max height} measures. Separate panels give one file per map, and every panel starts on the ground with its own reference row along its north edge, so you can build each one anywhere and in any order. Max height is then the tallest single panel. Panels that continue each other also give one file per map, but they keep the heights of the whole picture, and a southern panel stands on the row above it, so paste every panel at the same Y. Litematica shows that shared row in red on a finished panel, which is expected. One piece is a single schematic with one reference row for the whole build. The setting is {build as}, under {height} next to {max height}, because the two go together."
+        "They decide how a build bigger than one map is cut and what {max height} measures. Separate panels give one file per map, and every panel starts on the ground with its own reference row along its north edge, so you can build each one anywhere and in any order. Max height is then the tallest single panel. Panels that continue each other also give one file per map, but they keep the heights of the whole picture, and a southern panel stands on the row above it, so paste every panel at the same Y. A southern panel's north row is the row already built above it, so the two line up with nothing to redo. One piece is a single schematic with one reference row for the whole build. The setting is {build as}, under {height} next to {max height}, because the two go together."
       ]
     },
     {
       "id": "empty-panel",
       "q": "Why did a panel get no file?",
       "a": [
-        "Nothing in it places a block. A fully see-through corner of the picture, for instance, has no pixels to build, so that panel would be an empty schematic and Arachne leaves it out. The [Download](../#export-panel) section names the panels it skipped. Their map ids stay reserved, so the numbering of every other panel is unchanged and the files still line up with the maps on the wall."
+        "Nothing in it places a block. A fully transparent corner of the picture, for instance, has no pixels to build, so that panel would be an empty schematic and Arachne leaves it out. The [Download](../#export-panel) section names the panels it skipped. Their map ids stay reserved, so the numbering of every other panel is unchanged and the files still line up with the maps on the wall."
       ]
     },
     {
       "id": "map-data",
       "q": "What is the map data file for?",
       "a": [
-        "It skips the build. A map data file is the game's own record of a finished map, so dropping it into your world puts the picture straight onto a map item with no blocks placed. That only works where you can write to the world save, which means singleplayer or a server you run. Copy the file into the world's data folder, then give yourself the map with the command the [Download](../#export-panel) section shows for your version. Set {first map id} above the highest map your world already has, or the file replaces one of yours. The picture uses the same colors and shades as the build."
+        "It skips the build. A map data file is the game's own record of a finished map, so dropping it into your world puts the picture straight onto a map item with no blocks placed. That only works where you can write to the world save, which means singleplayer or a server you run. On 26.1 and later the zip holds a minecraft folder that goes inside the world's data folder, so the maps land in data/minecraft/maps. On older versions the map files go straight into the data folder. Then give yourself the map with the command the [Download](../#export-panel) section shows for your version. Set {first map id} above the highest map your world already has, or the file replaces one of yours. Choose {make} at the top of [Source](../#source-panel) and pick the map file. In that mode the palette is every color the game knows in all four shades, including the fourth one no block can make, and the block, filler and height settings fold away because nothing is placed."
+      ]
+    },
+    {
+      "id": "text",
+      "q": "Can I put text on my map?",
+      "a": [
+        "Yes. Turn on {text on the map} in [Source](../#source-panel), type a line, and drag it on the preview to where it should sit. Every font comes from a set of 142 free faces, listed with samples on the [fonts page](../fonts/), and only the ones you pick are downloaded.",
+        "Under 20 blocks tall the letters are drawn crisp, one solid map color with hard edges and no dither, which is what reads at sign size. From 20 blocks up they are drawn smooth and dithered like the picture, and {letter style} overrides that either way. Its third choice, hinted, is for 8 to 19 blocks. The letters are fitted to the block grid ahead of time by the font's own hinting, so they come out the same in every browser. With no picture behind it, the transparency settings decide what the rest of the map becomes, a fill color or nothing at all. The letters cost no more blocks than any other part of the picture.",
+        "A line can be turned a quarter or half turn, mirrored, flipped or stacked one letter per line, underlined, and on smooth letters given a two color gradient. Undo and redo sit in the head with the usual keys, and the arrow keys nudge the selected line a block at a time. Letter spacing needs a current browser, Safari from 18.4. The text tool as a whole needs Safari 17 or newer, the same floor as loading a picture, since both draw through an offscreen canvas."
       ]
     },
     {

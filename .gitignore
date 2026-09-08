@@ -16,3 +16,6 @@ web/public/feed.xml
 web/colors/
 web/changelog/
 web/faq/
+web/fonts/
+data-pipeline/.fonts-cache/
+web/public/fonts/catalog/

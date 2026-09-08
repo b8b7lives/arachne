@@ -1,4 +1,4 @@
-import type { CandidateBlock, OwnedTool } from "./types";
+import type { CandidateBlock, OwnedTool, TextItem } from "./types";
 
 const SCHEMA = 1;
 const KEY_WORKSPACE = "arachne.workspace";
@@ -109,12 +109,38 @@ export interface Workspace {
   previewInline?: boolean;
   dismissedStale: string;
   collapsed?: string[];
+  collapsedSubs?: string[];
+  text?: TextItem[];
+  textOn?: boolean;
 }
 
 export function loadWorkspace(): Partial<Workspace> | null {
-  const w = readJson<Partial<Workspace>>(KEY_WORKSPACE);
-  if (!w || w.v !== SCHEMA) return null;
-  return w;
+  const w = readJson<Record<string, unknown>>(KEY_WORKSPACE);
+  if (!w || typeof w !== "object" || w.v !== SCHEMA) return null;
+  const list = <T>(v: unknown, keep: (x: unknown) => boolean): T[] | undefined =>
+    Array.isArray(v) ? (v.filter(keep) as T[]) : undefined;
+  const record = <T>(v: unknown): T | undefined =>
+    v && typeof v === "object" && !Array.isArray(v) ? (v as T) : undefined;
+  const bool = (v: unknown): boolean | undefined => (typeof v === "boolean" ? v : undefined);
+  const isNum = (x: unknown) => typeof x === "number" && Number.isFinite(x);
+  const isStr = (x: unknown) => typeof x === "string";
+  return {
+    v: SCHEMA,
+    enabled: list<number>(w.enabled, isNum),
+    picks: record<Record<string, string>>(w.picks),
+    deliberate: list<number>(w.deliberate, isNum),
+    tools: list<OwnedTool>(w.tools, (x) => !!x && typeof x === "object"),
+    toggles: record<Record<string, boolean>>(w.toggles),
+    fields: record<Record<string, string | boolean>>(w.fields),
+    previewZoom: isNum(w.previewZoom) ? (w.previewZoom as number) : undefined,
+    previewHidden: bool(w.previewHidden),
+    previewInline: bool(w.previewInline),
+    dismissedStale: isStr(w.dismissedStale) ? (w.dismissedStale as string) : undefined,
+    collapsed: list<string>(w.collapsed, isStr),
+    collapsedSubs: list<string>(w.collapsedSubs, isStr),
+    text: list<TextItem>(w.text, (x) => !!x && typeof x === "object"),
+    textOn: bool(w.textOn),
+  };
 }
 
 let saveTimer: ReturnType<typeof setTimeout> | undefined;

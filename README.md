@@ -23,6 +23,11 @@ in game. The remaining rough edges are mostly cosmetic.
   optional refinement pass optimizes for viewing distance using the
   S-CIELAB perceptual metric of Zhang and Wandell (1996; [journal
   version](https://doi.org/10.1889/1.1985127)).
+- Puts text on the map, with or without a picture behind it: 142 free
+  fonts served from the site itself, crisp one-color letters at sign
+  size or dithered with the picture above it, outline, shadow,
+  underline, gradient, turn and mirror, dragged into place on the
+  preview.
 - Handles transparency the way the game does: holes place no blocks,
   and pixels along a transparency edge are quantized against the
   shades the game can render there.
@@ -36,7 +41,9 @@ in game. The remaining rough edges are mostly cosmetic.
   name in the schematic list, or a vanilla structure .nbt that
   Litematica and WorldEdit both read. Split per map panel with correct
   reference rows, plus optional map data files and a plain-text build
-  sheet.
+  sheet. Or skip the blocks: the map.dat mode writes map files for a
+  world save using every color and shade the game has, including the
+  one no block can make.
 - Keeps your data yours. The image never leaves your browser, the site
   has no backend, no analytics and no tracking, and presets save inside
   your own browser. The web server keeps an ordinary request log for

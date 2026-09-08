@@ -8,6 +8,8 @@ const ATLAS = process.env.PAGES_ATLAS || "public/atlas.json";
 const CHANGELOG = process.env.PAGES_CHANGELOG || "public/changelog.json";
 const VOCAB = process.env.PAGES_VOCAB || "src/vocab.json";
 const FAQ = process.env.PAGES_FAQ || "src/faq.json";
+const FONTS = process.env.PAGES_FONTS || "../data/fonts.json";
+const FONT_GROUPS = process.env.PAGES_FONT_GROUPS || "src/font-groups.json";
 const OUT = process.env.PAGES_OUT || ".";
 const TILE_PX = 32;
 
@@ -33,6 +35,7 @@ const LINK_PREFIXES = [
   "https://ko-fi.com/b8b7live",
   "https://rebane2001.com/mapartcraft/",
   "https://enginehub.org/worldedit",
+  "https://github.com/google/fonts/",
   "mailto:arachne@b8b7.live",
 ];
 
@@ -145,7 +148,7 @@ function shell({ path, title, description, body, ld, extraHead = "" }) {
     `    <header class="site-head">`,
     `      <a class="site-name" href="../">Arachne</a>`,
     `      <span class="site-tag">Minecraft map art maker</span>`,
-    `      <nav class="site-nav"><a href="../faq/">FAQ</a><a href="../colors/">map colors</a><a href="../changelog/">release notes</a></nav>`,
+    `      <nav class="site-nav"><a href="../faq/">FAQ</a><a href="../colors/">colors</a><a href="../fonts/">fonts</a><a href="../changelog/">release notes</a></nav>`,
     `    </header>`,
     `    <main class="page-main">`,
     body,
@@ -372,6 +375,116 @@ function faqPage(faq, stamp) {
   return { html, questions: items.length };
 }
 
+function fontGroup(face, groups) {
+  for (const key of groups.order) {
+    const g = groups.groups[key];
+    if (g.tags.length === 0) return key;
+    for (const [tag, score] of Object.entries(face.tags || {})) {
+      const hit = g.tags.some((t) => (t.endsWith("/") ? tag.startsWith(t) : tag === t));
+      if (hit && score >= g.min) return key;
+    }
+  }
+  return "display";
+}
+
+function fontsPage(manifest, groups) {
+  const faces = manifest.faces;
+  if (!Array.isArray(faces) || faces.length === 0) fail("fonts manifest has no faces");
+  const commit = manifest.source.commit;
+  if (!/^[0-9a-f]{40}$/.test(commit)) fail("fonts manifest has no pinned commit");
+  const strips = manifest.strips;
+  if (!strips?.names?.file || !strips?.samples?.file) fail("fonts manifest has no sprite strips");
+  const byGroup = new Map(groups.order.map((k) => [k, []]));
+  for (const f of faces) byGroup.get(fontGroup(f, groups)).push(f);
+  const kb = (n) => `${Math.max(1, Math.round(n / 1024))} KB`;
+  const fileNote = (f) => {
+    const weights = f.files.map((x) =>
+      x.weight === "variable" ? "variable weight" : x.weight === 700 ? "bold" : "regular",
+    );
+    const files = `${weights.join(", ")}, ${kb(f.files.reduce((a, x) => a + x.bytes, 0))}`;
+    return f.hinted ? `${files}, hinted letters ${kb(f.hinted.bytes)}` : files;
+  };
+  const sections = [];
+  for (const key of groups.order) {
+    const list = byGroup.get(key);
+    if (list.length === 0) continue;
+    list.sort((a, b) => a.name.localeCompare(b.name));
+    const rows = list.map((f) => {
+      const src = `https://github.com/google/fonts/tree/${commit}/${f.dir}`;
+      if (!linkOk(src)) fail(`fonts: link not allowed: ${src}`);
+      const extra = [
+        f.native ? `pixel face, ${f.native} px grid` : "",
+        f.hidden ? "used for emoji, not listed in the picker" : "",
+      ]
+        .filter(Boolean)
+        .join("; ");
+      return [
+        `<tr id="${esc(f.id)}">`,
+        `<th scope="row"><a href="#${esc(f.id)}" class="face-name fn-${esc(f.id)}" aria-label="${esc(f.name)}"></a><span class="face-text">${esc(f.name)}</span>${extra ? `<span class="note">${esc(extra)}</span>` : ""}</th>`,
+        `<td>${esc(f.designer)}</td>`,
+        `<td><a href="../fonts/catalog/${esc(f.id)}/${esc(f.license_file)}">${esc(f.license)}</a></td>`,
+        `<td>${esc(fileNote(f))}</td>`,
+        `<td><a href="${src}" target="_blank" rel="noopener noreferrer">google/fonts</a></td>`,
+        `</tr>`,
+        `<tr class="sample"><td colspan="5"><span class="face-sample fs-${esc(f.id)}" role="img" aria-label="a sample line in ${esc(f.name)}"></span></td></tr>`,
+      ].join("");
+    });
+    sections.push(
+      [
+        `<section class="font-group" id="group-${key}">`,
+        `<h2><a href="#group-${key}">${esc(groups.groups[key].label)}</a> <span class="count">${list.length}</span></h2>`,
+        `<table class="fonts"><thead><tr><th scope="col">family</th><th scope="col">designer</th><th scope="col">license</th><th scope="col">files</th><th scope="col">source</th></tr></thead>`,
+        `<tbody>${rows.join("")}</tbody></table>`,
+        `</section>`,
+      ].join("\n"),
+    );
+  }
+  const total = faces.reduce((a, f) => a + f.files.reduce((b, x) => b + x.bytes, 0), 0);
+  const sheets = faces.filter((f) => f.hinted);
+  if (sheets.length === 0 || !manifest.hinted?.freetype)
+    fail("fonts manifest has no hinted sheets");
+  const own = sheets.filter((f) => f.hinted.hinting === "own").length;
+  const sheetBytes = sheets.reduce((a, f) => a + f.hinted.bytes, 0);
+  const sizes = manifest.hinted.sizes;
+  const hintedNote =
+    `<p>Every family except the pixel faces also carries a sheet of letters drawn ahead of time by FreeType ${esc(manifest.hinted.freetype)} at ${sizes[0]} to ${sizes[sizes.length - 1]} blocks, for the hinted letter style. ` +
+    `${own} families are fitted to the grid by their own hinting and ${sheets.length - own} by FreeType's algorithm, because they carry none. ` +
+    `A sheet downloads only when the style is used, and together they are ${kb(sheetBytes)}.</p>`;
+  const toc = groups.order
+    .filter((k) => byGroup.get(k).length > 0)
+    .map((k) => `<a href="#group-${k}">${esc(groups.groups[k].label)}</a>`)
+    .join("");
+  const title = `Fonts in Arachne · ${faces.length} free families for map art text`;
+  const description = `Every font family Arachne ships for text on Minecraft maps, with its designer, its license, and where it came from. All of them are free and open source.`;
+  const body = [
+    `<h1>Fonts in Arachne</h1>`,
+    `<p class="lede">${faces.length} families for the text tool, every one free and open source. Each family ships exactly as its designer published it, with the license file beside it, and a font only downloads when you pick it. Together they are ${kb(total)}.</p>`,
+    `<p>Families come from the google/fonts repository at commit <code>${esc(commit.slice(0, 12))}</code>, the same place the licenses link to. The group names below are Arachne's; the underlying tags are the repository's own.</p>`,
+    hintedNote,
+    `<nav class="toc toc-fonts" aria-label="font groups">${toc}</nav>`,
+    sections.join("\n"),
+  ].join("\n");
+  const rows = Math.max(...faces.map((f) => f.strip)) + 1;
+  const sheet = (s) =>
+    `display:block;width:100%;max-width:${s.w}px;aspect-ratio:${s.w} / ${s.h};background:url("/fonts/catalog/${s.file}") no-repeat;background-size:100% auto`;
+  const rowPos = (f) => (rows > 1 ? `0 ${((f.strip / (rows - 1)) * 100).toFixed(4)}%` : "0 0");
+  const css = [
+    `.face-name{${sheet(strips.names)}}`,
+    `.face-sample{${sheet(strips.samples)}}`,
+    ...faces.map((f) => `.fn-${f.id},.fs-${f.id}{background-position:${rowPos(f)}}`),
+    "",
+  ].join("\n");
+  const html = shell({
+    path: "fonts/",
+    title,
+    description,
+    body,
+    ld: breadcrumb("Fonts in Arachne", "fonts/"),
+    extraHead: `    <link rel="stylesheet" href="/fonts/fonts.css" />`,
+  });
+  return { html, css, families: faces.length, groups: sections.length };
+}
+
 function check(name, html) {
   if (html.includes("<!--")) fail(`${name}: comment in served output`);
   if (/\sstyle="/.test(html)) fail(`${name}: inline style in served output`);
@@ -390,17 +503,22 @@ if (atlas.count !== data.blocks.length)
 const colors = colorsPage(data, versions, atlas);
 const notes = changelogPage(changelog);
 const faq = faqPage(readJson(FAQ), buildStamp(data.meta.data_version));
+const fonts = fontsPage(readJson(FONTS), readJson(FONT_GROUPS));
 check("colors", colors.html);
 check("changelog", notes.html);
 check("faq", faq.html);
+check("fonts", fonts.html);
 
 mkdirSync(`${OUT}/colors`, { recursive: true });
 mkdirSync(`${OUT}/changelog`, { recursive: true });
 mkdirSync(`${OUT}/faq`, { recursive: true });
+mkdirSync(`${OUT}/fonts`, { recursive: true });
 writeFileSync(`${OUT}/colors/index.html`, colors.html);
 writeFileSync(`${OUT}/colors/colors.css`, colors.css);
 writeFileSync(`${OUT}/changelog/index.html`, notes.html);
 writeFileSync(`${OUT}/faq/index.html`, faq.html);
+writeFileSync(`${OUT}/fonts/index.html`, fonts.html);
+writeFileSync(`${OUT}/fonts/fonts.css`, fonts.css);
 console.log(
-  `pages.js: colors (${colors.colors} colors, ${colors.blocks} blocks), changelog (${notes.entries} entries), faq (${faq.questions} questions)`,
+  `pages.js: colors (${colors.colors} colors, ${colors.blocks} blocks), changelog (${notes.entries} entries), faq (${faq.questions} questions), fonts (${fonts.families} families, ${fonts.groups} groups)`,
 );

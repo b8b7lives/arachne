@@ -12,7 +12,9 @@
       "!public/mapartcraft-presets-26.2.json",
       "!public/atlas.json",
       "!public/changelog.json",
-      "!public/partners.json"
+      "!public/partners.json",
+      "!public/fonts/catalog",
+      "!fonts"
     ]
   },
   "formatter": {
